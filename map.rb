@@ -12,7 +12,7 @@ doc = Nokogiri::XML(f)
 n = doc.xpath('//node')
 
 nodes = {}
-n.each{|x| nodes[x.attributes['id'].value] = [x.attributes['lat'].value, x.attributes['lon'].value, []]}
+n.each{|x| nodes[x.attributes['id'].value] = [x.attributes['lat'].value.to_f, x.attributes['lon'].value.to_f, []]}
 
 w = doc.xpath('//way')
 
