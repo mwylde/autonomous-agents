@@ -23,10 +23,24 @@ module Driving
     def initialize(json)
       graph = YAML.load(json)
       nodes = {}
+
+      # initial values for min/max. note: these are the highest/lowest values of
+      # lat/long possible, such that min is initially set to the highest
+      # possible value, etc.
+      lat_min = 90
+      lat_max = -90
+      long_min = 180
+      long_max = -180
       
       # create a new node with the lat/long coordinates from the map
       graph.each do |k,v|
         nodes[k] = Node.new(v[0], v[1])
+
+        # update min/max on extreme values.
+        lat_min = v[0] if v[0] < lat_min
+        lat_max = v[0] if v[0] > lat_max
+        long_min = v[1] if v[1] < long_min
+        long_max = v[1] if v[1] > long_max
       end
 
       # now that all of the nodes have been created, we do a second
@@ -38,6 +52,30 @@ module Driving
       end
 
       @map = Set.new(nodes.values)
+      @lat_min = lat_min
+      @lat_max = lat_max
+      @long_min = long_min
+      @long_max = long_max
+
+      @map.each do |n|
+        world = latlong_to_world n.lat, n.long
+        n.lat = world[0]
+        n.long = world[1]
+      end
+    end
+
+    def latlong_to_world(lat, long)
+      a = [lat, long]
+      
+      # shift
+      a[0] = lat - @lat_min
+      a[1] = long - @long_min
+
+      # scale
+      a[0] = 1000 * a[0]
+      a[1] = 1000 * a[1]
+
+      return a
     end
 
     def self.from_file(filename)
