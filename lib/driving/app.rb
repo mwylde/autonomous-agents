@@ -13,7 +13,6 @@ module Driving
     end
 
     def mouse_clicked
-      nueanh
       @display.mouse_clicked
     end
 

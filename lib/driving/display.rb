@@ -18,11 +18,15 @@ module Driving
       # @z_yspecifies the distance between the center of the camera and the
       # edge of the top or bottom screen boundaries (in world coordinates).
       @z_y = 10
-
-      @old_mouse_x = @old_mouse_y = 0
     end
 
     def draw
+      render_map()
+    end
+
+    def render_map
+      @p.background 255
+      
       @map.nodes.each do |n|
         point n.x, n.y if on_screen? n.x, n.y
 
@@ -38,15 +42,20 @@ module Driving
     # --------------------------------------------------------------------------
 
     def mouse_clicked
-      @old_mouse_x = @p.mouse_x
-      @old_mouse_y = @p.mouse_y
+      sx,sy = world_to_screen @c_x, @c_y
+      @c_x, @c_y = screen_to_world sx, sy
+
+      render_map()
     end
     
     def mouse_dragged
-      dx, dy = screen_to_world(@p.mouse_x - @old_mouse_x,
-                               @p.mouse_y - @old_mouse_y)
-      @c_x += dx
-      @c_y += dy 
+      wx0, wy0 = screen_to_world(@p.pmouse_x, @p.pmouse_y)
+      wx1, wy1 = screen_to_world(@p.mouse_x, @p.mouse_y)
+
+      @c_x -= wx1 - wx0
+      @c_y -= wy1 - wy0
+
+      render_map()
     end
 
     # wrapper methods for Processing which take world coordinates. -------------
