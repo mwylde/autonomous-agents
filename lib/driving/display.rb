@@ -5,7 +5,7 @@ module Driving
 
       # the point at the world coordinates given by @camera_pos will be centered
       # on the screen.
-      @camera_pos = map.world_max.collect {|x| x / 2}
+#      @camera_pos = map.world_max.collect {|x| x / 2}
 
       # @camera_zoom specifies the distance between the center of the camera and
       # the edge of the top or bottom screen boundaries (in world coordinates).
