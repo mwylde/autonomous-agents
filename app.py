@@ -9,16 +9,18 @@ class App:
   def __init__(self):
     self._parse_options()
     self._map = Map.from_file(self._options.map_path)
-    self._display = Display(self._map)
 
+    cocos.director.director.init()
+    self._display = Display(self._map)
+    
   def start(self):
     main_scene = cocos.scene.Scene (self._display)
     cocos.director.director.run (main_scene)
+    
 
   def _parse_options(self):
     op = OptionParser()
     op.add_option('--map', dest='map_path', help='path to map json file', default='map.json')
-
     options, args = op.parse_args()
     self._options = options
     self._args = args
@@ -27,7 +29,6 @@ class App:
       op.error('no map path set')    
     
 def main():
-  cocos.director.director.init()
   app = App()
   app.start()
 
