@@ -1,5 +1,5 @@
 module Driving
-  class Driving < Processing::App
+  class Display
     def initialize map
       @map = map
     end

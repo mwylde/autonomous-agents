@@ -1,7 +1,5 @@
 module Driving
   class App < Processing::App
-    load_ruby_library :yaml
-    
     def setup
       @map = Map.from_file("#{File.dirname(__FILE__)}/../../maps/map.yaml")
       @display = Display.new(@map)
