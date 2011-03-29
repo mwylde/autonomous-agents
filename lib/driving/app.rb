@@ -11,5 +11,14 @@ module Driving
     def draw
       @display.draw
     end
+
+    def mouse_clicked
+      nueanh
+      @display.mouse_clicked
+    end
+
+    def mouse_dragged
+      @display.mouse_dragged
+    end
   end
 end
