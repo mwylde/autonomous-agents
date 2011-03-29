@@ -14,8 +14,7 @@ class App:
     self._display = Display(self._map)
     
   def start(self):
-    main_scene = cocos.scene.Scene (self._display)
-    cocos.director.director.run (main_scene)
+    cocos.director.director.run (self._display)
     
 
   def _parse_options(self):
