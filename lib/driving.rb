@@ -1,8 +1,10 @@
-ROOT = File.expand_path(File.dirname(__FILE__))
+root = File.expand_path(File.dirname(__FILE__))
 
-require 'json'
+require 'ruby-processing'
 
-require "#{ROOT}/driving/map"
-require "#{ROOT}/driving/agent"
-require "#{ROOT}/driving/display"
-require "#{ROOT}/driving/app"
+require "#{root}/driving/map"
+require "#{root}/driving/agent"
+require "#{root}/driving/display"
+require "#{root}/driving/app"
+
+Driving::App.new :map => "map.json"

@@ -21,7 +21,7 @@ module Driving
     # appropriate json file can be generated from an osm file by using
     # the osm_converter application in the bin/ directory.
     def initialize(json)
-      graph = JSON.parse(json)
+      graph = YAML.parse(json)
       nodes = {}
 
       # initial values for min/max. note: these are the highest/lowest values of

@@ -1,5 +1,7 @@
+#!/usr/bin/env ruby
+
 require 'nokogiri'
-require 'json'
+require 'yaml'
 
 if ARGV.size < 2
   puts "Takes two args, input file and output file"
@@ -35,5 +37,5 @@ nodes.delete_if do |id,n|
 end
 
 File.open(ARGV[1], "w+") do |w|
-  w.write nodes.to_json
+  w.write YAML.dump(nodes)
 end
