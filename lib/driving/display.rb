@@ -16,23 +16,38 @@ module Driving
     end
 
     def aspect_ratio
-      @p.width / @p.height
+      width() / height()
     end  
-    
+
     def world_to_screen(x, y)
       a = [x, y]
 
-      a[0] = x - @camera_pos[0] - @camera_zoom
-      a[1] = y - @camera_pos[1] - aspect_ratio() * @camera_zoom
+      a[0] = x - @camera_pos[0] - aspect_ratio() * @camera_zoom
+      a[1] = @camera_pos[0] + @camera_zoom - y
 
       return a
     end
 
+    def on_screen?(x,y)
+      sx, sy = world_to_screen x,y
+      sx > 0 and sx < width() and sy > 0 and sy < height()
+    end
+
+    # draw point specified in world coordinates (only actually draws it if it's
+    # on the screen).
     def point(x, y)
-      wx,wy = world_to_screen x,y
-      if wx >= 0 and wx <= @p.width and wy >= 0 and wy <= @p.height then
-        @p.point wx, wy
+      if on_screen? x,y then
+        sx,sy = world_to_screen x,y
+        @p.point sx,sy
       end 
+    end
+
+    def width
+      @p.width
+    end
+
+    def height
+      @p.height
     end
 
     def setup
