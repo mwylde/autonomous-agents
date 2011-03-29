@@ -12,4 +12,9 @@ class Display(cocos.scene.Scene):
     sprite_layer = SpriteLayer()
 
     super(Display, self).__init__(bg, map_layer, sprite_layer)
-  
+
+class MapLayer(cocos.layer.scrolling.ScrollableLayer):
+  pass # XXX for now
+
+class SpriteLayer(cocos.layer.scrolling.ScrollableLayer):
+  pass # XXX for now
