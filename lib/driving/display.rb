@@ -1,6 +1,6 @@
 module Driving
   class Display
-    def initialize map, w, h
+    def initialize map
       @map = map
 
       # the point at the world coordinates given by @camera_pos will be centered
@@ -10,14 +10,10 @@ module Driving
       # @camera_zoom specifies the distance between the center of the camera and
       # the edge of the top or bottom screen boundaries (in world coordinates).
       @camera_zoom = 1
-
-      # display width and height
-      @width = w
-      @height = h
     end
 
     def aspect_ratio
-      @width / @height
+      width / height
     end  
     
     def world_to_screen(x, y)
