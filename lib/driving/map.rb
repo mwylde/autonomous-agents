@@ -15,7 +15,7 @@ module Driving
   # represents a point on a road, and each edge represents a segment
   # of a road. Nodes with more than two edges are intersections.
   class Map
-    attr_accessor :map, :lat_min, :lat_max, :long_min, :long_max, :world_max
+    attr_accessor :nodes, :lat_min, :lat_max, :long_min, :long_max, :world_max
 
     # Creates a new map from a json file containing the graph data. An
     # appropriate json file can be generated from an osm file by using
@@ -62,7 +62,7 @@ module Driving
         end
       end
 
-      @map = Set.new(nodes.values)
+      @nodes = Set.new(nodes.values)
     end
 
     def latlong_to_world(lat, long)

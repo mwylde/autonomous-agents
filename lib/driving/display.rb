@@ -26,12 +26,22 @@ module Driving
       a[1] = y - @camera_pos[1] - aspect_ratio() * @camera_zoom
 
       return a
-    end  
+    end
+
+    def point(x, y)
+      wx,wy = world_to_screen x,y
+      if wx >= 0 and wx <= @p.width and wy >= 0 and wy <= @p.height then
+        @p.point wx, wy
+      end 
+    end
 
     def setup
     end
 
     def draw
+      @map.nodes.each do |n|
+        point n.x, n.y
+      end
     end
   end
 end
