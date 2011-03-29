@@ -17,7 +17,7 @@ module Driving
 
       # @z_yspecifies the distance between the center of the camera and the
       # edge of the top or bottom screen boundaries (in world coordinates).
-      @z_y = 10
+      @z_y = 10.0
     end
 
     def draw
