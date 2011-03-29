@@ -49,6 +49,12 @@ module Driving
       @p.point sx,sy
     end
 
+    def line(x0, y0, x1, y1)
+      sx0, sy0 = world_to_screen x0, y0
+      sx1, sy1 = world_to_screen x1, y1
+      @p.line sx0, sy0, sx1, sy1
+    end
+
     def width
       @p.width
     end
@@ -63,6 +69,10 @@ module Driving
     def draw
       @map.nodes.each do |n|
         point n.x, n.y if on_screen? n.x, n.y
+
+        n.neighbors.each do |m|
+          line n.x, n.y, m.x, m.y if on_screen? n.x, n.y or on_screen? m.x, m.y
+        end
       end
     end
     
