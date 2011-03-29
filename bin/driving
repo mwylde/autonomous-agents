@@ -1,0 +1,3 @@
+#!/usr/bin/env ruby
+
+`rp5 run #{File.dirname(__FILE__)}/../lib/driving.rb`
