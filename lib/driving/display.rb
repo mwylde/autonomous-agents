@@ -20,7 +20,7 @@ module Driving
       a = [x, y]
 
       a[0] = x - @camera_pos[0] - @camera_zoom
-      a[1] = y - @camrea_pos[1] - aspect_ratio() * @camera_zoom
+      a[1] = y - @camera_pos[1] - aspect_ratio() * @camera_zoom
 
       return a
     end  
