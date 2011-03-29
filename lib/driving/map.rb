@@ -3,10 +3,10 @@ module Driving
   # (given by lattitude/longitude) and a set of other nodes to which
   # this one is connected by a road of some kind.
   class Node
-    attr_accessor :lat, :long, :neighbors
-    def initialize(lat, long, neighbors = Set.new)
-      @lat = lat
-      @long = long
+    attr_accessor :x, :y, :neighbors
+    def initialize(x, y, neighbors = Set.new)
+      @x = x
+      @y = y
       @neighbors = neighbors
     end
   end
@@ -31,18 +31,29 @@ module Driving
       lat_max = -90
       long_min = 180
       long_max = -180
-      
-      # create a new node with the lat/long coordinates from the map
-      graph.each do |k,v|
-        nodes[k] = Node.new(v[0], v[1])
 
-        # update min/max on extreme values.
+      # determine the extreme values
+      graph.each do |k,v|
         lat_min = v[0] if v[0] < lat_min
         lat_max = v[0] if v[0] > lat_max
         long_min = v[1] if v[1] < long_min
         long_max = v[1] if v[1] > long_max
       end
 
+      @lat_min = lat_min
+      @lat_max = lat_max
+      @long_min = long_min
+      @long_max = long_max
+
+      # store the the highest (x,y) coordinates of the map
+      @world_max = latlong_to_world lat_max, long_max
+
+      # create a new node with world coordinates
+      graph.each do |k,v|
+        world = latlong_to_world v[0], v[1]
+        nodes[k] = Node.new(world[0], world[1])
+      end
+        
       # now that all of the nodes have been created, we do a second
       # pass to get all of the references
       graph.each do |k,v|
@@ -52,16 +63,6 @@ module Driving
       end
 
       @map = Set.new(nodes.values)
-      @lat_min = lat_min
-      @lat_max = lat_max
-      @long_min = long_min
-      @long_max = long_max
-
-      @map.each do |n|
-        world = latlong_to_world n.lat, n.long
-        n.lat = world[0]
-        n.long = world[1]
-      end
     end
 
     def latlong_to_world(lat, long)
