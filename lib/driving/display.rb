@@ -10,7 +10,7 @@ module Driving
     end
 
     def setup
-      @p.size 800, 600
+      @p.size 1000, 760
       @p.frame_rate 60
       @p.smooth
 
@@ -31,8 +31,9 @@ module Driving
     def render_map
       @p.background 255
 
-      @p.color 0 # black
+      @p.fill 0 # black
       @map.nodes.each do |n|
+        #next unless rand < 0.5
         point n.x, n.y if on_screen? n.x, n.y
 
         n.neighbors.each do |m|
@@ -40,21 +41,17 @@ module Driving
         end
       end
 
-      @p.color 255, 0, 0 # red
+      @p.fill 255, 0, 0 # red
       @agents.each do |a|
-        ellipse a.x, a.y, 1000, 1000 if on_screen? a.x, a.y
+        ellipse a.x, a.y, 0.01, 0.01 if on_screen? a.x, a.y
       end
     end
 
     # Processing event handlers. 
-    # --------------------------------------------------------------------------
-    # NOTE: these need to be assigned in app.rb to the REAL Processing sketch. -
-    # --------------------------------------------------------------------------
+    # NOTE: these need to be assigned in app.rb to the REAL Processing
+    # sketch.
+    
     def mouse_clicked
-      sx,sy = world_to_screen @c_x, @c_y
-      @c_x, @c_y = screen_to_world sx, sy
-
-      render_map()
     end
     
     def mouse_dragged
@@ -63,12 +60,9 @@ module Driving
 
       @c_x -= wx1 - wx0
       @c_y -= wy1 - wy0
-
-      render_map()
     end
 
-    # wrapper methods for Processing which take world coordinates. -------------
-    # --------------------------------------------------------------------------
+    # wrapper methods for Processing which take world coordinates
     
     def point(x, y)
       sx,sy = world_to_screen x,y
@@ -82,13 +76,12 @@ module Driving
     end
 
     def ellipse(x, y, w, h)
-      sx, sy = world_to_screen x, y
-      sw, sh = [w / zoom_x,  h / zoom_y]
-      @p.ellipse sx, sy, sw, sh
+      x0, y0 = world_to_screen x, y
+      x1, y1 = world_to_screen x+w, y+h
+      @p.ellipse x0, y0, x1-x0, y1-y0
     end
     
-    # accessor methods for info which is gathered from Proessing. --------------
-    # --------------------------------------------------------------------------
+    # accessor methods for info which is gathered from Proessing
 
     def width
       @p.width
@@ -110,12 +103,11 @@ module Driving
       @z_y
     end
       
-    # coordinate manipulation. -------------------------------------------------
-    # --------------------------------------------------------------------------
+    # coordinate manipulation
     
     def world_to_screen(wx, wy)
       sx = (wx - (@c_x - zoom_x())) * ( width() / (2 * zoom_x()))
-      sy = ((@c_y + zoom_y()) - wy) * ( height() / (2 * zoom_y()))
+      sy = ((@c_y + zoom_y()) - wy) * ( width() / (2 * zoom_x()))
       [sx, sy]
     end
 
@@ -133,4 +125,3 @@ module Driving
   end
   
 end
-
