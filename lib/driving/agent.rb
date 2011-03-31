@@ -3,8 +3,12 @@ module Driving
     attr_reader :x, :y, :phi, :velocity, :acceleration
 
     # Creates a default agent with all parameters set to 0
-    def initialize
-      @x, @y, @phi, @velocity, @acceleration = [0]*5
+    def initialize x = 0, y = 0, phi = 0, velocity = 0, accel = 0
+      @x = x
+      @y = y
+      @phi = phi
+      @velocity = velocity
+      @acceleration = acceleration
     end
 
     # Causes the agent to accelerate or decellerate at a rate

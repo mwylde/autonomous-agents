@@ -2,9 +2,11 @@ module Driving
   class App < Processing::App
     def setup
       @map = Map.from_file("#{File.dirname(__FILE__)}/../../maps/map.yaml")
-      @display = Display.new(@map, self)
-      size 800, 600
-      frame_rate 30
+
+      x, y = @map.latlong_to_world(37.5716897, -122.0797629)
+      @agents = [Agent.new(x, y)]
+        
+      @display = Display.new(@map, @agents, self)
       @display.setup
     end
 

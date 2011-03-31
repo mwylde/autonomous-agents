@@ -2,14 +2,18 @@ module Driving
   class Display
     attr_accessor :map, :p
     
-    def initialize map, p
+    def initialize map, agents, p
       @map = map
-
+      @agents = agents
       # store reference to processing to access processing commands.
       @p = p
     end
 
     def setup
+      @p.size 800, 600
+      @p.frame_rate 60
+      @p.smooth
+
       # the point at the world coordinates given by (@c_x, @c_y) will
       # be centered on the screen.
       @c_x = map.world_max[0] / 2.0
@@ -26,7 +30,8 @@ module Driving
 
     def render_map
       @p.background 255
-      
+
+      @p.color 0 # black
       @map.nodes.each do |n|
         point n.x, n.y if on_screen? n.x, n.y
 
@@ -34,13 +39,17 @@ module Driving
           line n.x, n.y, m.x, m.y if on_screen? n.x, n.y or on_screen? m.x, m.y
         end
       end
+
+      @p.color 255, 0, 0 # red
+      @agents.each do |a|
+        ellipse a.x, a.y, 1000, 1000 if on_screen? a.x, a.y
+      end
     end
 
-    # Processing event handlers. -----------------------------------------------
+    # Processing event handlers. 
     # --------------------------------------------------------------------------
     # NOTE: these need to be assigned in app.rb to the REAL Processing sketch. -
     # --------------------------------------------------------------------------
-
     def mouse_clicked
       sx,sy = world_to_screen @c_x, @c_y
       @c_x, @c_y = screen_to_world sx, sy
@@ -70,6 +79,12 @@ module Driving
       sx0, sy0 = world_to_screen x0, y0
       sx1, sy1 = world_to_screen x1, y1
       @p.line sx0, sy0, sx1, sy1
+    end
+
+    def ellipse(x, y, w, h)
+      sx, sy = world_to_screen x, y
+      sw, sh = [w / zoom_x,  h / zoom_y]
+      @p.ellipse sx, sy, sw, sh
     end
     
     # accessor methods for info which is gathered from Proessing. --------------
