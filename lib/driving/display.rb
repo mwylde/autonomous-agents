@@ -19,12 +19,16 @@ module Driving
       @c_x = map.world_max[0] / 2.0
       @c_y = map.world_max[1] / 2.0
 
-      # @z_yspecifies the distance between the center of the camera and the
-      # edge of the top or bottom screen boundaries (in world coordinates).
-      @z_y = 10.0
+      # Get scroll wheel events
+      @wheel = WheelListener.new(10, 2, 25)
+      @p.add_mouse_wheel_listener(@wheel)
     end
 
     def draw
+      # @z_yspecifies the distance between the center of the camera and the
+      # edge of the top or bottom screen boundaries (in world coordinates).
+      @z_y = @wheel.zoom
+
       render_map()
     end
 
@@ -123,5 +127,24 @@ module Driving
     end
 
   end
-  
+  class WheelListener
+    include java.awt.event.MouseWheelListener
+    
+    attr_reader :zoom, :max, :min
+
+    # zoom is the initial value (for say z_start)
+    # limit range of zoom with max
+
+    def initialize(zoom, min, max)
+      @zoom = zoom
+      @min = min
+      @max = max
+    end
+    
+    def mouse_wheel_moved(e)
+      increment = e.get_wheel_rotation       # increment/decrement
+      newz = @zoom + increment
+      @zoom = newz if (newz < @max && newz > @min)
+    end
+  end  
 end
