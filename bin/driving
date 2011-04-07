@@ -1,3 +1,7 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env jruby
 
-`rp5 run #{File.dirname(__FILE__)}/../lib/driving.rb`
+root = File.expand_path(File.dirname(__FILE__))
+
+require root + '/../lib/driving'
+
+Driving::App.new.setup
