@@ -11,7 +11,8 @@ include_class 'javax.swing.JFrame'
 include_class 'javax.swing.JPanel'
 
 module Driving
-  class Display < Canvas    
+  class Display < Canvas
+    ROAD_WIDTH = 5
     WIDTH = 800
     HEIGHT = 600
     attr_accessor :map
@@ -55,7 +56,7 @@ module Driving
       addMouseMotionListener @mouse
       addMouseListener @mouse
       add_mouse_wheel_listener @wheel
-      Thread.new { draw }
+      draw
     end
 
     def draw
@@ -81,11 +82,12 @@ module Driving
 
     def render_map
       @g.setColor(Color.black)
+      rw2 = ROAD_WIDTH**2
       @map.nodes.each do |n|
         #next unless rand < 0.5
         n.neighbors.each do |m|
           if on_screen? n.x, n.y or on_screen? m.x, m.y
-            line n.x, n.y, m.x, m.y
+            road n.x, n.y, m.x, m.y
           end
         end
       end
@@ -98,6 +100,33 @@ module Driving
     
 
     # wrapper methods for Processing which take world coordinates
+    def road x1, y1, x2, y2
+      # find the slope of the line that goes through (x1, y1)
+      # and (x2, y2)
+      m = (y2-y1)/(x2-x1).to_f
+      # find the intercept and slope of the line perpendicular
+      # to the above
+      mp = -1/m
+      bp1 = y1 - mp * x1
+      bp2 = y2 - mp * x2
+
+      # find the point for the road line above and below
+      y2_m_y1_s = (y2 - y1)**2
+      rw2 = ROAD_WIDTH ** 2
+      find_point = proc{|rw2, xi, b|
+        x = Math.sqrt((rw2 - y2_m_y1_s).abs) + xi
+        y = mp * x + b
+        [x,y]
+      }
+
+      a = find_point.call(rw2,  x1, bp1)
+      b = find_point.call(-rw2, x1, bp1)
+      c = find_point.call(rw2,  y1, bp2)
+      d = find_point.call(-rw2, y1, bp2)
+
+      line(*(a + b))
+      line(*(c + d))
+    end
     
     def point(x, y)
       sx,sy = world_to_screen x,y
@@ -112,7 +141,16 @@ module Driving
       end
       @g.draw_polyline xs, ys, points.size
     end
- 
+
+    def polygon points
+      xs, ys = points.fold [[],[]] do |acc, p|
+        sX, sY = world_to_screen(*p)
+        acc[0] << sX
+        acc[1] << sY
+      end
+      @g.draw_polygon xs, ys, points.size
+    end
+
     def line(x0, y0, x1, y1)
       sx0, sy0 = world_to_screen x0, y0
       sx1, sy1 = world_to_screen x1, y1
