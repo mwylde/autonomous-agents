@@ -13,8 +13,8 @@ include_class 'javax.swing.JPanel'
 module Driving
   class Display < Canvas
     ROAD_WIDTH = 10
-    WIDTH = 800
-    HEIGHT = 600
+    WIDTH = 1400
+    HEIGHT = 1000
     attr_accessor :map
     
     def initialize map, agents
@@ -81,26 +81,20 @@ module Driving
     end
 
     def render_map
-      @g.setColor(Color.black)
-      @map.nodes.each do |n|
-        #next unless rand < 0.5
-        x1, y1 = world_to_screen n.x, n.y
-        n.neighbors.each do |m|
-          x2, y2 = world_to_screen m.x, m.y
-          if on_screen? n.x, n.y or on_screen? m.x, m.y
-            road x1, y1, x2, y2
-          end
-        end
-      end
-
       @map.nodes.each do |n|
         @g.setColor(Color.green)
         point n.x, n.y if on_screen? n.x, n.y
-        #next unless rand < 0.5
-        @g.setColor(Color.red)
 
+        #next unless rand < 0.5
+        x1, y1 = world_to_screen n.x, n.y
         n.neighbors.each do |m|
+          # we don't want to draw stuff twice
+          next if m.object_id > n.object_id
+          x2, y2 = world_to_screen m.x, m.y
           if on_screen? n.x, n.y or on_screen? m.x, m.y
+            @g.setColor(Color.black)
+            road x1, y1, x2, y2
+            @g.setColor(Color.red)
             line n.x, n.y, m.x, m.y
           end
         end
@@ -112,13 +106,10 @@ module Driving
       end
     end
     
-
-    # wrapper methods for Processing which take world coordinates
+    # Draws a road with lanes
     def road x1, y1, x2, y2
-      # find perpendicular vectors going in both directions from v
-      # starting at either point
-      dx = x2-x1
-      dy = y2-y1
+      dx = (x2-x1).abs
+      dy = (y2-y1).abs
 
       find_point = proc {|x, y, ax, ay|
         # magnitude of vector
@@ -133,12 +124,18 @@ module Driving
       c = find_point.call(-dy, -dx, x2, y2)
       d = find_point.call(dy, dx, x2, y2)
 
-      l1, l2 = a+b, c+d
+      l1, l2 = a+d, b+c
+      if dx < dy
+        l1 = a+c
+        l2 = b+d
+      end
 
       @g.draw_line(*l1)
       @g.draw_line(*l2)
     end
     
+
+    # wrapper methods for Processing which take world coordinates
     def point(x, y)
       sx,sy = world_to_screen x,y
       @g.fill_oval sx-5, sy-5, 10, 10
