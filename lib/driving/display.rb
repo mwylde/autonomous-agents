@@ -12,7 +12,7 @@ include_class 'javax.swing.JPanel'
 
 module Driving
   class Display < Canvas
-    ROAD_WIDTH = 5
+    ROAD_WIDTH = 10
     WIDTH = 800
     HEIGHT = 600
     attr_accessor :map
@@ -51,7 +51,7 @@ module Driving
       @c_y = map.world_max[1] / 2.0
 
       # Get scroll wheel events
-      @wheel = WheelListener.new 10, 2, 25
+      @wheel = WheelListener.new 10, 1, 30
       @mouse = MouseDragger.new @c_x, @c_y, self
       addMouseMotionListener @mouse
       addMouseListener @mouse
@@ -82,12 +82,26 @@ module Driving
 
     def render_map
       @g.setColor(Color.black)
-      rw2 = ROAD_WIDTH**2
       @map.nodes.each do |n|
         #next unless rand < 0.5
+        x1, y1 = world_to_screen n.x, n.y
+        n.neighbors.each do |m|
+          x2, y2 = world_to_screen m.x, m.y
+          if on_screen? n.x, n.y or on_screen? m.x, m.y
+            road x1, y1, x2, y2
+          end
+        end
+      end
+
+      @map.nodes.each do |n|
+        @g.setColor(Color.green)
+        point n.x, n.y if on_screen? n.x, n.y
+        #next unless rand < 0.5
+        @g.setColor(Color.red)
+
         n.neighbors.each do |m|
           if on_screen? n.x, n.y or on_screen? m.x, m.y
-            road n.x, n.y, m.x, m.y
+            line n.x, n.y, m.x, m.y
           end
         end
       end
@@ -101,36 +115,33 @@ module Driving
 
     # wrapper methods for Processing which take world coordinates
     def road x1, y1, x2, y2
-      # find the slope of the line that goes through (x1, y1)
-      # and (x2, y2)
-      m = (y2-y1)/(x2-x1).to_f
-      # find the intercept and slope of the line perpendicular
-      # to the above
-      mp = -1/m
-      bp1 = y1 - mp * x1
-      bp2 = y2 - mp * x2
+      # find perpendicular vectors going in both directions from v
+      # starting at either point
+      dx = x2-x1
+      dy = y2-y1
 
-      # find the point for the road line above and below
-      y2_m_y1_s = (y2 - y1)**2
-      rw2 = ROAD_WIDTH ** 2
-      find_point = proc{|rw2, xi, b|
-        x = Math.sqrt((rw2 - y2_m_y1_s).abs) + xi
-        y = mp * x + b
-        [x,y]
+      find_point = proc {|x, y, ax, ay|
+        # magnitude of vector
+        m = Math.sqrt(x*x+y*y)
+        # scaling factor, so that magnitude becomes ROAD_WIDTH
+        s = ROAD_WIDTH/m
+        [x*s+ax, y*s+ay]
       }
+      
+      a = find_point.call(-dy, dx, x1, y1)
+      b = find_point.call(dy, -dx, x1, y1)
+      c = find_point.call(-dy, -dx, x2, y2)
+      d = find_point.call(dy, dx, x2, y2)
 
-      a = find_point.call(rw2,  x1, bp1)
-      b = find_point.call(-rw2, x1, bp1)
-      c = find_point.call(rw2,  y1, bp2)
-      d = find_point.call(-rw2, y1, bp2)
+      l1, l2 = a+b, c+d
 
-      line(*(a + b))
-      line(*(c + d))
+      @g.draw_line(*l1)
+      @g.draw_line(*l2)
     end
     
     def point(x, y)
       sx,sy = world_to_screen x,y
-      @g.fill_oval sx-1, sy-1, 2, 2
+      @g.fill_oval sx-5, sy-5, 10, 10
     end
 
     def polyline points
