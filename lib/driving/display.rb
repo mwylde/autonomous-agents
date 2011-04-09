@@ -12,12 +12,15 @@ include_class 'javax.swing.JPanel'
 
 module Driving
   class Display < Canvas
-    ROAD_WIDTH = 10
-    WIDTH = 1400
-    HEIGHT = 1000
+    ROAD_WIDTH = 0.10
+    WIDTH = 800
+    HEIGHT = 600
+    POINT_RADIUS = 3
     attr_accessor :map
     
     def initialize map, agents
+      puts "Creating display"
+      
       super()
       @container = JFrame.new "Autonomous Driving"
       @container.setDefaultCloseOperation JFrame::EXIT_ON_CLOSE      
@@ -33,9 +36,7 @@ module Driving
 
       @map = map
       @agents = agents
-    end
 
-    def setup
       puts "Running setup"
       @container.pack
       @container.setResizable false
@@ -56,7 +57,6 @@ module Driving
       addMouseMotionListener @mouse
       addMouseListener @mouse
       add_mouse_wheel_listener @wheel
-      draw
     end
 
     def draw
@@ -86,16 +86,11 @@ module Driving
         point n.x, n.y if on_screen? n.x, n.y
 
         #next unless rand < 0.5
-        x1, y1 = world_to_screen n.x, n.y
         n.neighbors.each do |m|
           # we don't want to draw stuff twice
           next if m.object_id > n.object_id
-          x2, y2 = world_to_screen m.x, m.y
           if on_screen? n.x, n.y or on_screen? m.x, m.y
-            @g.setColor(Color.black)
-            road x1, y1, x2, y2
-            @g.setColor(Color.red)
-            line n.x, n.y, m.x, m.y
+            road n.x, n.y, m.x, m.y
           end
         end
       end
@@ -105,41 +100,56 @@ module Driving
         ellipse a.x, a.y, 50, 50 if on_screen? a.x, a.y
       end
     end
+
+    # distance between (x1,y1) and (x2, y2)
+    def dist x1, y1, x2, y2
+      dx = x2 - x1
+      dy = y2 - y1
+      Math.sqrt(dx*dx + dy*dy)
+    end
     
-    # Draws a road with lanes
+    # draws a road with lines connecting points (x1,y1) and (x2,y2), specified
+    # in world coordinates
     def road x1, y1, x2, y2
-      dx = (x2-x1).abs
-      dy = (y2-y1).abs
+      d = dist x1, y1, x2, y2
 
-      find_point = proc {|x, y, ax, ay|
-        # magnitude of vector
-        m = Math.sqrt(x*x+y*y)
-        # scaling factor, so that magnitude becomes ROAD_WIDTH
-        s = ROAD_WIDTH/m
-        [x*s+ax, y*s+ay]
-      }
-      
-      a = find_point.call(-dy, dx, x1, y1)
-      b = find_point.call(dy, -dx, x1, y1)
-      c = find_point.call(-dy, -dx, x2, y2)
-      d = find_point.call(dy, dx, x2, y2)
+      # unit vector pointing from (x1,y1) to (x2,y2)
+      u = [ (x2-x1)/d, (y2-y1)/d ]
 
-      l1, l2 = a+d, b+c
-      if dx < dy
-        l1 = a+c
-        l2 = b+d
-      end
+      # unit vector normal to u
+      n = [ u[1], -u[0] ]
 
-      @g.draw_line(*l1)
-      @g.draw_line(*l2)
+      a = [ x1 + ROAD_WIDTH*n[0], y1 + ROAD_WIDTH*n[1] ]
+      b = [ x1 - ROAD_WIDTH*n[0], y1 - ROAD_WIDTH*n[1] ]
+      c = [ x2 + ROAD_WIDTH*n[0], y2 + ROAD_WIDTH*n[1] ]
+      d = [ x2 - ROAD_WIDTH*n[0], y2 - ROAD_WIDTH*n[1] ]
+
+      @g.setColor Color.black
+      line *(a+c)
+      line *(b+d)
+
+      @g.setColor Color.red
+      line x1, y1, x2, y2
+    end
+
+    # draws a very small circle of radius 5 centered at (x,y) in world
+    # coordinates.
+    def point(x, y)
+      r = POINT_RADIUS
+      sx,sy = world_to_screen x,y
+      @g.fill_oval sx-r, sy-r, 2*r, 2*r
+    end
+
+    def line_screen x0, y0, x1, y1
+      @g.draw_line x0, y0, x1, x1
     end
     
-
-    # wrapper methods for Processing which take world coordinates
-    def point(x, y)
-      sx,sy = world_to_screen x,y
-      @g.fill_oval sx-5, sy-5, 10, 10
+    def line x0, y0, x1, y1
+      x0, y0 = world_to_screen x0, y0
+      x1, y1 = world_to_screen x1, y1
+      @g.draw_line x0, y0, x1, y1
     end
+
 
     def polyline points
       xs, ys = points.fold [[],[]] do |acc, p|
@@ -159,11 +169,6 @@ module Driving
       @g.draw_polygon xs, ys, points.size
     end
 
-    def line(x0, y0, x1, y1)
-      sx0, sy0 = world_to_screen x0, y0
-      sx1, sy1 = world_to_screen x1, y1
-      @g.draw_line sx0, sy0, sx1, sy1
-    end
 
     def ellipse(x, y, w, h)
       x0, y0 = world_to_screen x, y
