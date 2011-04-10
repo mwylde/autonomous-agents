@@ -7,7 +7,7 @@ module Driving
       @agents = [Agent.new(0.01, 0.01, x, y)]
         
       @display = Display.new @map, @agents
-      @display.draw
+      @display.run
     end
   end
 end

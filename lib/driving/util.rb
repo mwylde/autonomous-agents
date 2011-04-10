@@ -26,6 +26,12 @@ module Driving
       new_v = v.rotate theta
       return p.add_vector new_v
     end
+
+    def dist p
+      dx = p.x - @x
+      dy = p.y - @y
+      Math.sqrt(dx*dx + dy*dy)
+    end
   end
   
   class Vector
@@ -45,15 +51,16 @@ module Driving
       Math.sqrt(@x*@x + @y*@y)
     end
     
-    def normal?
+    def unit?
       magnitude == 1
     end
 
-    def normalize
-      unless normal?
+    def normalize!
+      unless unit?
         m = magnitude
         @x = @x / m
         @y = @y / m
+        self
       end
     end
 

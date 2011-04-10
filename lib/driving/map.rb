@@ -3,10 +3,9 @@ module Driving
   # (given by lattitude/longitude) and a set of other nodes to which
   # this one is connected by a road of some kind.
   class Node
-    attr_accessor :x, :y, :neighbors
+    attr_accessor :pos, :neighbors
     def initialize(x, y, neighbors = Set.new)
-      @x = x
-      @y = y
+      @pos = Point.new(x,y)
       @neighbors = neighbors
     end
   end

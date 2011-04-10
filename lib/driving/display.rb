@@ -15,7 +15,7 @@ module Driving
     ROAD_WIDTH = 0.10
     WIDTH = 800
     HEIGHT = 600
-    POINT_RADIUS = 3
+    DOT_RADIUS = 3
     INIT_ZOOM = 10
     MIN_ZOOM = 1
     MAX_ZOOM = 30
@@ -52,34 +52,33 @@ module Driving
       
       # the point at the world coordinates given by (@c_x, @c_y) will
       # be centered on the screen.
-      @c_x = map.world_max[0] / 2.0
-      @c_y = map.world_max[1] / 2.0
+      @c_pos = Point.new(map.world_max[0]/2.0, map.world_max[1]/2.0)
+      @z_y = INIT_ZOOM
 
       # Get scroll wheel events
-      @wheel = WheelListener.new INIT_ZOOM, MIN_ZOOM, MAX_ZOOM
-      @mouse = MouseDragger.new @c_x, @c_y, self
+      @wheel = WheelListener.new @z_y, MIN_ZOOM, MAX_ZOOM
+      @mouse = MouseDragger.new @c_pos, self
       addMouseMotionListener @mouse
       addMouseListener @mouse
       add_mouse_wheel_listener @wheel
     end
 
-    def draw
+    def run
       while true
+        
         @g = @strategy.getDrawGraphics
         @g.setRenderingHint RenderingHints::KEY_ANTIALIASING,
           RenderingHints::VALUE_ANTIALIAS_ON
         @g.setColor(Color.white)
         @g.fillRect(0,0,getWidth,getHeight)
-        # @z_yspecifies the distance between the center of the camera and the
-        # edge of the top or bottom screen boundaries (in world coordinates).
-        @c_x = @mouse.c_x
-        @c_y = @mouse.c_y
 
         render_map
 
         @g.dispose
+        @c_pos = @mouse.c_pos
+        @z_y = @wheel.zoom
+
         @strategy.show
-        sleep SLEEP_DURATION
       end
     end
 
@@ -88,119 +87,133 @@ module Driving
         n.neighbors.each do |m|
           # we don't want to draw stuff twice
           next if m.object_id > n.object_id
-          if on_screen? n.x, n.y or on_screen? m.x, m.y
-            road n.x, n.y, m.x, m.y
+          if on_screen? n or on_screen? m
+            road n.pos, m.pos
           end
         end
       end
 
       @g.setColor(Color.red)
       @agents.each do |a|
-        ellipse a.pos.x, a.pos.y, 50, 50 if on_screen? a.pos.x, a.pos.y
+        ellipse a.pos, Vector.new(50,50) if on_screen? a
       end
     end
 
-    # distance between (x1,y1) and (x2, y2)
-    def dist x1, y1, x2, y2
-      dx = x2 - x1
-      dy = y2 - y1
-      Math.sqrt(dx*dx + dy*dy)
-    end
-    
-    # draws a road with lines connecting points (x1,y1) and (x2,y2), specified
-    # in world coordinates
-    def road x1, y1, x2, y2
-      d = dist x1, y1, x2, y2
+    # draws a road with lines connecting points p0 and p1), specified in world
+    # coordinates
+    def road p0, p1
+      d = p0.dist p1
 
-      # unit vector pointing from (x1,y1) to (x2,y2)
-      u = [ (x2-x1)/d, (y2-y1)/d ]
-
-      # unit vector normal to u
-      n = [ u[1], -u[0] ]
-
-      a = [ x1 + ROAD_WIDTH*n[0], y1 + ROAD_WIDTH*n[1] ]
-      b = [ x1 - ROAD_WIDTH*n[0], y1 - ROAD_WIDTH*n[1] ]
-      c = [ x2 + ROAD_WIDTH*n[0], y2 + ROAD_WIDTH*n[1] ]
-      d = [ x2 - ROAD_WIDTH*n[0], y2 - ROAD_WIDTH*n[1] ]
+      # unit vector pointing from p0 to p1
+      u = (p1.subtract_point p0).normalize!
+      n = u.normal_vector
+      n_road = n.scale ROAD_WIDTH
+      n_road_neg = n.scale -ROAD_WIDTH
+      
+      a = p0.add_vector n_road
+      b = p0.add_vector n_road_neg 
+      c = p1.add_vector n_road
+      d = p1.add_vector n_road_neg
 
       @g.setColor Color.black
-      line *(a+c)
-      line *(b+d)
+      line a, c
+      line b, d
 
       @g.setColor Color.red
-      line x1, y1, x2, y2
+      line p0, p1
     end
 
-    # draws a very small circle of radius 5 centered at (x,y) in world
+    # draws a very small circle of radius DOT_RADIUS centered at p in world
     # coordinates.
-    def point(x, y)
-      r = POINT_RADIUS
-      sx,sy = world_to_screen x,y
-      @g.fill_oval sx-r, sy-r, 2*r, 2*r
+    def dot p
+      r = DOT_RADIUS
+      s_p = world_to_screen p
+      
+      ellipse(s_p.add_vector(Vector.new(-r, -r)), Vector.new(2*r, 2*r))
     end
 
-    def line x0, y0, x1, y1
-      x0, y0 = world_to_screen x0, y0
-      x1, y1 = world_to_screen x1, y1
-      @g.draw_line x0, y0, x1, y1
+    # draws a line between two points specified in world coordinates.
+    def line p0, p1
+      s_p0 = world_to_screen p0
+      s_p1 = world_to_screen p1
+      @g.draw_line s_p0.x, s_p0.y, s_p1.x, s_p1.y
     end
 
-    def polyline points
-      xs, ys = points.fold [[],[]] do |acc, p|
-        sX, sY = world_to_screen(*p)
-        acc[0] << sX
-        acc[1] << sY
-      end
-      @g.draw_polyline xs, ys, points.size
+    # draws an ellipse starting at point p and with width/height described by
+    # the vector v.
+    def ellipse p, v
+      x, y = p.x, p.y
+      w, h = v.x, v.y
+      @g.fill_oval x, y, w, h
     end
 
-    def polygon points
-      xs, ys = points.fold [[],[]] do |acc, p|
-        sX, sY = world_to_screen(*p)
-        acc[0] << sX
-        acc[1] << sY
-      end
-      @g.draw_polygon xs, ys, points.size
-    end
+    #def polyline points
+    #  xs, ys = points.fold [[],[]] do |acc, p|
+    #    sX, sY = world_to_screen(*p)
+    #    acc[0] << sX
+    #    acc[1] << sY
+    #  end
+    #  @g.draw_polyline xs, ys, points.size
+    #end
 
-
-    def ellipse(x, y, w, h)
-      x0, y0 = world_to_screen x, y
-      w, h = w / zoom_x, h / zoom_y
-      @g.fill_oval x0, y0, w, h
-    end
+    #def polygon points
+    #  xs, ys = points.fold [[],[]] do |acc, p|
+    #    sX, sY = world_to_screen(*p)
+    #    acc[0] << sX
+    #    acc[1] << sY
+    #  end
+    #  @g.draw_polygon xs, ys, points.size
+    #end
     
-    # accessor methods for info which is gathered from Proessing
+    # accessor methods for info which is dynamic (set by the window state or the
+    # mouse state)
     
     def aspect_ratio
       getWidth / getHeight
     end
 
     def zoom_x
-      @wheel.zoom * aspect_ratio()
+      @z_y * aspect_ratio()
     end
 
     def zoom_y
-      @wheel.zoom
+      @z_y
     end
       
     # coordinate manipulation
     
-    def world_to_screen(wx, wy)
-      sx = (wx - (@c_x - zoom_x)) * ( getWidth / (2 * zoom_x))
-      sy = ((@c_y + zoom_y) - wy) * ( getWidth / (2 * zoom_x))
-      [sx, sy]
+    def world_to_screen(p)
+      wx = p.x
+      wy = p.y
+      
+      sx = (wx - (@c_pos.x - zoom_x)) * ( getWidth / (2 * zoom_x))
+      sy = ((@c_pos.y + zoom_y) - wy) * ( getWidth / (2 * zoom_x))
+      
+      Point.new(sx, sy)
     end
 
-    def screen_to_world(sx, sy)
-      wx = (2 * zoom_x * sx / getWidth) + (@c_x - zoom_x)
-      wy = (@c_y + zoom_y) - (2 * zoom_y * sy / getHeight)
-      [wx, wy]
+    def screen_to_world(p)
+      sx = p.x
+      sy = p.y
+      
+      wx = (2 * zoom_x * sx / getWidth) + (@c_pos.x - zoom_x)
+      wy = (@c_pos.y + zoom_y) - (2 * zoom_y * sy / getWidth)
+      
+      Point.new(wx, wy)
     end
 
-    def on_screen?(x,y)
-      x > @c_x - zoom_x and x < @c_x + zoom_x and
-      y > @c_y - zoom_y and y < @c_y + zoom_y
+    # determines if a point in world coordinates is on the screen.
+    def on_screen?(p)
+      # allow on_screen? to be passed not only points, but objects which have a
+      # point variable named pos
+      if defined? p.pos
+        p = p.pos
+      end
+
+      screen_p = world_to_screen p
+
+      return (screen_p.x > 0 and screen_p.x < getWidth and
+              screen_p.y > 0 and screen_p.y < getHeight)
     end
 
   end
@@ -209,24 +222,24 @@ module Driving
     include MouseListener
     include MouseMotionListener
 
-    attr_accessor :c_x, :c_y
-    def initialize c_x, c_y, display
+    attr_accessor :c_pos
+    def initialize c_pos, display
       @display = display
-      @c_x = c_x
-      @c_y = c_y
+      @c_pos = c_pos
     end
     
     def mousePressed e
-      @pmouse = [e.getX, e.getY]
+      @pmouse = Point.new(e.getX, e.getY)
     end
 
     def mouseDragged e
-      wx0, wy0 = @display.screen_to_world(*@pmouse)
-      wx1, wy1 = @display.screen_to_world(e.getX, e.getY)
+      p0 = @display.screen_to_world @pmouse
+      p1 = @display.screen_to_world(Point.new(e.getX, e.getY))
 
-      @c_x -= wx1 - wx0
-      @c_y -= wy1 - wy0
-      @pmouse = e.getX, e.getY
+      displacement = p0.subtract_point p1
+      @c_pos.add_vector! displacement
+
+      @pmouse = Point.new(e.getX, e.getY)
     end
     
     def mouseReleased e
