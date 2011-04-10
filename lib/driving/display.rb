@@ -19,6 +19,7 @@ module Driving
     INIT_ZOOM = 10
     MIN_ZOOM = 1
     MAX_ZOOM = 30
+    SLEEP_DURATION = 0.05
     attr_accessor :map
     
     def initialize map, agents
@@ -78,7 +79,7 @@ module Driving
 
         @g.dispose
         @strategy.show
-        sleep 0.05
+        sleep SLEEP_DURATION
       end
     end
 
@@ -95,7 +96,7 @@ module Driving
 
       @g.setColor(Color.red)
       @agents.each do |a|
-        ellipse a.x, a.y, 50, 50 if on_screen? a.x, a.y
+        ellipse a.pos.x, a.pos.y, 50, 50 if on_screen? a.pos.x, a.pos.y
       end
     end
 

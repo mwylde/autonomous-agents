@@ -4,7 +4,9 @@ require 'yaml'
 require 'set'
 require 'java'
 
+require "#{root}/driving/util"
 require "#{root}/driving/map"
 require "#{root}/driving/agent"
 require "#{root}/driving/display"
 require "#{root}/driving/app"
+
