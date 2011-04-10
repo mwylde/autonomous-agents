@@ -13,8 +13,6 @@ include_class 'javax.swing.JPanel'
 module Driving
   class Display < Canvas
     ROAD_WIDTH = 0.10
-    WIDTH = 800
-    HEIGHT = 600
     DOT_RADIUS = 3
     INIT_ZOOM = 10
     MIN_ZOOM = 1
@@ -22,7 +20,7 @@ module Driving
     SLEEP_DURATION = 0.05
     attr_accessor :map
     
-    def initialize map, agents
+    def initialize map, agents, w, h
       puts "Creating display"
       
       super()
@@ -30,10 +28,10 @@ module Driving
       @container.setDefaultCloseOperation JFrame::EXIT_ON_CLOSE      
 
       panel = @container.getContentPane
-      panel.setPreferredSize Dimension.new(WIDTH, HEIGHT)
+      panel.setPreferredSize Dimension.new(w, h)
       panel.setLayout(nil)
 
-      setBounds 0, 0, WIDTH, HEIGHT
+      setBounds 0, 0, w, h
       panel.add self
 
       setIgnoreRepaint true
@@ -41,7 +39,6 @@ module Driving
       @map = map
       @agents = agents
 
-      puts "Running setup"
       @container.pack
       @container.setResizable false
       @container.setVisible true
@@ -64,24 +61,25 @@ module Driving
     end
 
     def run
-      while true
-        
-        @g = @strategy.getDrawGraphics
-        @g.setRenderingHint RenderingHints::KEY_ANTIALIASING,
-          RenderingHints::VALUE_ANTIALIAS_ON
-        @g.setColor(Color.white)
-        @g.fillRect(0,0,getWidth,getHeight)
+      loop { draw }
+    end
 
-        @c_pos = @mouse.c_pos.clone
-        
-        @z_y = @wheel.zoom
-        
-        render_map
+    def draw
+      @g = @strategy.getDrawGraphics
+      @g.setRenderingHint RenderingHints::KEY_ANTIALIASING,
+      RenderingHints::VALUE_ANTIALIAS_ON
+      @g.setColor(Color.white)
+      @g.fillRect(0,0,getWidth,getHeight)
 
-        @g.dispose
+      @c_pos = @mouse.c_pos.clone
+      
+      @z_y = @wheel.zoom
+      
+      render_map
 
-        @strategy.show
-      end
+      @g.dispose
+
+      @strategy.show
     end
 
     def render_map

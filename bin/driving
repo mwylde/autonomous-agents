@@ -4,4 +4,5 @@ root = File.expand_path(File.dirname(__FILE__))
 
 require root + '/../lib/driving'
 
-Driving::App.new.setup
+app = Driving::App.new(ARGV)
+app.setup.run
