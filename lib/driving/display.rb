@@ -16,6 +16,9 @@ module Driving
     WIDTH = 800
     HEIGHT = 600
     POINT_RADIUS = 3
+    INIT_ZOOM = 10
+    MIN_ZOOM = 1
+    MAX_ZOOM = 30
     attr_accessor :map
     
     def initialize map, agents
@@ -52,7 +55,7 @@ module Driving
       @c_y = map.world_max[1] / 2.0
 
       # Get scroll wheel events
-      @wheel = WheelListener.new 10, 1, 30
+      @wheel = WheelListener.new INIT_ZOOM, MIN_ZOOM, MAX_ZOOM
       @mouse = MouseDragger.new @c_x, @c_y, self
       addMouseMotionListener @mouse
       addMouseListener @mouse
@@ -68,7 +71,6 @@ module Driving
         @g.fillRect(0,0,getWidth,getHeight)
         # @z_yspecifies the distance between the center of the camera and the
         # edge of the top or bottom screen boundaries (in world coordinates).
-        @z_y = @wheel.zoom
         @c_x = @mouse.c_x
         @c_y = @mouse.c_y
 
@@ -82,10 +84,6 @@ module Driving
 
     def render_map
       @map.nodes.each do |n|
-        @g.setColor(Color.green)
-        point n.x, n.y if on_screen? n.x, n.y
-
-        #next unless rand < 0.5
         n.neighbors.each do |m|
           # we don't want to draw stuff twice
           next if m.object_id > n.object_id
@@ -140,16 +138,11 @@ module Driving
       @g.fill_oval sx-r, sy-r, 2*r, 2*r
     end
 
-    def line_screen x0, y0, x1, y1
-      @g.draw_line x0, y0, x1, x1
-    end
-    
     def line x0, y0, x1, y1
       x0, y0 = world_to_screen x0, y0
       x1, y1 = world_to_screen x1, y1
       @g.draw_line x0, y0, x1, y1
     end
-
 
     def polyline points
       xs, ys = points.fold [[],[]] do |acc, p|
@@ -183,24 +176,24 @@ module Driving
     end
 
     def zoom_x
-      @z_y * aspect_ratio()
+      @wheel.zoom * aspect_ratio()
     end
 
     def zoom_y
-      @z_y
+      @wheel.zoom
     end
       
     # coordinate manipulation
     
     def world_to_screen(wx, wy)
       sx = (wx - (@c_x - zoom_x)) * ( getWidth / (2 * zoom_x))
-      sy = ((@c_y + zoom_y()) - wy) * ( getWidth / (2 * zoom_x))
+      sy = ((@c_y + zoom_y) - wy) * ( getWidth / (2 * zoom_x))
       [sx, sy]
     end
 
     def screen_to_world(sx, sy)
       wx = (2 * zoom_x * sx / getWidth) + (@c_x - zoom_x)
-      wy = (@c_y + zoom_y) - (2 * zoom_y * sy / height)
+      wy = (@c_y + zoom_y) - (2 * zoom_y * sy / getHeight)
       [wx, wy]
     end
 
