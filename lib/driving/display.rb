@@ -72,11 +72,13 @@ module Driving
         @g.setColor(Color.white)
         @g.fillRect(0,0,getWidth,getHeight)
 
+        @c_pos = @mouse.c_pos.clone
+        
+        @z_y = @wheel.zoom
+        
         render_map
 
         @g.dispose
-        @c_pos = @mouse.c_pos
-        @z_y = @wheel.zoom
 
         @strategy.show
       end
