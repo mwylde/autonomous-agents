@@ -15,8 +15,8 @@ module Driving
   class Display < Canvas
     ROAD_WIDTH = 0.10
     DOT_RADIUS = 3
-    INIT_ZOOM = 10
-    MIN_ZOOM = 1
+    INIT_ZOOM = 3
+    MIN_ZOOM = 0.5
     MAX_ZOOM = 30
     SLEEP_DURATION = 0.05
     attr_accessor :map
