@@ -109,17 +109,13 @@ module Driving
     # draws a road with lines connecting points p0 and p1), specified in world
     # coordinates
     def road p0, p1
-      d = p0.dist p1
-
       # unit vector pointing from p0 to p1
-      u = (p1.subtract_point p0).normalize!
-      n = u.normal_vector
-      n_road = n.scale ROAD_WIDTH
+      n = (p1.subtract_point p0).normalize.normal_vector.scale ROAD_WIDTH
       
-      a = p0.add_vector n_road
-      b = p0.subtract_vector n_road
-      c = p1.add_vector n_road
-      d = p1.subtract_vector n_road
+      a = p0.add_vector n
+      b = p0.subtract_vector n
+      c = p1.add_vector n
+      d = p1.subtract_vector n
 
       @g.setColor Color.black
       line a, c

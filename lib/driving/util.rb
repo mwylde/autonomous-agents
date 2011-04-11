@@ -8,8 +8,8 @@ module Driving
     end
     
     def initialize x, y
-      @x = x
-      @y = y
+      @x = x.to_f
+      @y = y.to_f
     end
 
     def to_s
@@ -42,8 +42,7 @@ module Driving
 
     def rotate p, theta
       v = self.subtract_point p
-      new_v = v.rotate theta
-      return p.add_vector new_v
+      p.add_vector v.rotate(theta)
     end
 
     def dist p
@@ -85,6 +84,10 @@ module Driving
       mag <= 1.001 && mag >= 0.999
     end
 
+    def normalize
+      Vector.new(@x / mag, @y / mag)
+    end
+    
     def normalize!
       unless unit?
         @x /= mag
