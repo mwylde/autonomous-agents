@@ -84,7 +84,6 @@ module Driving
     end
 
     def render_map
-      puts "Rendering map"
       @map.nodes.each do |n|
         n.neighbors.each do |m|
           # we don't want to draw stuff twice
@@ -97,7 +96,6 @@ module Driving
     end
 
     def render_agents
-      puts "Rendering agents"
       @g.setColor(Color.red)
       @agents.each do |a|
         polygon [a.ne, a.nw, a.sw, a.se]
