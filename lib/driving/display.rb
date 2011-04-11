@@ -72,10 +72,8 @@ module Driving
       @g.fillRect(0,0,getWidth,getHeight)
 
       @c_pos = @mouse.c_pos.clone
-      puts @c_pos
       
       @z_y = @wheel.zoom
-      puts @z_y
       
       render_map
       render_agents
@@ -101,7 +99,7 @@ module Driving
       @g.setColor(Color.red)
       @agents.each do |a|
         @g.set_color Color.red
-        polygon [a.ne, a.nw, a.sw, a.se],fill= true
+        polygon [a.ne, a.nw, a.sw, a.se], fill=true
         @g.set_color Color.black
         polygon [a.ne, a.nw, a.sw, a.se]
       end
