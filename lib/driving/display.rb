@@ -99,7 +99,6 @@ module Driving
       @agents.each do |a|
         next unless on_screen? a.ne or on_screen? a.ne or on_screen? a.sw or
           on_screen? a.se
-        puts a.pos
         @g.set_color Color.red
         polygon [a.ne, a.nw, a.sw, a.se], fill=true
         @g.set_color Color.black
@@ -116,12 +115,11 @@ module Driving
       u = (p1.subtract_point p0).normalize!
       n = u.normal_vector
       n_road = n.scale ROAD_WIDTH
-      n_road_neg = n.scale -ROAD_WIDTH
       
       a = p0.add_vector n_road
-      b = p0.add_vector n_road_neg 
+      b = p0.subtract_vector n_road
       c = p1.add_vector n_road
-      d = p1.add_vector n_road_neg
+      d = p1.subtract_vector n_road
 
       @g.setColor Color.black
       line a, c

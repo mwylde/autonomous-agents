@@ -23,14 +23,17 @@ module Driving
     def add_vector! v
       @x += v.x
       @y += v.y
+      self
     end
 
     def subtract_vector v
-      add_vector(v.scale(-1.0))
+      Point.new(@x - v.x, @y - v.y)
     end
 
     def subtract_vector! v
-      add_vector!(v.scale(-1.0))
+      @x -= v.x
+      @y -= v.y
+      self
     end
 
     def subtract_point p
@@ -62,29 +65,32 @@ module Driving
     end
     
     def initialize x, y
-      @x = x
-      @y = y
+      @x = x.to_f
+      @y = y.to_f
     end
 
     def to_s
       "Vector <#{@x}, #{@y}>"
     end
 
-    def magnitude
+    def mag
       Math.sqrt(@x*@x + @y*@y)
+    end
+
+    def dir
+      Math.tan(@y / @x)
     end
     
     def unit?
-      magnitude == 1
+      mag <= 1.001 && mag >= 0.999
     end
 
     def normalize!
       unless unit?
-        m = magnitude
-        @x = @x / m
-        @y = @y / m
-        self
+        @x /= mag
+        @y /= mag
       end
+      self
     end
 
     def normal_vector
@@ -93,6 +99,22 @@ module Driving
 
     def add_vector v
       Vector.new(@x + v.x, @y + v.y)
+    end
+
+    def add_vector! v
+      @x += v.x
+      @y += v.y
+      self
+    end
+
+    def subtract_vector v
+      Vector.new(@x - v.x, @y - v.y)
+    end
+
+    def subtract_vector! v
+      @x -= v.x
+      @y -= v.y
+      self
     end
 
     def scale c

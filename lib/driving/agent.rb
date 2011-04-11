@@ -2,14 +2,17 @@ module Driving
   class ServerAgent
     DEFAULT_WIDTH = 0.1
     DEFAULT_HEIGHT = 0.1
+
+    # these are the world coordinates  of (37.5716897, -122.0797629) in latlong.
+    DEFAULT_POS = Point.new(27.3725, 52.4647) 
+
     
     attr_reader :id, :pos, :phi, :delta, :delta_speed, :speed, :accel, :w, :h,
     :u, :n, :ne, :nw, :se, :sw
     
-
     # Creates a default agent with positional parameters set to 0; requires
     # width and heigh tspecification
-    def initialize(id, pos = Point.new(0,0),
+    def initialize(id, pos = DEFAULT_POS,
                    w = DEFAULT_WIDTH, h = DEFAULT_HEIGHT,
                    phi = 0, delta = 0, delta_speed = 0, speed = 0, accel = 0)
       @id = id

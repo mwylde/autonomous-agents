@@ -14,10 +14,9 @@ module Driving
 
       @map = Map.from_file(@options[:map_file])
 
-      camera = @map.latlong_to_world(Point.new(37.5716897, -122.0797629))
-      @agents = [ServerAgent.new 0, camera]
-      
-      @display = Display.new @map, @agents, @options[:w], @options[:h], camera
+      @agents = [ServerAgent.new 0]
+
+      @display = Display.new @map, @agents, @options[:w], @options[:h], @agents[0].pos
 
       @server = Server.new @options[:address], @options[:port]
     end
