@@ -3,7 +3,9 @@ module Driving
     DEFAULT_WIDTH = 0.1
     DEFAULT_HEIGHT = 0.1
     
-    attr_reader :id, :pos, :phi, :delta, :delta_speed, :speed, :accel, :w, :h
+    attr_reader :id, :pos, :phi, :delta, :delta_speed, :speed, :accel, :w, :h,
+    :u, :n, :ne, :nw, :se, :sw
+    
 
     # Creates a default agent with positional parameters set to 0; requires
     # width and heigh tspecification
@@ -11,15 +13,16 @@ module Driving
                    w = DEFAULT_WIDTH, h = DEFAULT_HEIGHT,
                    phi = 0, delta = 0, delta_speed = 0, speed = 0, accel = 0)
       @id = id
+      @w = w
+      @h = h
+
       @pos = pos
-      @phi = phi
+      update_phi phi
       # delta > 0 means turning to the right
       @delta = delta
       @delta_speed = delta_speed
       @speed = speed
       @accel = accel
-      @w = w
-      @h = h
     end
 
     def to_hash
@@ -42,34 +45,56 @@ module Driving
       end
     end
 
+    def update_phi new_phi
+      @phi = new_phi
+
+      # instance variables that depend on phi
+      @u = create_u
+      @n = create_n
+      @ne = create_ne
+      @nw = create_nw
+      @se = create_se
+      @sw = create_sw
+    end
+
+    def update_pos new_pos
+      @pos = new_pos
+
+      # instance variables that depend on position
+      @ne = create_ne
+      @nw = create_nw
+      @se = create_se
+      @sw = create_sw
+    end
+
     # unit vector pointing in the direction of phi
-    def u
+    def create_u
       Vector.new(Math.cos(@phi), Math.sin(@phi))
     end
 
     # unit vector pointing normal to u
-    def n
-      u.normal_vector
+    def create_n
+      create_u.normal_vector
     end
       
     # position of northeast corner of agent (where north is in the dir of phi)
-    def ne
-      @pos.add_vector(n.scale -@w/2.0).add_vector(u.scale @h/2.0)
+    def create_ne
+      @pos.subtract_vector(@n.scale @w/2.0).add_vector(@u.scale @h/2.0)
     end
 
     # position of northwest corner of agent (where north is in the dir of phi)
-    def nw
-      @pos.add_vector(n.scale @w/2.0).add_vector(u.scale @h/2.0)
+    def create_nw
+      @pos.add_vector(@n.scale @w/2.0).add_vector(@u.scale @h/2.0)
     end
 
     # position of southeast corner of agent (where north is in the dir of phi)
-    def se
-      @pos.add_vector(n.scale -@w/2.0).add_vector(u.scale -@h/2.0)
+    def create_se
+      @pos.subtract_vector(@n.scale @w/2.0).subtract_vector(@u.scale @h/2.0)
     end
 
     # poisiton of southwest corner of agent (where north is in the dir of phi)
-    def sw
-      @pos.add_vector(n.scale @w/2.0).add_vector(u.scale -@h/2.0)
+    def create_sw
+      @pos.add_vector(@n.scale @w/2.0).subtract_vector(@u.scale @h/2.0)
     end
 
     def move t
@@ -83,7 +108,7 @@ module Driving
     # Move the agent in a straight path as if time t (in seconds) has
     # elapsed. Note: this should only be used when delta is very small.
     def move_straight t
-      @pos.add_vector!(u.scale t * @speed)
+      @pos.add_vector!(@u.scale t * @speed)
     end
 
     # Move the agent in a curved path as if time t (in seconds) has
@@ -107,18 +132,18 @@ module Driving
 
       # translate the car so that the southwest tire is moved to the correct
       # position.
-      @pos.add_vector!(Vector.from_mag_dir(tire_d_mag, tire_d_ang))
+      update_pos(@pos.add_vector(Vector.from_mag_dir(tire_d_mag, tire_d_ang)))
 
       # rotate the car about the southwest or southeast tire, depending on which
       # way it's turning
       if @delta > 0
-        @pos.rotate sw, theta
+        update_pos(@pos.rotate @sw, theta)
       else
-        @pos.rotate se, theta
+        update_pos(@pos.rotate @se, theta)
       end
 
       # update phi to reflect the rotation
-      @phi.rotate theta
+      update_phi @phi.rotate theta
     end
     
     # Causes the agent to accelerate or decellerate at a rate
