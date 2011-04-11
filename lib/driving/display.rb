@@ -72,11 +72,13 @@ module Driving
       @g.fillRect(0,0,getWidth,getHeight)
 
       @c_pos = @mouse.c_pos.clone
+      puts @c_pos
       
       @z_y = @wheel.zoom
+      puts @z_y
       
       render_map
-      # render_agents
+      render_agents
 
       @g.dispose
 
@@ -84,7 +86,6 @@ module Driving
     end
 
     def render_map
-      puts "Rendering map"
       @map.nodes.each do |n|
         n.neighbors.each do |m|
           # we don't want to draw stuff twice
@@ -97,9 +98,11 @@ module Driving
     end
 
     def render_agents
-      puts "Rendering agents"
       @g.setColor(Color.red)
       @agents.each do |a|
+        @g.set_color Color.red
+        polygon [a.ne, a.nw, a.sw, a.se],fill= true
+        @g.set_color Color.black
         polygon [a.ne, a.nw, a.sw, a.se]
       end
     end
@@ -164,19 +167,24 @@ module Driving
       @g.draw_polyline xs, ys, points.size
     end
 
-    def polygon points
+    def polygon points, fill=false
       xs, ys = points.reduce [[],[]] do |acc, p|
         p = world_to_screen p
         acc[0] << p.x
         acc[1] << p.y
         acc
       end
-      xs = xs.to_java(java.lang.Integer)
-      ys = ys.to_java(java.lang.Integer)
-      l = points.size.to_java(java.lang.Integer)
 
-      poly = Polygon.new(xs, ys, l)
-      @g.draw poly
+      xs = xs.to_java(Java::int)
+      ys = ys.to_java(Java::int)
+      p = points.size
+
+      poly = Polygon.new(xs, ys, p)
+      if fill
+        @g.fill poly
+      else
+        @g.draw poly
+      end
     end
     
     # accessor methods for info which is dynamic (set by the window state or the

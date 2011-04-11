@@ -1,7 +1,7 @@
 module Driving
   class ServerAgent
-    DEFAULT_WIDTH = 0.01
-    DEFAULT_HEIGHT = 0.01
+    DEFAULT_WIDTH = 0.1
+    DEFAULT_HEIGHT = 0.1
     
     attr_reader :id, :pos, :phi, :delta, :delta_speed, :speed, :accel, :w, :h
 
@@ -64,12 +64,12 @@ module Driving
 
     # position of southeast corner of agent (where north is in the dir of phi)
     def se
-      @pos.add_vector(n.scale @w/2.0).add_vector(u.scale -@h/2.0)
+      @pos.add_vector(n.scale -@w/2.0).add_vector(u.scale -@h/2.0)
     end
 
     # poisiton of southwest corner of agent (where north is in the dir of phi)
     def sw
-      @pos.add_vector(n.scale -@w/2.0).add_vector(u.scale -@h/2.0)
+      @pos.add_vector(n.scale @w/2.0).add_vector(u.scale -@h/2.0)
     end
 
     def move t

@@ -12,6 +12,10 @@ module Driving
       @y = y
     end
 
+    def to_s
+      "Point (#{@x}, #{@y})"
+    end
+
     def add_vector v
       Point.new(@x + v.x, @y + v.y)
     end
@@ -60,6 +64,10 @@ module Driving
     def initialize x, y
       @x = x
       @y = y
+    end
+
+    def to_s
+      "Vector <#{@x}, #{@y}>"
     end
 
     def magnitude
