@@ -96,8 +96,10 @@ module Driving
     end
 
     def render_agents
-      @g.setColor(Color.red)
       @agents.each do |a|
+        next unless on_screen? a.ne or on_screen? a.ne or on_screen? a.sw or
+          on_screen? a.se
+        puts a.pos
         @g.set_color Color.red
         polygon [a.ne, a.nw, a.sw, a.se], fill=true
         @g.set_color Color.black

@@ -25,11 +25,11 @@ module Driving
     def to_hash
       {
         :pos => [@pos.x, @pos.y],
-        :phi => phi,
-        :delta => delta,
-        :delta_speed => delta_speed,
-        :speed => speed,
-        :accel => accel
+        :phi => @phi,
+        :delta => @delta,
+        :delta_speed => @delta_speed,
+        :speed => @speed,
+        :accel => @accel
       }
     end
 
@@ -44,7 +44,7 @@ module Driving
 
     # unit vector pointing in the direction of phi
     def u
-      Vector.new(Math.cos(phi), Math.sin(phi))
+      Vector.new(Math.cos(@phi), Math.sin(@phi))
     end
 
     # unit vector pointing normal to u
@@ -83,7 +83,7 @@ module Driving
     # Move the agent in a straight path as if time t (in seconds) has
     # elapsed. Note: this should only be used when delta is very small.
     def move_straight t
-      @pos.add_vector(u.scale t)
+      @pos.add_vector!(u.scale t * @speed)
     end
 
     # Move the agent in a curved path as if time t (in seconds) has
@@ -91,7 +91,7 @@ module Driving
     # is sizeable.
     def move_curved t
       r = @h / Math.sin(@delta.abs)      
-      theta = @vel / (2.0*Math::PI) * t
+      theta = @speed / (2.0*Math::PI) * t
 
       rotate theta
     end
