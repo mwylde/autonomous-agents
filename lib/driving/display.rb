@@ -136,15 +136,18 @@ module Driving
     def line p0, p1
       s_p0 = world_to_screen p0
       s_p1 = world_to_screen p1
+      
       @g.draw_line s_p0.x, s_p0.y, s_p1.x, s_p1.y
     end
 
     # draws an ellipse starting at point p and with width/height described by
     # the vector v.
     def ellipse p, v
-      x, y = p.x, p.y
-      w, h = v.x, v.y
-      @g.fill_oval x, y, w, h
+      p0 = world_to_screen(p)
+      p1 = world_to_screen(p.add_vector v)
+      v = p1.subtract_point p0
+
+      @g.fill_oval p0.x, p0.y, v.x, v.y
     end
 
     #def polyline points
@@ -173,7 +176,7 @@ module Driving
     end
 
     def zoom_x
-      @z_y * aspect_ratio()
+      @z_y * aspect_ratio
     end
 
     def zoom_y
