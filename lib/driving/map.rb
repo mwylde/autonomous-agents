@@ -8,19 +8,23 @@ module Driving
       @pos = pos
       @neighbors = neighbors
     end
+
+    def inspect
+      "(#{@pos.x}, #{@pos.y}) #{@neighbors.size} neighbors"
+    end
   end
 
   # A graph of Nodes represented by an adjacency list. Each node
   # represents a point on a road, and each edge represents a segment
   # of a road. Nodes with more than two edges are intersections.
   class Map
-    attr_accessor :nodes, :lat_min, :lat_max, :long_min, :long_max, :world_max
+    attr_reader :nodes, :lat_min, :lat_max, :long_min, :long_max, :world_max
 
     # Creates a new map from a json file containing the graph data. An
     # appropriate json file can be generated from an osm file by using
     # the osm_converter application in the bin/ directory.
-    def initialize(json)
-      graph = YAML.load(json)
+    def initialize(hash)
+      @graph = hash
       nodes = {}
 
       # initial values for min/max. note: these are the highest/lowest values of
@@ -32,7 +36,7 @@ module Driving
       @long_max = -180
 
       # determine the extreme values
-      graph.each do |k,v|
+      @graph.each do |k,v|
         @lat_min = v[0] if v[0] < lat_min
         @lat_max = v[0] if v[0] > lat_max
         @long_min = v[1] if v[1] < long_min
@@ -43,20 +47,21 @@ module Driving
       @world_max = latlong_to_world Point.new(lat_max, long_max)
 
       # create a new node with world coordinates
-      graph.each do |k,v|
+      @graph.each do |k,v|
         world = latlong_to_world Point.new(v[0], v[1])
         nodes[k] = Node.new(world)
       end
         
       # now that all of the nodes have been created, we do a second
       # pass to get all of the references
-      graph.each do |k,v|
+      @graph.each do |k,v|
         v[2].each do |neighbor_k|
           nodes[k].neighbors << nodes[neighbor_k]
         end
       end
 
       @nodes = Set.new(nodes.values)
+      @nodes.freeze
     end
 
     def latlong_to_world p
@@ -69,8 +74,12 @@ module Driving
 
     def self.from_file(filename)
       File.open(filename) do |f|
-        Map.new(f.read)
+        Map.new(YAML.load(f.read))
       end
+    end
+
+    def to_hash
+      @graph
     end
   end
 end

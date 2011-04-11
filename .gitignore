@@ -1,4 +1,3 @@
-agents
 *.pyc
 .emacs.desktop*
 *.wiki
