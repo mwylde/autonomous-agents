@@ -31,10 +31,10 @@ module Driving
     def setup
       @map = Map.from_file(@options[:map_file])
 
-      x, y = @map.latlong_to_world(37.5716897, -122.0797629)
-      @agents = [Agent.new(0.01, 0.01, x, y)]
+      camera = @map.latlong_to_world(Point.new(37.5716897, -122.0797629))
+      @agents = [Agent.new camera]
         
-      @display = Display.new @map, @agents, @options[:w], @options[:h]
+      @display = Display.new @map, @agents, @options[:w], @options[:h], camera
       @display.run
     end
   end

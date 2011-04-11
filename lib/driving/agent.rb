@@ -1,12 +1,15 @@
 module Driving
   class Agent
+    DEFAULT_WIDTH = 0.01
+    DEFAULT_HEIGHT = 0.01
+    
     attr_reader :pos, :phi, :delta, :delta_speed, :speed, :accel, :w, :h
 
     # Creates a default agent with positional parameters set to 0; requires
     # width and heigh tspecification
-    def initialize(w, h, x = 0, y = 0, phi = 0, delta = 0,
-                   delta_speed = 0, speed = 0, accel = 0)
-      @pos = Point.new(x, y)
+    def initialize(pos = Point.new(0,0), w = DEFAULT_WIDTH, h = DEFAULT_HEIGHT,
+                   phi = 0, delta = 0, delta_speed = 0, speed = 0, accel = 0)
+      @pos = pos
       @phi = phi
       # delta > 0 means turning to the right
       @delta = delta
@@ -82,7 +85,7 @@ module Driving
 
       # translate the car so that the southwest tire is moved to the correct
       # position.
-      @pos.add_vector!(Vector.new(tire_d_mag, tire_d_ang, mag_dir=True))
+      @pos.add_vector!(Vector.from_mag_dir(tire_d_mag, tire_d_ang))
 
       # rotate the car about the southwest or southeast tire, depending on which
       # way it's turning

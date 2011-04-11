@@ -3,6 +3,10 @@ module Driving
   class Point
     attr_accessor :x, :y
 
+    def self.from_vector v
+      Point.new v.x, v.y
+    end
+    
     def initialize x, y
       @x = x
       @y = y
@@ -15,6 +19,14 @@ module Driving
     def add_vector! v
       @x += v.x
       @y += v.y
+    end
+
+    def subtract_vector v
+      add_vector(v.scale(-1.0))
+    end
+
+    def subtract_vector! v
+      add_vector!(v.scale(-1.0))
     end
 
     def subtract_point p
@@ -37,14 +49,17 @@ module Driving
   class Vector
     attr_accessor :x, :y
 
-    def initialize x, y, mag_dir=false
-      if mag_dir
-        @x = mag * Math.cos(ang)
-        @y = mag * Math.sin(ang)
-      else
-        @x = x
-        @y = y
-      end
+    def self.from_point p
+      Vector.new p.x, p.y
+    end
+
+    def self.from_mag_dir mag, dir
+      Vector.new(mag * Math.cos(dir), mag * Math.sin(dir))
+    end
+    
+    def initialize x, y
+      @x = x
+      @y = y
     end
 
     def magnitude

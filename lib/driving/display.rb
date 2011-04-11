@@ -2,6 +2,7 @@ include_class 'java.awt.Canvas'
 include_class 'java.awt.Color'
 include_class 'java.awt.Dimension'
 include_class 'java.awt.Graphics2D'
+include_class 'java.awt.Polygon'
 include_class 'java.awt.event.ActionListener'
 include_class 'java.awt.event.MouseListener'
 include_class 'java.awt.event.MouseMotionListener'
@@ -20,7 +21,7 @@ module Driving
     SLEEP_DURATION = 0.05
     attr_accessor :map
     
-    def initialize map, agents, w, h
+    def initialize map, agents, w, h, camera_pos
       puts "Creating display"
       
       super()
@@ -46,10 +47,9 @@ module Driving
 
       createBufferStrategy(2)
       @strategy = getBufferStrategy
-      
-      # the point at the world coordinates given by (@c_x, @c_y) will
-      # be centered on the screen.
-      @c_pos = Point.new(map.world_max[0]/2.0, map.world_max[1]/2.0)
+
+      @c_pos = camera_pos
+      # @c_pos = Point.new(map.world_max[0]/2.0, map.world_max[1]/2.0)
       @z_y = INIT_ZOOM
 
       # Get scroll wheel events
@@ -76,6 +76,7 @@ module Driving
       @z_y = @wheel.zoom
       
       render_map
+      # render_agents
 
       @g.dispose
 
@@ -83,6 +84,7 @@ module Driving
     end
 
     def render_map
+      puts "Rendering map"
       @map.nodes.each do |n|
         n.neighbors.each do |m|
           # we don't want to draw stuff twice
@@ -92,10 +94,13 @@ module Driving
           end
         end
       end
+    end
 
+    def render_agents
+      puts "Rendering agents"
       @g.setColor(Color.red)
       @agents.each do |a|
-        ellipse a.pos, Vector.new(50,50) if on_screen? a
+        polygon [a.ne, a.nw, a.sw, a.se]
       end
     end
 
@@ -150,23 +155,29 @@ module Driving
       @g.fill_oval p0.x, p0.y, v.x, v.y
     end
 
-    #def polyline points
-    #  xs, ys = points.fold [[],[]] do |acc, p|
-    #    sX, sY = world_to_screen(*p)
-    #    acc[0] << sX
-    #    acc[1] << sY
-    #  end
-    #  @g.draw_polyline xs, ys, points.size
-    #end
+    def polyline points
+      xs, ys = points.reduce [[],[]] do |acc, p|
+        p = world_to_screen p
+        acc[0] << p.x
+        acc[1] << p.y
+      end
+      @g.draw_polyline xs, ys, points.size
+    end
 
-    #def polygon points
-    #  xs, ys = points.fold [[],[]] do |acc, p|
-    #    sX, sY = world_to_screen(*p)
-    #    acc[0] << sX
-    #    acc[1] << sY
-    #  end
-    #  @g.draw_polygon xs, ys, points.size
-    #end
+    def polygon points
+      xs, ys = points.reduce [[],[]] do |acc, p|
+        p = world_to_screen p
+        acc[0] << p.x
+        acc[1] << p.y
+        acc
+      end
+      xs = xs.to_java(java.lang.Integer)
+      ys = ys.to_java(java.lang.Integer)
+      l = points.size.to_java(java.lang.Integer)
+
+      poly = Polygon.new(xs, ys, l)
+      @g.draw poly
+    end
     
     # accessor methods for info which is dynamic (set by the window state or the
     # mouse state)

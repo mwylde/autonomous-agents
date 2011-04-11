@@ -4,8 +4,8 @@ module Driving
   # this one is connected by a road of some kind.
   class Node
     attr_accessor :pos, :neighbors
-    def initialize(x, y, neighbors = Set.new)
-      @pos = Point.new(x,y)
+    def initialize(pos, neighbors = Set.new)
+      @pos = pos
       @neighbors = neighbors
     end
   end
@@ -26,31 +26,26 @@ module Driving
       # initial values for min/max. note: these are the highest/lowest values of
       # lat/long possible, such that min is initially set to the highest
       # possible value, etc.
-      lat_min = 90
-      lat_max = -90
-      long_min = 180
-      long_max = -180
+      @lat_min = 90
+      @lat_max = -90
+      @long_min = 180
+      @long_max = -180
 
       # determine the extreme values
       graph.each do |k,v|
-        lat_min = v[0] if v[0] < lat_min
-        lat_max = v[0] if v[0] > lat_max
-        long_min = v[1] if v[1] < long_min
-        long_max = v[1] if v[1] > long_max
+        @lat_min = v[0] if v[0] < lat_min
+        @lat_max = v[0] if v[0] > lat_max
+        @long_min = v[1] if v[1] < long_min
+        @long_max = v[1] if v[1] > long_max
       end
 
-      @lat_min = lat_min
-      @lat_max = lat_max
-      @long_min = long_min
-      @long_max = long_max
-
       # store the the highest (x,y) coordinates of the map
-      @world_max = latlong_to_world lat_max, long_max
+      @world_max = latlong_to_world Point.new(lat_max, long_max)
 
       # create a new node with world coordinates
       graph.each do |k,v|
-        world = latlong_to_world v[0], v[1]
-        nodes[k] = Node.new(world[0], world[1])
+        world = latlong_to_world Point.new(v[0], v[1])
+        nodes[k] = Node.new(world)
       end
         
       # now that all of the nodes have been created, we do a second
@@ -64,18 +59,12 @@ module Driving
       @nodes = Set.new(nodes.values)
     end
 
-    def latlong_to_world(lat, long)
-      a = [lat, long]
-      
-      # shift
-      a[0] = lat - @lat_min
-      a[1] = long - @long_min
+    def latlong_to_world p
+      # translate
+      p.subtract_vector!(Vector.new(@lat_min, @long_min))
 
       # scale
-      a[0] = 1000 * a[0]
-      a[1] = 1000 * a[1]
-
-      return a
+      Point.from_vector(Vector.from_point(p).scale(1000.0))
     end
 
     def self.from_file(filename)
