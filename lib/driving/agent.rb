@@ -1,14 +1,16 @@
 module Driving
-  class Agent
+  class ServerAgent
     DEFAULT_WIDTH = 0.01
     DEFAULT_HEIGHT = 0.01
     
-    attr_reader :pos, :phi, :delta, :delta_speed, :speed, :accel, :w, :h
+    attr_reader :id, :pos, :phi, :delta, :delta_speed, :speed, :accel, :w, :h
 
     # Creates a default agent with positional parameters set to 0; requires
     # width and heigh tspecification
-    def initialize(pos = Point.new(0,0), w = DEFAULT_WIDTH, h = DEFAULT_HEIGHT,
+    def initialize(id, pos = Point.new(0,0),
+                   w = DEFAULT_WIDTH, h = DEFAULT_HEIGHT,
                    phi = 0, delta = 0, delta_speed = 0, speed = 0, accel = 0)
+      @id = id
       @pos = pos
       @phi = phi
       # delta > 0 means turning to the right
@@ -18,6 +20,26 @@ module Driving
       @accel = accel
       @w = w
       @h = h
+    end
+
+    def to_hash
+      {
+        :pos => [@pos.x, @pos.y],
+        :phi => phi,
+        :delta => delta,
+        :delta_speed => delta_speed,
+        :speed => speed,
+        :accel => accel
+      }
+    end
+
+    # Starts the update loop which periodically updates the state
+    # variables. Spawns a thread, so non-blocking.
+    # @param start_time Time the start time of the simulation 
+    def run start_time
+      Thread.new do
+        move(Time.now - start+time)
+      end
     end
 
     # unit vector pointing in the direction of phi
@@ -112,5 +134,6 @@ module Driving
 
     def update
     end
+
   end
 end
