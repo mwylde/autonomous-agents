@@ -8,11 +8,11 @@ module Driving
     DEFAULT_POS = Point.new(27.3725, 52.4647)
     DEFAULT_PHI = Math::PI / 2 # Math::PI * 2.5 / 4.0
 
-    DEFAULT_SPEED = 0.3
+    DEFAULT_SPEED = 0.0
 
     
     attr_reader :id, :pos, :phi, :delta, :delta_speed, :speed, :accel, :w, :l,
-    :tw, :tl, :u, :n, :ne, :nw, :se, :sw
+    :tw, :tl, :u, :n, :ne, :nw, :se, :sw, :crumbs
     
     # Creates a default agent with positional parameters set to 0; requires
     # width and heigh tspecification
@@ -33,6 +33,7 @@ module Driving
       @delta_speed = delta_speed
       @speed = speed
       @accel = accel
+      @crumbs = []
     end
 
     def to_hash
@@ -95,50 +96,46 @@ module Driving
       
     # position of northeast corner of agent (where north is in the dir of phi)
     def create_ne
-      @pos.add_vector(@n.scale @w/2.0).add_vector(@u.scale @l/2.0)
+      @pos + @n*(@w/2.0) + @u*(@l/2.0)
     end
 
     # position of northwest corner of agent (where north is in the dir of phi)
     def create_nw
-      @pos.subtract_vector(@n.scale @w/2.0).add_vector(@u.scale @l/2.0)
+      @pos - @n*(@w/2.0) + @u*(@l/2.0)
     end
 
     # position of southeast corner of agent (where north is in the dir of phi)
     def create_se
-      @pos.add_vector(@n.scale @w/2.0).subtract_vector(@u.scale @l/2.0)
+      @pos + @n*(@w/2.0) - @u*(@l/2.0)
     end
 
     # poisiton of southwest corner of agent (where north is in the dir of phi)
     def create_sw
-      @pos.subtract_vector(@n.scale @w/2.0).subtract_vector(@u.scale @l/2.0)
+      @pos - @n*(@w/2.0) - @u*(@l/2.0)
     end
 
     def nw_tire_pts
       # get the center of the tire
-      c = @nw.subtract_vector(@u.scale(@tl/2)).subtract_vector(@n.scale(@tw/2))
+      c = @nw - @u*(@tl/2.0) - @n*(@tw/2.0)
 
       # get the scaled heading and normal vectors for the tire
       tire_u = @u.rotate(@delta).scale(@tl/2.0)
       tire_n = @n.rotate(@delta).scale(@tw/2.0)
       
-      [ c.add_vector(tire_u).subtract_vector(tire_n),
-        c.add_vector(tire_u).add_vector(tire_n),
-        c.subtract_vector(tire_u).add_vector(tire_n),
-        c.subtract_vector(tire_u).subtract_vector(tire_n) ]
+      [ c + tire_u - tire_n, c + tire_u + tire_n,
+        c - tire_u + tire_n, c - tire_u - tire_n ]
     end
 
     def ne_tire_pts
       # get the center of the tire
-      c = @ne.subtract_vector(@u.scale(@tl/2)).add_vector(@n.scale(@tw/2))
+      c = @ne - @u*(@tl/2.0) + @n*(@tw/2.0)
 
       # get the scaled heading and normal vectors for the tire
       tire_u = @u.rotate(@delta).scale(@tl/2.0)
       tire_n = @n.rotate(@delta).scale(@tw/2.0)
-      
-      [ c.add_vector(tire_u).subtract_vector(tire_n),
-        c.add_vector(tire_u).add_vector(tire_n),
-        c.subtract_vector(tire_u).add_vector(tire_n),
-        c.subtract_vector(tire_u).subtract_vector(tire_n) ]
+
+      [ c + tire_u - tire_n, c + tire_u + tire_n,
+        c - tire_u + tire_n, c - tire_u - tire_n ]
     end
     
     def se_tire_pts
@@ -146,11 +143,8 @@ module Driving
       # back tire, these are aligned with the car as a whole).
       u_scale = @u.scale @tl
       n_scale = @n.scale @tw
-      
-      [ @se.add_vector(u_scale).add_vector(n_scale),
-        @se.add_vector(u_scale),
-        @se,
-        @se.add_vector(n_scale) ]
+
+      [ @se + u_scale + n_scale, @se + u_scale, @se, @se + n_scale ]
     end
 
     def sw_tire_pts
@@ -158,11 +152,8 @@ module Driving
       # back tire, these are aligned with the car as a whole).
       u_scale = @u.scale @tl
       n_scale = @n.scale @tw
-      
-      [ @sw.add_vector(u_scale),
-        @sw.add_vector(u_scale).subtract_vector(n_scale),
-        @sw.subtract_vector(n_scale),
-        @sw ]
+
+      [ @sw + u_scale, @sw + u_scale - n_scale, @sw - n_scale, @sw ]
     end
 
     
@@ -173,12 +164,14 @@ module Driving
       else
         move_curved t
       end
+
+      @crumbs << @pos.clone
     end
     
     # Move the agent in a straight path as if time t (in seconds) has
     # elapsed. Note: this should only be used when delta is very small.
     def move_straight t
-      update_pos(@pos.add_vector(@u.scale t * @speed))
+      update_pos @pos + @u*t*@speed
     end
 
     # Move the agent in a curved path as if time t (in seconds) has
@@ -208,14 +201,14 @@ module Driving
 
       # translate the car so that the southwest tire is moved to the correct
       # position.
-      update_pos(@pos.add_vector(Vector.from_mag_dir(tire_d_mag, tire_d_ang)))
+      update_pos @pos + Vector.from_mag_dir(tire_d_mag, tire_d_ang)
 
       # rotate the car about the southwest or southeast tire, depending on which
       # way it's turning
       if @delta > 0
-        update_pos(@pos.rotate(@sw.add_vector(@n.scale(r)), theta))
+        update_pos @pos.rotate(@sw + @n*r, theta)
       else
-        update_pos(@pos.rotate(@se.subtract_vector(@n.scale(r)), theta))
+        update_pos @pos.rotate(@se - @n*r, theta)
       end
 
       # update phi to reflect the rotation
@@ -235,12 +228,18 @@ module Driving
     end
 
     def go_crazy
+      @speed = 0.25
       Thread.new do
         loop do
           @delta += (rand - 0.5) * Math::PI
           sleep 1
         end
       end
+    end
+
+    def go_straight
+      @speed = 0.25
+      @delta = 0.0
     end
   end
 end

@@ -52,6 +52,14 @@ module Driving
       return c
     end
 
+    def +(v)
+      cname = v.class.name
+      unless cname == "Driving::Vector"
+        raise "Can only add a vector, not a #{cname}, to a point"
+      end
+      add_vector v
+    end
+    
     def add_vector v
       Point.new(@x + v.x, @y + v.y)
     end
@@ -60,6 +68,17 @@ module Driving
       @x += v.x
       @y += v.y
       self
+    end
+
+    def -(a)
+      cname = a.class.name
+      if cname == "Driving::Vector"
+        subtract_vector a
+      elsif cname == "Driving::Point"
+        subtract_point a
+      else
+        raise "Can only subtract a vector or a point, not a #{cname}, from a point"
+      end
     end
 
     def subtract_vector v
@@ -140,6 +159,14 @@ module Driving
       Vector.new(@y, -@x)
     end
 
+    def +(v)
+      cname = v.class.name
+      unless cname == "Driving::Vector"
+        raise "Can only add a vector, not a #{cname}, to vector"
+      end
+      add_vector v
+    end
+    
     def add_vector v
       Vector.new(@x + v.x, @y + v.y)
     end
@@ -154,6 +181,14 @@ module Driving
       Vector.new(@x - v.x, @y - v.y)
     end
 
+    def -(v)
+      cname = v.class.name
+      unless cname == "Vector"
+        raise "Can only subtract a vector, not a #{cname}, from a vector"
+      end
+      subtract_vector v
+    end
+
     def subtract_vector! v
       @x -= v.x
       @y -= v.y
@@ -162,6 +197,14 @@ module Driving
 
     def scale c
       Vector.new(c*@x, c*@y)
+    end
+
+    def *(c)
+      cname = c.class.name
+      unless cname == "Fixnum" or cname == "Float"
+        raise "Can only scale by a scalar, not a #{cname}"
+      end
+      scale c
     end
 
     def rotate theta

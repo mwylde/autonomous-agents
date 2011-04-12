@@ -16,7 +16,7 @@ include_class 'javax.swing.JPanel'
 
 module Driving
   class Display < Canvas
-    DOT_RADIUS = 3
+    WORLD_DOT_RADIUS = 0.01
     INIT_ZOOM = 3
     MIN_ZOOM = 0.2
     MAX_ZOOM = 30
@@ -51,7 +51,9 @@ module Driving
       @strategy = getBufferStrategy
 
       @c_pos = camera_pos
-      # @c_pos = Point.new(map.world_max[0]/2.0, map.world_max[1]/2.0)
+
+      @display_crumbs = []
+      @hidden_crumbs = []
 
       @input = InputHandler.new @c_pos.clone, INIT_ZOOM, MIN_ZOOM, MAX_ZOOM, self
       addMouseMotionListener @input
@@ -81,9 +83,13 @@ module Driving
       @z_y = @input.zoom
 
       @current_agents = @agents.collect { |a| a.clone }
+
+      @hidden_crumbs = @current_agents[0].crumbs.clone
       
       render_map
+      render_crumbs
       render_agents
+      
 
       @g.dispose
 
@@ -102,8 +108,21 @@ module Driving
       end
     end
 
+    def render_crumbs
+      @g.set_color Color.blue
+      @hidden_crumbs.each do |c|
+        dot c if on_screen? c
+      end
+
+      @g.set_color Color.green
+      @display_crumbs.each do |c|
+        dot c if on_screen? c
+      end
+    end
+
     def render_agents
       @current_agents.each do |a|
+        @display_crumbs << a.pos
         next unless on_screen? a.ne or on_screen? a.ne or on_screen? a.sw or
           on_screen? a.se
         @g.set_color Color.red
@@ -132,10 +151,11 @@ module Driving
     # draws a very small circle of radius DOT_RADIUS centered at p in world
     # coordinates.
     def dot p
-      r = DOT_RADIUS
-      s_p = world_to_screen p
-      
-      ellipse(s_p.add_vector(Vector.new(-r, -r)), Vector.new(2*r, 2*r))
+      r = Vector.new(WORLD_DOT_RADIUS, WORLD_DOT_RADIUS)
+      s = p - r
+      v = r * 2
+
+      ellipse s, v
     end
 
     # draws a line between two points specified in world coordinates.
@@ -149,11 +169,14 @@ module Driving
     # draws an ellipse starting at point p and with width/height described by
     # the vector v.
     def ellipse p, v
-      p0 = world_to_screen(p)
-      p1 = world_to_screen(p.add_vector v)
-      v = p1.subtract_point p0
+      w_start = p + Vector.new(0, -v.y)
+      w_vect = Vector.new(v.x, -v.y)
 
-      @g.fill_oval p0.x, p0.y, v.x, v.y
+      s_start = world_to_screen w_start
+      s_end = world_to_screen w_start + w_vect
+      s_vect = s_end - s_start
+
+      @g.fill_oval s_start.x, s_start.y, s_vect.x, s_vect.y
     end
 
     def polyline points
