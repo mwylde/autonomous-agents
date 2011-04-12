@@ -19,7 +19,7 @@ module Driving
     ROAD_WIDTH = 0.10
     DOT_RADIUS = 3
     INIT_ZOOM = 3
-    MIN_ZOOM = 0.5
+    MIN_ZOOM = 0.01
     MAX_ZOOM = 30
     SLEEP_DURATION = 0.05
     attr_accessor :map
@@ -285,7 +285,7 @@ module Driving
 
     def mouseWheelMoved e
       increment = e.get_wheel_rotation   # increment/decrement
-      newz = @zoom + increment
+      newz = @zoom * 0.75**(-increment)
       @zoom = newz if (newz < @zoom_max && newz > @zoom_min)
     end
 

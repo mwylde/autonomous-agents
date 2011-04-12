@@ -8,7 +8,7 @@ module Driving
     DEFAULT_POS = Point.new(27.3725, 52.4647)
     DEFAULT_PHI = Math::PI / 2 # Math::PI * 2.5 / 4.0
 
-    DEFAULT_SPEED = 0.3
+    DEFAULT_SPEED = 0.0
 
     
     attr_reader :id, :pos, :phi, :delta, :delta_speed, :speed, :accel, :w, :l,
@@ -22,8 +22,8 @@ module Driving
       @id = id
       @w = w     # car width
       @l = l     # car length
-      @tw = w/5  # tire width
-      @tl = l/3  # tire length
+      @tw = w/10  # tire width
+      @tl = l/4  # tire length
       
 
       @pos = pos
@@ -95,31 +95,31 @@ module Driving
       
     # position of northeast corner of agent (where north is in the dir of phi)
     def create_ne
-      @pos.subtract_vector(@n.scale @w/2.0).add_vector(@u.scale @l/2.0)
+      @pos.add_vector(@n.scale @w/2.0).add_vector(@u.scale @l/2.0)
     end
 
     # position of northwest corner of agent (where north is in the dir of phi)
     def create_nw
-      @pos.add_vector(@n.scale @w/2.0).add_vector(@u.scale @l/2.0)
+      @pos.subtract_vector(@n.scale @w/2.0).add_vector(@u.scale @l/2.0)
     end
 
     # position of southeast corner of agent (where north is in the dir of phi)
     def create_se
-      @pos.subtract_vector(@n.scale @w/2.0).subtract_vector(@u.scale @l/2.0)
+      @pos.add_vector(@n.scale @w/2.0).subtract_vector(@u.scale @l/2.0)
     end
 
     # poisiton of southwest corner of agent (where north is in the dir of phi)
     def create_sw
-      @pos.add_vector(@n.scale @w/2.0).subtract_vector(@u.scale @l/2.0)
+      @pos.subtract_vector(@n.scale @w/2.0).subtract_vector(@u.scale @l/2.0)
     end
 
     def nw_tire_pts
       # get the center of the tire
-      c = @ne.subtract_vector(@u.scale(@tl/2)).subtract_vector(@n.scale(@tw/2))
+      c = @nw.subtract_vector(@u.scale(@tl/2)).subtract_vector(@n.scale(@tw/2))
 
       # get the scaled heading and normal vectors for the tire
-      tire_u = @u.rotate(@phi).scale(@tl/2.0)
-      tire_n = @n.rotate(@phi).scale(@tw/2.0)
+      tire_u = @u.rotate(@delta).scale(@tl/2.0)
+      tire_n = @n.rotate(@delta).scale(@tw/2.0)
       
       [ c.add_vector(tire_u).subtract_vector(tire_n),
         c.add_vector(tire_u).add_vector(tire_n),
@@ -129,11 +129,11 @@ module Driving
 
     def ne_tire_pts
       # get the center of the tire
-      c = @nw.subtract_vector(@u.scale(@tl/2)).add_vector(@n.scale(@tw/2))
+      c = @ne.subtract_vector(@u.scale(@tl/2)).add_vector(@n.scale(@tw/2))
 
       # get the scaled heading and normal vectors for the tire
-      tire_u = @u.rotate(@phi).scale(@tl/2.0)
-      tire_n = @n.rotate(@phi).scale(@tw/2.0)
+      tire_u = @u.rotate(@delta).scale(@tl/2.0)
+      tire_n = @n.rotate(@delta).scale(@tw/2.0)
       
       [ c.add_vector(tire_u).subtract_vector(tire_n),
         c.add_vector(tire_u).add_vector(tire_n),
@@ -147,10 +147,10 @@ module Driving
       u_scale = @u.scale @tl
       n_scale = @n.scale @tw
       
-      [ @se.add_vector(u_scale).subtract_vector(n_scale),
+      [ @se.add_vector(u_scale).add_vector(n_scale),
         @se.add_vector(u_scale),
         @se,
-        @se.subtract_vector(n_scale) ]
+        @se.add_vector(n_scale) ]
     end
 
     def sw_tire_pts
@@ -160,8 +160,8 @@ module Driving
       n_scale = @n.scale @tw
       
       [ @sw.add_vector(u_scale),
-        @sw.add_vector(u_scale).add_vector(n_scale),
-        @sw.add_vector(n_scale),
+        @sw.add_vector(u_scale).subtract_vector(n_scale),
+        @sw.subtract_vector(n_scale),
         @sw ]
     end
 
