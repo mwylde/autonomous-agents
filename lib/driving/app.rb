@@ -48,6 +48,7 @@ module Driving
       end
       @agents[0].run
       @agents[0].go_crazy
+      
       # blocking
       @display.run
     end

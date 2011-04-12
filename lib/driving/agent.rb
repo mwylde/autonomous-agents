@@ -8,7 +8,7 @@ module Driving
     DEFAULT_POS = Point.new(27.3725, 52.4647)
     DEFAULT_PHI = Math::PI / 2 # Math::PI * 2.5 / 4.0
 
-    DEFAULT_SPEED = 0.0
+    DEFAULT_SPEED = 0.3
 
     
     attr_reader :id, :pos, :phi, :delta, :delta_speed, :speed, :accel, :w, :l,
@@ -20,10 +20,10 @@ module Driving
                    w = DEFAULT_WIDTH, l = DEFAULT_LENGTH, phi = DEFAULT_PHI,
                    delta = 0, delta_speed = 0, speed = DEFAULT_SPEED, accel = 0)
       @id = id
-      @w = w     # car width
-      @l = l     # car length
+      @w = w      # car width
+      @l = l      # car length
       @tw = w/10  # tire width
-      @tl = l/4  # tire length
+      @tl = l/4   # tire length
       
 
       @pos = pos
@@ -190,7 +190,11 @@ module Driving
 
       # puts "#{pos}: r = %.5f, theta = %.5f" % [r, theta*180.0/Math::PI]
 
-      rotate theta
+      # FIXME: this shouldn't be necessary, but the car zooms off now even if
+      # given no speed
+      if theta > 0.0001
+        rotate theta
+      end
     end
 
     # Rotates the agent by arclength theta a. The agent is rotated such that the

@@ -18,7 +18,7 @@ module Driving
   class Display < Canvas
     DOT_RADIUS = 3
     INIT_ZOOM = 3
-    MIN_ZOOM = 0.01
+    MIN_ZOOM = 0.2
     MAX_ZOOM = 30
     SLEEP_DURATION = 0.05
     attr_accessor :map
@@ -79,6 +79,8 @@ module Driving
       end
       
       @z_y = @input.zoom
+
+      @current_agents = @agents.collect { |a| a.clone }
       
       render_map
       render_agents
@@ -101,7 +103,7 @@ module Driving
     end
 
     def render_agents
-      @agents.each do |a|
+      @current_agents.each do |a|
         next unless on_screen? a.ne or on_screen? a.ne or on_screen? a.sw or
           on_screen? a.se
         @g.set_color Color.red
