@@ -1,5 +1,8 @@
 module Driving
   class ServerAgent
+
+    MAX_CRUMBS = 1000
+    
     DEFAULT_WIDTH = 0.075
 
     DEFAULT_LENGTH = 0.1
@@ -9,6 +12,8 @@ module Driving
     DEFAULT_PHI = Math::PI / 2 # Math::PI * 2.5 / 4.0
 
     DEFAULT_SPEED = 0.0
+
+    
 
     
     attr_reader :id, :pos, :phi, :delta, :delta_speed, :speed, :accel, :w, :l,
@@ -165,7 +170,11 @@ module Driving
         move_curved t
       end
 
-      @crumbs << @pos.clone
+      if @crumbs.size >= MAX_CRUMBS
+        @crumbs[0] = @pos.clone
+      else
+        @crumbs << @pos.clone
+      end
     end
     
     # Move the agent in a straight path as if time t (in seconds) has

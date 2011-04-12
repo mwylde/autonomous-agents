@@ -16,6 +16,8 @@ include_class 'javax.swing.JPanel'
 
 module Driving
   class Display < Canvas
+    MAX_DISPLAY_CRUMBS = 1000
+    
     WORLD_DOT_RADIUS = 0.01
     INIT_ZOOM = 3
     MIN_ZOOM = 0.2
@@ -126,7 +128,11 @@ module Driving
 
     def render_agents
       @current_agents.each do |a|
-        @display_crumbs << a.pos
+        if @display_crumbs.size <= MAX_DISPLAY_CRUMBS * @current_agents.size
+          @display_crumbs[0] = a.pos
+        else
+          @display_crumbs << a.pos
+        end
         next unless on_screen? a.ne or on_screen? a.ne or on_screen? a.sw or
           on_screen? a.se
         @g.set_color Color.red
