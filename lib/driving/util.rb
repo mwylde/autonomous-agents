@@ -1,4 +1,17 @@
 module Driving
+
+  # Calculates the four points of the rectangle for the road segment
+  # between p0 and p1
+  def self.calculate_road p0, p1
+    # unit vector pointing from p0 to p1
+    n = (p1.subtract_point p0).normalize.normal_vector.scale ROAD_WIDTH
+    
+    a = p0.add_vector n
+    b = p0.subtract_vector n
+    c = p1.add_vector n
+    d = p1.subtract_vector n
+    [a, b, c, d]
+  end
   
   class Point
     attr_accessor :x, :y
@@ -18,6 +31,25 @@ module Driving
 
     def to_s
       inspect
+    end
+
+    # Returns true if the point is in the convex polygon specified by
+    # the four points a, b, c, d, false otherwise
+    def in_convex_poly points
+      c = false
+      i = -1
+      j = points.size - 1
+      while (i += 1) < points.size
+        if ((points[i].y <= self.y && self.y < points[j].y) || 
+            (points[j].y <= self.y && self.y < points[i].y))
+          if (self.x < (points[j].x - points[i].x) * (self.y - points[i].y) / 
+              (points[j].y - points[i].y) + points[i].x)
+            c = !c
+          end
+        end
+        j = i
+      end
+      return c
     end
 
     def add_vector v
@@ -135,11 +167,9 @@ module Driving
     def rotate theta
       Vector.from_mag_dir(mag, dir + theta)
     end
+
+    def dot v
+      @x * v.x + @y * v.y
+    end
   end
 end
-
-   
-
-    
-        
-        

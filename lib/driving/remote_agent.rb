@@ -20,7 +20,7 @@ module Driving
     def handle_msg msg
       # get actions from agents, which is choice of delta_speed (how
       # fast it's turning the wheel) and acceleration
-      @delta_speed = msg[:delta_speed]
+      @delta_speed = msg[:delta]
       @accel = msg[:accel]
       send self.to_hash
     end
