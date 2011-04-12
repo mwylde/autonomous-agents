@@ -109,6 +109,10 @@ module Driving
         polygon [a.ne, a.nw, a.sw, a.se], fill=true
         @g.set_color Color.black
         polygon [a.ne, a.nw, a.sw, a.se]
+        polygon a.nw_tire_pts, fill=true
+        polygon a.ne_tire_pts, fill=true
+        polygon a.se_tire_pts, fill=true
+        polygon a.sw_tire_pts, fill=true
       end
     end
 
@@ -295,78 +299,3 @@ module Driving
     def keyTyped e; end;
   end
 end
-      
-
-=begin 
-  class KeybdListener
-    include KeyListener
-
-    attr_accessor :following
-    def initialize following
-      @following = following
-    end
-
-    def keyPressed e
-      if e.get_key_text == "SPACE"
-        @following != @following
-      end
-    end
-  end
-
-  class MouseDragger
-    include MouseListener
-    include MouseMotionListener
-
-    attr_accessor :c_pos
-    def initialize c_pos, display
-      @display = display
-      @c_pos = c_pos
-    end
-    
-    def mousePressed e
-      @pmouse = Point.new(e.getX, e.getY)
-    end
-
-    def mouseDragged e
-      p0 = @display.screen_to_world @pmouse
-      p1 = @display.screen_to_world(Point.new(e.getX, e.getY))
-
-      displacement = p0.subtract_point p1
-      @c_pos.add_vector! displacement
-
-      @pmouse = Point.new(e.getX, e.getY)
-    end
-    
-    def mouseReleased e
-      @pmouse = nil
-    end
-
-    def mouseEntered e; end;
-    def mouseClicked e; end;
-    def mouseExited e; end;
-    def mouseMoved e; end;
-    def mouseWheelMoved e; end
-
-  end
-  class WheelListener
-    include MouseWheelListener
-    
-    attr_reader :zoom, :max, :min
-
-    # zoom is the initial value (for say z_start)
-    # limit range of zoom with max
-
-    def initialize(zoom, min, max)
-      @zoom = zoom
-      @min = min
-      @max = max
-    end
-    
-    def mouse_wheel_moved(e)
-      increment = e.get_wheel_rotation       # increment/decrement
-      newz = @zoom + increment
-      @zoom = newz if (newz < @max && newz > @min)
-    end
-  end  
-end
-=end

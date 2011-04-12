@@ -12,8 +12,12 @@ module Driving
       @y = y.to_f
     end
 
+    def inspect
+      "Point (%.3f, %.3f)" % [x, y]
+    end
+
     def to_s
-      "Point (#{@x}, #{@y})"
+      inspect
     end
 
     def add_vector v
@@ -68,8 +72,12 @@ module Driving
       @y = y.to_f
     end
 
+    def inspect
+      "Vector <%.3f, %.3f>" % [@x, @y]
+    end
+
     def to_s
-      "Vector <#{@x}, #{@y}>"
+      inspect
     end
 
     def mag
@@ -77,7 +85,7 @@ module Driving
     end
 
     def dir
-      Math.tan(@y / @x)
+      Math.atan(@y / @x)
     end
     
     def unit?
@@ -125,9 +133,7 @@ module Driving
     end
 
     def rotate theta
-      new_x = @x * Math.cos(theta) - @y * Math.sin(theta)
-      new_y = @x * Math.sin(theta) + @y * Math.cos(theta)
-      Vector.new(new_x, new_y)
+      Vector.from_mag_dir(mag, dir + theta)
     end
   end
 end
