@@ -4,9 +4,10 @@ module Driving
   class ClientAgent
     include Communicator
 
-    def initialize port
+    def initialize host, port
       @port = port
-      @socket = Socket.new @port
+      @host = host
+      @socket = Socket.new @host, @port
       puts "Started #{self.class} on port #{@port}"
     end
 

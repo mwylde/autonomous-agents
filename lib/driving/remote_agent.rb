@@ -3,13 +3,13 @@ module Driving
     include Communicator
 
     def initialize socket, *agent_params
+      super *agent_params
       @socket = socket
       initial = {
-        :map => @map.to_hash,
+        :map => self.to_hash,
         :dest => @map.nodes.choice.pos #random element
       }
       send initial.merge(self.to_hash)
-      super *agent_params
     end
     
     def run

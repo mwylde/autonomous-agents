@@ -45,11 +45,12 @@ module Driving
       Thread.new do
         @server.run
       end
-      @agents[0].run
-      @agents[0].go_crazy
+      # @agents[0].run
+      # @agents[0].go_crazy
 
-      fork do
-        AStarAgent.new(@options[:port]).run
+      Thread.new do
+        sleep 1
+        AStarAgent.new(@options[:address], @options[:port]).run
       end
       # blocking
       @display.run
