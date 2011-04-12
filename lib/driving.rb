@@ -4,6 +4,7 @@ require 'yaml'
 require 'set'
 require 'java'
 
+require "#{root}/driving/constants"
 require "#{root}/driving/util"
 require "#{root}/driving/map"
 require "#{root}/driving/agent"

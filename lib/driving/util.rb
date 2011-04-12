@@ -2,7 +2,7 @@ module Driving
 
   # Calculates the four points of the rectangle for the road segment
   # between p0 and p1
-  def calculate_road p0, p1
+  def self.calculate_road p0, p1
     # unit vector pointing from p0 to p1
     n = (p1.subtract_point p0).normalize.normal_vector.scale ROAD_WIDTH
     

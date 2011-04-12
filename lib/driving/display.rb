@@ -118,7 +118,7 @@ module Driving
     # draws a road with lines connecting points p0 and p1), specified in world
     # coordinates
     def road p0, p1
-      a, b, c, d = calculate_road p0, p1
+      a, b, c, d = Driving::calculate_road p0, p1
       @g.setColor Color.black
       line a, c
       line b, d
