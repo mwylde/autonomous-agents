@@ -6,6 +6,9 @@ include_class 'java.awt.Polygon'
 include_class 'java.awt.event.ActionListener'
 include_class 'java.awt.event.MouseListener'
 include_class 'java.awt.event.MouseMotionListener'
+include_class 'java.awt.event.MouseWheelListener'
+include_class 'java.awt.event.KeyListener'
+include_class 'java.awt.event.KeyEvent'
 include_class 'java.awt.image.BufferStrategy'
 include_class 'java.awt.RenderingHints'
 include_class 'javax.swing.JFrame'
@@ -50,14 +53,12 @@ module Driving
 
       @c_pos = camera_pos
       # @c_pos = Point.new(map.world_max[0]/2.0, map.world_max[1]/2.0)
-      @z_y = INIT_ZOOM
 
-      # Get scroll wheel events
-      @wheel = WheelListener.new @z_y, MIN_ZOOM, MAX_ZOOM
-      @mouse = MouseDragger.new @c_pos, self
-      addMouseMotionListener @mouse
-      addMouseListener @mouse
-      add_mouse_wheel_listener @wheel
+      @input = InputHandler.new @c_pos.clone, INIT_ZOOM, MIN_ZOOM, MAX_ZOOM, self
+      addMouseMotionListener @input
+      addMouseListener @input
+      addMouseWheelListener @input
+      addKeyListener @input
     end
 
     def run
@@ -71,9 +72,14 @@ module Driving
       @g.setColor(Color.white)
       @g.fillRect(0,0,getWidth,getHeight)
 
-      @c_pos = @mouse.c_pos.clone
+      if @input.following
+        @c_pos = @agents[0].pos.clone
+        @input.c_pos = @c_pos.clone
+      else
+        @c_pos = @input.c_pos.clone
+      end
       
-      @z_y = @wheel.zoom
+      @z_y = @input.zoom
       
       render_map
       render_agents
@@ -234,6 +240,79 @@ module Driving
 
   end
 
+  class InputHandler
+    include KeyListener
+    include MouseListener
+    include MouseMotionListener
+    include MouseWheelListener
+
+    attr_accessor :c_pos, :following, :zoom, :zoom_min, :zoom_max
+    def initialize c_pos, zoom, zoom_min, zoom_max, display
+      @display = display
+      @c_pos = c_pos
+      @zoom = zoom
+      @zoom_min = zoom_min
+      @zoom_max = zoom_max
+      @following = false
+    end
+
+    def mousePressed e
+      @pmouse = Point.new(e.getX, e.getY)
+    end
+
+    def mouseDragged e
+      p0 = @display.screen_to_world @pmouse
+      p1 = @display.screen_to_world(Point.new(e.getX, e.getY))
+
+      displacement = p0.subtract_point p1
+      @c_pos.add_vector! displacement
+
+      @pmouse = Point.new(e.getX, e.getY)
+    end
+
+    def mouseReleased e
+      @pmouse = nil
+    end
+
+    def mouseEntered e; end;
+    def mouseClicked e; end;
+    def mouseExited e; end;
+    def mouseMoved e; end;
+
+    def mouseWheelMoved e
+      increment = e.get_wheel_rotation   # increment/decrement
+      newz = @zoom + increment
+      @zoom = newz if (newz < @zoom_max && newz > @zoom_min)
+    end
+
+    def keyPressed e
+      if e.getKeyCode == KeyEvent::VK_SPACE
+        @following = ! @following
+      end
+    end
+
+    def keyReleased e; end;
+    def keyTyped e; end;
+  end
+end
+      
+
+=begin 
+  class KeybdListener
+    include KeyListener
+
+    attr_accessor :following
+    def initialize following
+      @following = following
+    end
+
+    def keyPressed e
+      if e.get_key_text == "SPACE"
+        @following != @following
+      end
+    end
+  end
+
   class MouseDragger
     include MouseListener
     include MouseMotionListener
@@ -270,7 +349,7 @@ module Driving
 
   end
   class WheelListener
-    include java.awt.event.MouseWheelListener
+    include MouseWheelListener
     
     attr_reader :zoom, :max, :min
 
@@ -290,3 +369,4 @@ module Driving
     end
   end  
 end
+=end

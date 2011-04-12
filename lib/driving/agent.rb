@@ -6,7 +6,7 @@ module Driving
 
     # these are the world coordinates  of (37.5716897, -122.0797629) in latlong.
     DEFAULT_POS = Point.new(27.3725, 52.4647)
-    DEFAULT_PHI = Math::PI * 2.5 / 4.0
+    DEFAULT_PHI = Math::PI / 2 # Math::PI * 2.5 / 4.0
 
     DEFAULT_SPEED = 0.3
 
@@ -18,7 +18,7 @@ module Driving
     # width and heigh tspecification
     def initialize(id, pos = DEFAULT_POS,
                    w = DEFAULT_WIDTH, h = DEFAULT_HEIGHT, phi = DEFAULT_PHI,
-                   delta = 0, delta_speed = 0, speed = DEFAULT_SPEED, accel = 0)
+                   delta = -0.1, delta_speed = 0, speed = DEFAULT_SPEED, accel = 0)
       @id = id
       @w = w
       @h = h
@@ -53,6 +53,7 @@ module Driving
           last_time = curr_time
           curr_time = Time.now
           move(curr_time - last_time)
+          sleep 0.1
         end
       end
     end
@@ -149,28 +150,34 @@ module Driving
       # rotate the car about the southwest or southeast tire, depending on which
       # way it's turning
       if @delta > 0
-        update_pos(@pos.rotate @sw, theta)
+        update_pos(@pos.rotate @sw.subtract_vector(@n.scale(r)), theta)
       else
-        update_pos(@pos.rotate @se, theta)
+        update_pos(@pos.rotate @se.add_vector(@n.scale(r)), theta)
       end
 
       # update phi to reflect the rotation
-      update_phi @phi.rotate theta
+      update_phi @phi + theta
     end
     
     # Causes the agent to accelerate or decellerate at a rate
     # determined by x.
     # @param x Float the acceleration, in range [-1, 1]
     def accelerate x
+      Thread.new do
+        loop do
+          @speed += x / 0.01
+          sleep 0.01
+        end
+      end
     end
 
-    # Causes the agent to steer to the right or left
-    # @param x Float amount to turn, in range [-1, 1]
-    def turn x
+    def go_crazy
+      Thread.new do
+        loop do
+          @delta += (rand - 0.5) * Math::PI
+          sleep 1
+        end
+      end
     end
-
-    def update
-    end
-
   end
 end
