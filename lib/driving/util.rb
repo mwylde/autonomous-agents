@@ -81,7 +81,7 @@ module Driving
     end
     
     def unit?
-      mag <= 1.001 && mag >= 0.999
+      (mag - 1.0).abs < 0.001
     end
 
     def normalize

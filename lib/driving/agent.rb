@@ -1,11 +1,14 @@
 module Driving
   class ServerAgent
     DEFAULT_WIDTH = 0.075
+
     DEFAULT_HEIGHT = 0.1
 
     # these are the world coordinates  of (37.5716897, -122.0797629) in latlong.
     DEFAULT_POS = Point.new(27.3725, 52.4647)
     DEFAULT_PHI = Math::PI * 2.5 / 4.0
+
+    DEFAULT_SPEED = 0.3
 
     
     attr_reader :id, :pos, :phi, :delta, :delta_speed, :speed, :accel, :w, :h,
@@ -15,7 +18,7 @@ module Driving
     # width and heigh tspecification
     def initialize(id, pos = DEFAULT_POS,
                    w = DEFAULT_WIDTH, h = DEFAULT_HEIGHT, phi = DEFAULT_PHI,
-                   delta = 0, delta_speed = 0, speed = 0, accel = 0)
+                   delta = 0, delta_speed = 0, speed = DEFAULT_SPEED, accel = 0)
       @id = id
       @w = w
       @h = h
@@ -43,9 +46,14 @@ module Driving
     # Starts the update loop which periodically updates the state
     # variables. Spawns a thread, so non-blocking.
     # @param start_time Time the start time of the simulation 
-    def run start_time
+    def run
       Thread.new do
-        move(Time.now - start+time)
+        curr_time = Time.now
+        loop do
+          last_time = curr_time
+          curr_time = Time.now
+          move(curr_time - last_time)
+        end
       end
     end
 
@@ -62,7 +70,7 @@ module Driving
     end
 
     def update_pos new_pos
-      @pos = new_pos
+      @pos = new_pos.clone
 
       # instance variables that depend on position
       @ne = create_ne
@@ -112,7 +120,7 @@ module Driving
     # Move the agent in a straight path as if time t (in seconds) has
     # elapsed. Note: this should only be used when delta is very small.
     def move_straight t
-      @pos.add_vector!(@u.scale t * @speed)
+      update_pos(@pos.add_vector(@u.scale t * @speed))
     end
 
     # Move the agent in a curved path as if time t (in seconds) has

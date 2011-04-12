@@ -14,9 +14,10 @@ module Driving
 
       @map = Map.from_file(@options[:map_file])
 
-      @agents = [ServerAgent.new 0]
+      @agents = [ServerAgent.new(0)]
 
-      @display = Display.new @map, @agents, @options[:w], @options[:h], @agents[0].pos
+      @display = Display.new @map, @agents, @options[:w], @options[:h],
+                             @agents[0].pos.clone
 
       @server = Server.new @options[:address], @options[:port]
     end
@@ -45,6 +46,7 @@ module Driving
       Thread.new do
         @server.run
       end
+      @agents[0].run
       # blocking
       @display.run
     end
