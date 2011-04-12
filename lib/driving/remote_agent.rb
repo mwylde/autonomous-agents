@@ -4,6 +4,11 @@ module Driving
 
     def initialize socket, *agent_params
       @socket = socket
+      initial = {
+        :map => @map.to_hash,
+        :dest => @map.nodes.choice.pos #random element
+      }
+      send initial.merge(self.to_hash)
       super *agent_params
     end
     
@@ -20,7 +25,7 @@ module Driving
     def handle_msg msg
       # get actions from agents, which is choice of delta_speed (how
       # fast it's turning the wheel) and acceleration
-      @delta_speed = msg[:delta]
+      @delta = msg[:delta]
       @accel = msg[:accel]
       send self.to_hash
     end
