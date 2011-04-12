@@ -87,7 +87,7 @@ module Driving
       @hidden_crumbs = @current_agents[0].crumbs.clone
       
       render_map
-      render_crumbs
+      render_crumbs :both
       render_agents
       
 
@@ -108,15 +108,19 @@ module Driving
       end
     end
 
-    def render_crumbs
-      @g.set_color Color.blue
-      @hidden_crumbs.each do |c|
-        dot c if on_screen? c
+    def render_crumbs spec
+      if spec == :both || spec == :hidden
+        @g.set_color Color.blue
+        @hidden_crumbs.each do |c|
+          dot c if on_screen? c
+        end
       end
-
-      @g.set_color Color.green
-      @display_crumbs.each do |c|
-        dot c if on_screen? c
+      
+      if spec == :both || spec == :display
+        @g.set_color Color.green
+        @display_crumbs.each do |c|
+          dot c if on_screen? c
+        end
       end
     end
 

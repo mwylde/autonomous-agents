@@ -47,7 +47,7 @@ module Driving
         @server.run
       end
       @agents[0].run
-      @agents[0].go_straight
+      @agents[0].go_crazy
       
       # blocking
       @display.run

@@ -228,7 +228,7 @@ module Driving
     end
 
     def go_crazy
-      @speed = 0.25
+      @speed = 0.01
       Thread.new do
         loop do
           @delta += (rand - 0.5) * Math::PI
