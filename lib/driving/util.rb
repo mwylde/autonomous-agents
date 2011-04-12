@@ -105,6 +105,10 @@ module Driving
       dy = p.y - @y
       Math.sqrt(dx*dx + dy*dy)
     end
+
+    def midpt p
+      self + (p - self)/2.0
+    end
   end
   
   class Vector
@@ -205,6 +209,10 @@ module Driving
         raise "Can only scale by a scalar, not a #{cname}"
       end
       scale c
+    end
+
+    def /(c)
+      self*(1/c)
     end
 
     def rotate theta
