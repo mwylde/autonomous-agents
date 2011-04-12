@@ -128,7 +128,7 @@ module Driving
 
     def render_agents
       @current_agents.each do |a|
-        if @display_crumbs.size <= MAX_DISPLAY_CRUMBS * @current_agents.size
+        if @display_crumbs.size >= MAX_DISPLAY_CRUMBS * @current_agents.size
           @display_crumbs[0] = a.pos
         else
           @display_crumbs << a.pos

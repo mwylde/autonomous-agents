@@ -247,8 +247,13 @@ module Driving
     end
 
     def go_straight
-      @speed = 0.25
+      @speed = 0.1
       @delta = 0.0
+    end
+
+    def head_right
+      @speed = 0.01
+      @delta = 0.01
     end
   end
 end
