@@ -44,11 +44,11 @@ module Driving
       end
     end
 
-    def route
+    def calulate_route
       node = astar
       route = []
       while node.parent
-        route.unshift node.parent
+        route << node.parent.state
         node = node.parent
       end
       route
@@ -62,19 +62,63 @@ module Driving
     end
     
     def handle_msg msg
+      @old_pos
+      @old_phi = @phi
+      @old_delta = @delta
+      @old_speed = @speed
+      @old_accel = @accel
+      
+      @phi = msg[:phi]
+      @delta = msg[:delta]
+      @speed = msg[:speed]
+      @accel = msg[:accel]
       @pos = Point.new(*msg[:pos])
+      
       @route = []
+      # find cloest node to our current pos
+      @curr = closest_node @pos, @map
       case msg[:type]
       when :initial
         @map = Map.initialize(msg[:map])
-        @dest = msg[:dest]
-        # find cloest node to our current pos
-        @curr = closest_node @pos, @map
-        @goal = closest_node @dest, @map
-        
+        change_dest = Point.new(*msg[:dest])
+      when :dest_change
+        change_dest = Point.new(*msg[:dest])
       when :update
-        # do stuff
+        new_delta, new_accel = navigate
+        send({:delta => new_delta, :accel => new_accel})
       end
+    end
+
+    def change_dest p
+      @dest = p
+      @goal = closest_node @dest, @map
+      @route = calculate_route
+    end
+    
+    def navigate
+      # check if we're at the current way point
+      at = @curr == @route[-1]
+      # see if we've passed a way point since our last update, which
+      # we determine by calculating the rectangle of the road that
+      # we've passed since our last nav op and check if the current
+      # waypoint is inside
+      road_segment = calculuate_road(@old_pos, @pos)
+      passed = proc { @route[0].in_convex_poly road_segment }
+      @route.pop if at || passed.call
+      
+      # find the difference in phi between our current position and
+      # our next waypoint
+      u = Vector.from_mag_dir 1, @phi
+      v = @pos.subtract_point @route[-1].pos
+      theta = Math.acos(u.dot(v)/v.mag)
+      # on right side, should move left
+      new_delta = 0
+      if theta > v.dir
+        new_delta = [@delta - 0.1, -Math.pi/2].max
+      else
+        new_delta = [@delta + 0.1, Math.pi/2].min
+      end
+      [new_delta, 0.2]
     end
   end
 end

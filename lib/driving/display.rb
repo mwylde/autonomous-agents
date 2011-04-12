@@ -13,7 +13,6 @@ include_class 'javax.swing.JPanel'
 
 module Driving
   class Display < Canvas
-    ROAD_WIDTH = 0.10
     DOT_RADIUS = 3
     INIT_ZOOM = 3
     MIN_ZOOM = 0.5
@@ -109,14 +108,7 @@ module Driving
     # draws a road with lines connecting points p0 and p1), specified in world
     # coordinates
     def road p0, p1
-      # unit vector pointing from p0 to p1
-      n = (p1.subtract_point p0).normalize.normal_vector.scale ROAD_WIDTH
-      
-      a = p0.add_vector n
-      b = p0.subtract_vector n
-      c = p1.add_vector n
-      d = p1.subtract_vector n
-
+      a, b, c, d = calculate_road p0, p1
       @g.setColor Color.black
       line a, c
       line b, d
