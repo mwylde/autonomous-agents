@@ -147,7 +147,7 @@ module Driving
         polygon a.se_tire_pts, fill=true
         polygon a.sw_tire_pts, fill=true
 
-        dot a.nw.midpt(a.ne)+a.u*a.tw*3
+        dot a.north
       end
     end
 
@@ -173,6 +173,11 @@ module Driving
       ellipse s, v
     end
 
+    def point p
+      p = world_to_screen p
+      @g.fill_oval p.x, p.y, 1, 1
+    end
+
     # draws a line between two points specified in world coordinates.
     def line p0, p1
       s_p0 = world_to_screen p0
@@ -182,10 +187,27 @@ module Driving
     end
 
     # draws an ellipse starting at point p and with width/height described by
-    # the vector v.
+    # the vector v, in world coordinates.
     def ellipse p, v
-      w_start = p + Vector.new(0, -v.y)
-      w_vect = Vector.new(v.x, -v.y)
+      # fill_oval can only take positive displacements, so this draws the
+      # specified ellipse in the right order to accomodate this.
+      if v.x > 0
+        if v.y > 0
+          w_start = p + Vector.new(0, v.y)
+          w_vect = Vector.new(v.x, -v.y)
+        else
+          w_start = p
+          w_vect = v
+        end
+      else
+        if v.y > 0
+          w_start = p + v
+          w_vect = Vector.new(-v.x, -v.y)
+        else
+          w_start = p + Vector.new(v.x, 0)
+          w_vect = Vector.new(-v.x, v.y)
+        end
+      end
 
       s_start = world_to_screen w_start
       s_end = world_to_screen w_start + w_vect

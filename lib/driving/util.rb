@@ -25,12 +25,8 @@ module Driving
       @y = y.to_f
     end
 
-    def inspect
-      "Point (%.3f, %.3f)" % [x, y]
-    end
-
-    def to_s
-      inspect
+    def to_s p = 3
+      "Point (%.#{p}f, %.#{p}f)" % [x, y]
     end
 
     # Returns true if the point is in the convex polygon specified by
@@ -127,12 +123,8 @@ module Driving
       @y = y.to_f
     end
 
-    def inspect
-      "Vector <%.3f, %.3f>" % [@x, @y]
-    end
-
-    def to_s
-      inspect
+    def to_s p = 3
+      "Vector <%.#{p}f, %.#{p}f>" % [@x, @y]
     end
 
     def mag

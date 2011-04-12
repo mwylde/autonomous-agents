@@ -9,7 +9,7 @@ module Driving
 
     # these are the world coordinates  of (37.5716897, -122.0797629) in latlong.
     DEFAULT_POS = Point.new(27.3725, 52.4647)
-    DEFAULT_PHI = Math::PI / 2 # Math::PI * 2.5 / 4.0
+    DEFAULT_PHI = Math::PI/2 # Math::PI * 2.5 / 4.0
 
     DEFAULT_SPEED = 0.0
 
@@ -17,7 +17,7 @@ module Driving
 
     
     attr_reader :id, :pos, :phi, :delta, :delta_speed, :speed, :accel, :w, :l,
-    :tw, :tl, :u, :n, :ne, :nw, :se, :sw, :crumbs
+    :tw, :tl, :u, :n, :ne, :nw, :se, :sw, :crumbs, :north
     
     # Creates a default agent with positional parameters set to 0; requires
     # width and heigh tspecification
@@ -77,6 +77,7 @@ module Driving
       @nw = create_nw
       @se = create_se
       @sw = create_sw
+      @north = create_north
     end
 
     def update_pos new_pos
@@ -87,6 +88,7 @@ module Driving
       @nw = create_nw
       @se = create_se
       @sw = create_sw
+      @north = create_north
     end
 
     # unit vector pointing in the direction of phi
@@ -117,6 +119,10 @@ module Driving
     # poisiton of southwest corner of agent (where north is in the dir of phi)
     def create_sw
       @pos - @n*(@w/2.0) - @u*(@l/2.0)
+    end
+
+    def create_north
+      @pos + @u*(@l/2.0)
     end
 
     def nw_tire_pts
@@ -164,8 +170,7 @@ module Driving
     
 
     def move t
-      raise "Delta must be in [-Pi/2, Pi/2]" unless (@delta >= -Math::PI/2 &&
-                                                     @delta <= Math::PI/2)
+      raise "Delta must be in [-Pi/2, Pi/2]" unless (@delta.abs <= Math::PI/2)
       
       if @delta.abs < 0.01
         move_straight t
@@ -193,7 +198,7 @@ module Driving
       r = @l / Math.cos(@delta.abs)      
       theta = @speed * t / (2.0 * Math::PI * r)
 
-      puts "#{pos}: r = %.5f, theta = %.5f" % [r, theta*180.0/Math::PI]
+      # puts (@pos.to_s(5) + " delta = %.3f, r = %.3f, theta = %.3f" % [@delta, r, theta*180.0/Math::PI])
 
       # FIXME: this shouldn't be necessary, but the car zooms off now even if
       # given no speed. this might be useful to save computation, though.
@@ -242,7 +247,7 @@ module Driving
       @speed = 0.01
       Thread.new do
         loop do
-          @delta += (rand - 0.5) * Math::PI
+          @delta = (rand - 0.5) * Math::PI
           sleep 1
         end
       end
