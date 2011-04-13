@@ -88,6 +88,13 @@ module Driving
       Point.from_vector Vector.from_mag_dir dist, latlong_displacement.dir
     end
 
+    def closest_node point
+      @nodes.reduce([nil, 999999999999]){|best, n|
+        dist = point.dist(n.pos)
+        best[1] < dist ? best : [n, dist]
+      }[0]
+    end
+
     def self.from_file(filename)
       File.open(filename) do |f|
         Map.new(YAML.load(f.read))

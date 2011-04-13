@@ -6,11 +6,21 @@ module Driving
       super *agent_params
       @socket = socket
       map = @map.to_hash
-      dest = @map.nodes.to_a.choice.pos #random element
+      @dest = @map.closest_node @pos
+      # pick a random dest that is relatively accessible from the
+      # current position
+      last = @dest
+      while rand > 0.01
+        choices = @dest.neighbors.to_a
+        choices.delete last
+        @dest = choices.choice #get random
+        last = @dest
+      end
+      @dest = @dest.pos
       initial = {
         :type => :initial,
         :map => @map.to_hash,
-        :dest => dest.to_a
+        :dest => @dest.to_a
       }
       send initial.merge(self.to_hash)
     end

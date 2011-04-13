@@ -151,6 +151,11 @@ module Driving
         polygon a.sw_tire_pts, fill=true
 
         dot a.north
+
+        if a.dest
+          @g.set_color Color.green
+          ellipse a.dest, Vector.new(10, 10)
+        end
       end
     end
 

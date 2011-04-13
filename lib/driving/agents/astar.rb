@@ -72,13 +72,6 @@ module Driving
         []
       end
     end
-
-    def closest_node point, map
-      map.nodes.reduce([nil, 999999999999]){|best, n|
-        dist = point.dist(n.pos)
-        best[1] < dist ? best : [n, dist]
-      }[0]
-    end
     
     def handle_msg msg
       if msg[:map]
@@ -108,7 +101,7 @@ module Driving
         @old_pos = @pos
       end
       # find cloest node to our current pos
-      @curr = closest_node @pos, @map
+      @curr = @map.closest_node @pos
 
       case msg[:type]
       when :initial, :dest_change
@@ -122,7 +115,7 @@ module Driving
 
     def change_dest p
       @dest = p
-      @goal = closest_node @dest, @map
+      @goal = @map.closest_node @dest
       @route = calculate_route
       puts "Route: #{@route.inspect}"
     end
@@ -151,9 +144,9 @@ module Driving
       # on right side, should move left
       new_delta = 0
       if theta > v.dir
-        new_delta = [@delta - 0.1, -Math.pi/2].max
+        new_delta = [@delta - 0.1, -Math::PI/2].max
       else
-        new_delta = [@delta + 0.1, Math.pi/2].min
+        new_delta = [@delta + 0.1, Math::PI/2].min
       end
       [new_delta, 0.2]
     end

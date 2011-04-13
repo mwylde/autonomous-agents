@@ -15,7 +15,7 @@ module Driving
     MOVE_FREQUENCY = 10.0
 
     attr_reader :id, :pos, :phi, :delta, :delta_speed, :speed, :accel, :w, :l,
-    :tw, :tl, :u, :n, :ne, :nw, :se, :sw, :crumbs, :north, :map
+    :tw, :tl, :u, :n, :ne, :nw, :se, :sw, :crumbs, :north, :map, :dest
     
     # Creates a default agent with positional parameters set to 0; requires
     # width and heigh tspecification
