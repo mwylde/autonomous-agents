@@ -151,9 +151,9 @@ module Driving
       # on right side, should move left
       new_delta = 0
       if theta > v.dir
-        new_delta = [@delta - 0.1, -Math.pi/2].max
+        new_delta = [@delta - 0.1, -Math::PI/2].max
       else
-        new_delta = [@delta + 0.1, Math.pi/2].min
+        new_delta = [@delta + 0.1, Math::PI/2].min
       end
       [new_delta, 0.2]
     end
