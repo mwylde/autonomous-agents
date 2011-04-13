@@ -128,21 +128,26 @@ module Driving
 
     def render_agents
       @current_agents.each do |a|
-        if @display_crumbs.size <= MAX_DISPLAY_CRUMBS * @current_agents.size
+        if @display_crumbs.size >= MAX_DISPLAY_CRUMBS * @current_agents.size
           @display_crumbs[0] = a.pos
         else
           @display_crumbs << a.pos
         end
+        
         next unless on_screen? a.ne or on_screen? a.ne or on_screen? a.sw or
           on_screen? a.se
+        
         @g.set_color Color.red
         polygon [a.ne, a.nw, a.sw, a.se], fill=true
         @g.set_color Color.black
         polygon [a.ne, a.nw, a.sw, a.se]
+        
         polygon a.nw_tire_pts, fill=true
         polygon a.ne_tire_pts, fill=true
         polygon a.se_tire_pts, fill=true
         polygon a.sw_tire_pts, fill=true
+
+        dot a.nw.midpt(a.ne)+a.u*a.tw*3
       end
     end
 

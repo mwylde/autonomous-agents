@@ -52,6 +52,7 @@ module Driving
         sleep 1
         AStarAgent.new(@options[:address], @options[:port]).run
       end
+
       # blocking
       @display.run
     end

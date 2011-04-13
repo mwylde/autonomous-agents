@@ -7,7 +7,7 @@ module Driving
       @socket = socket
       initial = {
         :map => self.to_hash,
-        :dest => @map.nodes.choice.pos #random element
+        :dest => @map.nodes.to_a.choice.pos #random element
       }
       send initial.merge(self.to_hash)
     end

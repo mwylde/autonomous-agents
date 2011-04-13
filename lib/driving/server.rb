@@ -48,7 +48,7 @@ module Driving
         puts "Agent connected"
         @agents << RemoteServerAgent.new(client, @id_counter, @map)
         # start the agent's non-blocking run loop
-        @gents[-1].run
+        @agents[-1].run
         @id_counter += 1
       end
     end

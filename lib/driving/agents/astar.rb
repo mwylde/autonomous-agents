@@ -90,10 +90,12 @@ module Driving
     end
 
     def change_dest p
-      @dest = p
+      @dest 
       @goal = closest_node @dest, @map
       @route = calculate_route
     end
+
+    def socket; @socket; end
     
     def navigate
       # check if we're at the current way point

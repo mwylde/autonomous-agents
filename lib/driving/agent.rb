@@ -165,6 +165,9 @@ module Driving
     
 
     def move t
+      raise "Delta must be in [-Pi/2, Pi/2]" unless (@delta >= -Math::PI/2 &&
+                                                     @delta <= Math::PI/2)
+      
       if @delta.abs < 0.01
         move_straight t
       else
@@ -188,15 +191,15 @@ module Driving
     # elapsed. Note: this should be used instead of move_straight whenever delta
     # is sizeable.
     def move_curved t
-      r = @l / Math.sin(@delta.abs)      
-      theta = @speed / (2.0*Math::PI) * t
+      r = @l / Math.cos(@delta.abs)      
+      theta = @speed * t / (2.0 * Math::PI * r)
 
-      # puts "#{pos}: r = %.5f, theta = %.5f" % [r, theta*180.0/Math::PI]
+      puts "#{pos}: r = %.5f, theta = %.5f" % [r, theta*180.0/Math::PI]
 
       # FIXME: this shouldn't be necessary, but the car zooms off now even if
-      # given no speed
+      # given no speed. this might be useful to save computation, though.
       if theta > 0.0001
-        rotate theta
+        rotate theta, r
       end
     end
 
@@ -204,8 +207,7 @@ module Driving
     # back right (or left) tire is pivoted by theta along the point where normal
     # lines from the back right (or left) tire and front right (or left) tire
     # meet. Rotated to the right if delta>0, to the left if delta<0.
-    def rotate theta
-      r = @l / Math.sin(@delta.abs)
+    def rotate theta, r
       tire_d_mag = 2.0 * r * Math.sin(theta/2)
       tire_d_ang = theta / 2.0
 
@@ -248,8 +250,13 @@ module Driving
     end
 
     def go_straight
-      @speed = 0.25
+      @speed = 0.1
       @delta = 0.0
+    end
+
+    def head_right
+      @speed = 0.01
+      @delta = 0.01
     end
   end
 end
