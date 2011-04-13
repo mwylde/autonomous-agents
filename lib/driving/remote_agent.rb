@@ -26,6 +26,7 @@ module Driving
     end
     
     def run
+      super
       Thread.new do
         read
       end
@@ -40,7 +41,7 @@ module Driving
       # fast it's turning the wheel) and acceleration
       @delta = msg[:delta]
       @accel = msg[:accel]
-      # puts "delta = #{@delta}; accel = #{@accel}"
+      puts "delta = #{@delta}; accel = #{@accel}" if rand < 0.01
       send(self.to_hash.merge({:type => :update}))
     end
   end

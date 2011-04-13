@@ -94,7 +94,7 @@ module Driving
       @accel = msg[:accel]
       @pos = Point.new(*msg[:pos])
       # puts "Current pos: #{@pos}"
-      @route = []
+      @route ||= []
 
       if msg[:type] == :initial
         @map = Map.new(msg[:map])
@@ -109,6 +109,7 @@ module Driving
       end
 
       # puts "Got update"
+      puts "Speed: #{@speed}"
       new_delta, new_accel = navigate
       send({:delta => new_delta, :accel => new_accel})
     end
@@ -124,7 +125,7 @@ module Driving
     
     def navigate
       if @route.size == 0
-        # puts "Can't navigate, no route"
+        puts "Can't navigate, no route #{@route.inspect}"
         return [0, 0]
       end
       # check if we're at the current way point
@@ -134,7 +135,7 @@ module Driving
       # we've passed since our last nav op and check if the current
       # waypoint is inside
       road_segment = Driving::calculate_road(@old_pos, @pos)
-      @route.pop if at || @route[0].in_convex_poly(road_segment)
+      @route.pop if at || @route[0].pos.in_convex_poly(road_segment)
       
       # find the difference in phi between our current position and
       # our next waypoint
@@ -144,11 +145,11 @@ module Driving
       # on right side, should move left
       new_delta = 0
       if theta > v.dir
-        new_delta = [@delta - 0.1, -Math::PI/2].max
+        new_delta = [@delta - 0.005, -Math::PI/2+0.01].max
       else
-        new_delta = [@delta + 0.1, Math::PI/2].min
+        new_delta = [@delta + 0.005, Math::PI/2-0.01].min
       end
-      [new_delta, 0.2]
+      [new_delta, @speed > 5 ? 0 : 0.2]
     end
   end
 end

@@ -91,10 +91,10 @@ module Driving
 
       @current_agents = @agents.collect { |a| a.clone }
 
-      @hidden_crumbs = @agents.collect { |a| a.crumbs.collect { |c| c.clone }}.flatten
+      # @hidden_crumbs = @agents.collect { |a| a.crumbs.collect { |c| c.clone }}.flatten
       
       render_map
-      render_crumbs :both
+      # render_crumbs :both
       render_agents
 
       @g.dispose
