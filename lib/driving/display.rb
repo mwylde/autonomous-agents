@@ -18,7 +18,8 @@ module Driving
   class Display < Canvas
     MAX_DISPLAY_CRUMBS = 1000
     
-    WORLD_DOT_RADIUS = 0.01
+    WORLD_DOT_RADIUS = 0.3
+    POINT_RADIUS = 1
     INIT_ZOOM = 30
     MIN_ZOOM = 5
     MAX_ZOOM = 1000000
@@ -183,7 +184,8 @@ module Driving
 
     def point p
       p = world_to_screen p
-      @g.fill_oval p.x, p.y, 1, 1
+      r = POINT_RADIUS
+      @g.fill_oval p.x-r/2, p.y-r/2, r, r
     end
 
     # draws a line between two points specified in world coordinates.
