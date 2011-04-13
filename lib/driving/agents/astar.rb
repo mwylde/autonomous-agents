@@ -132,7 +132,7 @@ module Driving
     def navigate
       if @route.size == 0
         # puts "Can't navigate, no route"
-        return
+        return [0, 0]
       end
       # check if we're at the current way point
       at = @curr == @route[-1]
