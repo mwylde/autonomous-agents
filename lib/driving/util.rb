@@ -107,6 +107,10 @@ module Driving
     def midpt p
       self + (p - self)/2.0
     end
+
+    def to_a
+      [@x, @y]
+    end
   end
   
   class Vector
