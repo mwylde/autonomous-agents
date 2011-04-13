@@ -2,7 +2,8 @@ module Driving
   module Communicator
     # Sends a message on the socket.
     def send msg
-      socket.get_output_stream.write(YAML.dump(msg).to_java_bytes)
+      str = YAML.dump(msg) + "\x0"
+      socket.get_output_stream.write(str.to_java_bytes)
     end
 
     # Message read loop (blocking call) which waits for messages on
@@ -32,13 +33,15 @@ module Driving
         # we wait for more data on the socket.
         if chunk == 0
           begin
-            msg = YAML.load(String.from_java_bytes(buffer))
+            msg = YAML.load(buffer)
           rescue ArgumentError
             msg = nil
             puts "Bad YAML recieved by #{self.class}"
           end
           handle_msg(msg) if msg
           buffer = ''
+        else
+          buffer << chunk
         end
       end
 

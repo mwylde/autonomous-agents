@@ -5,9 +5,12 @@ module Driving
     def initialize socket, *agent_params
       super *agent_params
       @socket = socket
+      map = @map.to_hash
+      dest = @map.nodes.to_a.choice.pos #random element
       initial = {
-        :map => self.to_hash,
-        :dest => @map.nodes.to_a.choice.pos #random element
+        :type => :initial,
+        :map => @map.to_hash,
+        :dest => dest.to_a
       }
       send initial.merge(self.to_hash)
     end
@@ -27,7 +30,8 @@ module Driving
       # fast it's turning the wheel) and acceleration
       @delta = msg[:delta]
       @accel = msg[:accel]
-      send self.to_hash
+      # puts "delta = #{@delta}; accel = #{@accel}"
+      send(self.to_hash.merge({:type => :update}))
     end
   end
 end

@@ -44,7 +44,7 @@ module Driving
 
     def to_hash
       {
-        :pos => [@pos.x, @pos.y],
+        :pos => @pos.to_a,
         :phi => @phi,
         :delta => @delta,
         :delta_speed => @delta_speed,
