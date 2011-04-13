@@ -45,6 +45,7 @@ module Driving
       Thread.new do
         @server.run
       end
+
       # @agents[0].run
       # @agents[0].go_crazy
 
