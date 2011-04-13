@@ -55,12 +55,32 @@ module Driving
     # variables. Spawns a thread, so non-blocking.
     # @param start_time Time the start time of the simulation 
     def run
+
+      # update loop
       Thread.new do
         curr_time = Time.now
+        
         loop do
           last_time = curr_time
           curr_time = Time.now
+
+          @speed += @accel * (curr_time - last_time)
+          @delta += @delta_speed * (curr_time - last_time)
+
+          sleep 1.0 / STATE_UPDATE_FREQUENCY
+        end
+      end
+               
+      # move loop
+      Thread.new do
+        curr_time = Time.now
+        
+        loop do
+          last_time = curr_time
+          curr_time = Time.now
+          
           move(curr_time - last_time)
+          
           sleep 1.0 / MOVE_FREQUENCY
         end
       end
@@ -237,12 +257,13 @@ module Driving
     # @param x Float the acceleration, in meters per second per second.
     # @param t Float the time, in seconds, to accelerate for.
     def accelerate x, t
-      start_time = Time.now
-      incr = x / STATE_UPDATE_FREQUENCY
+      curr_time = Time.now
       
       Thread.new do
         until Time.now > start_time + t do
-          @speed += incr
+          last_time = curr_time
+          curr_time = Time.now
+          @speed += x * (curr_time - last_time)
           sleep 1.0 / STATE_UPDATE_FREQUENCY
         end
       end
@@ -268,14 +289,13 @@ module Driving
         raise "End wheel position must be in range [-pi/2, pi/2]"
       end
 
-      start_time = Time.now
-      
-      incr = x / STATE_UPDATE_FREQUENCY
+      curr_time = Time.now
       
       Thread.new do
         until Time.now > start_time + t do
-          raise "fuck" if @delta.abs >= Math::PI/2
-          @delta += incr
+          last_time = curr_time
+          curr_time = Time.now
+          @delta += x * (curr_time - last_time)
           sleep 1.0 / STATE_UPDATE_FREQUENCY
         end
       end
