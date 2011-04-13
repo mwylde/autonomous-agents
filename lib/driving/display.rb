@@ -180,7 +180,7 @@ module Driving
     def point p
       p = world_to_screen p
       r = POINT_RADIUS
-      @g.fill_oval p.x-r/2, p.y-r/2, 2*r, 2*r
+      @g.fill_oval p.x-r/2, p.y-r/2, r, r
     end
 
     # draws a line between two points specified in world coordinates.
