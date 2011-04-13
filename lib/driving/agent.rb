@@ -16,15 +16,12 @@ module Driving
     STATE_UPDATE_FREQUENCY = 100.0
     MOVE_FREQUENCY = 10.0
 
-    
-
-    
     attr_reader :id, :pos, :phi, :delta, :delta_speed, :speed, :accel, :w, :l,
-    :tw, :tl, :u, :n, :ne, :nw, :se, :sw, :crumbs, :north
+    :tw, :tl, :u, :n, :ne, :nw, :se, :sw, :crumbs, :north, :map
     
     # Creates a default agent with positional parameters set to 0; requires
     # width and heigh tspecification
-    def initialize(id, pos = DEFAULT_POS,
+    def initialize(id, map, pos = DEFAULT_POS,
                    w = DEFAULT_WIDTH, l = DEFAULT_LENGTH, phi = DEFAULT_PHI,
                    delta = 0, delta_speed = 0, speed = DEFAULT_SPEED, accel = 0)
       @id = id
@@ -33,7 +30,8 @@ module Driving
       @tw = w/10  # tire width
       @tl = l/4   # tire length
       
-
+      @map = map
+      
       @pos = pos
       update_phi phi
       # delta > 0 means turning to the right

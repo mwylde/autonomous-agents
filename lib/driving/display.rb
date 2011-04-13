@@ -25,7 +25,7 @@ module Driving
     SLEEP_DURATION = 0.05
     attr_accessor :map
     
-    def initialize map, agents, w, h, camera_pos
+    def initialize map, agents, w, h, camera_pos = nil
       puts "Creating display"
       
       super()
@@ -52,7 +52,7 @@ module Driving
       createBufferStrategy(2)
       @strategy = getBufferStrategy
 
-      @c_pos = camera_pos
+      @c_pos = camera_pos || Point.new(map.world_max.x/2.0, map.world_max.y/2.0)
 
       @display_crumbs = []
       @hidden_crumbs = []
@@ -62,6 +62,10 @@ module Driving
       addMouseListener @input
       addMouseWheelListener @input
       addKeyListener @input
+    end
+
+    def center a
+      @c_pos = a.pos.clone
     end
 
     def run
@@ -86,7 +90,7 @@ module Driving
 
       @current_agents = @agents.collect { |a| a.clone }
 
-      @hidden_crumbs = @current_agents[0].crumbs.clone
+      # @hidden_crumbs = @current_agents[0].crumbs.clone
       
       render_map
       render_crumbs :both

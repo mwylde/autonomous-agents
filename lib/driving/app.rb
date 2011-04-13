@@ -14,12 +14,11 @@ module Driving
 
       @map = Map.from_file(@options[:map_file])
 
-      @agents = [ServerAgent.new(0)]
+      @agents = [] #ServerAgent.new(0, @map)]
 
-      @display = Display.new @map, @agents, @options[:w], @options[:h],
-                             @agents[0].pos.clone
+      @display = Display.new @map, @agents, @options[:w], @options[:h]
 
-      @server = Server.new @options[:address], @options[:port]
+      @server = Server.new @options[:address], @options[:port], @map, @agents
     end
 
     def parser
@@ -46,8 +45,14 @@ module Driving
       Thread.new do
         @server.run
       end
-      @agents[0].run
-      @agents[0].turn_left
+
+      # @agents[0].run
+      # @agents[0].go_crazy
+
+      Thread.new do
+        sleep 1
+        AStarAgent.new(@options[:address], @options[:port]).run
+      end
 
       # blocking
       @display.run

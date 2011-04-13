@@ -3,9 +3,10 @@ java_import java.net.InetSocketAddress
 
 module Driving
   class Server
-    def initialize address, port
+    def initialize address, port, map, agents
       @address = address
       @port = port
+      @map = map
 
       # a counter which lets us give unique ids to each agent
       @id_counter = 0
@@ -20,7 +21,7 @@ module Driving
       @socket.set_reuse_address true
 
       # array of agents currently in the simulation
-      @agents = []
+      @agents = agents
 
       # Add handler for SIGINT, so we can clean up
       Signal.trap("TERM") { cleanup }
@@ -45,9 +46,9 @@ module Driving
         # blocking call that waits for connections
         client = @socket.accept
         puts "Agent connected"
-        @agents << Agent.new(@id_counter, 10, 10)
+        @agents << RemoteServerAgent.new(client, @id_counter, @map)
         # start the agent's non-blocking run loop
-        @gents[-1].run
+        @agents[-1].run
         @id_counter += 1
       end
     end

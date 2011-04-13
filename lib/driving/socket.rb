@@ -2,7 +2,7 @@ module Driving
   module Communicator
     # Sends a message on the socket.
     def send msg
-      socket.send(YAML.dump(msg), 0)
+      socket.get_output_stream.write(YAML.dump(msg).to_java_bytes)
     end
 
     # Message read loop (blocking call) which waits for messages on
@@ -14,30 +14,31 @@ module Driving
       # holds the partial data which is appended to on every recv
       # until you have a full message.
       buffer = ''
+      #reader = BufferedReader.new(InputStreamReader.new(socket.get_input_stream))
       loop do
         # receive at most 8192 bytes, which is a mostly arbitrary
         # value that should work well
-        chunk = socket.recv(8192)
+        chunk = socket.get_input_stream.read()
         # a zero-length chunk means the connection was closed
-        if chunk == ''
+        if chunk == nil || chunk == ''
           socket.close
           puts "Lost connection, shutting down"
           exit
         end
 
-        buffer += chunk
         # we use a single \x000 (i.e., null) as a messag eterminator,
         # so we look for one in the chunk. If there is one, then that
         # gives us a complete message and we can process it. If not,
         # we wait for more data on the socket.
-        msg_end = buffer.index(0)
-        while msg_end
-          handle_msg(YAML.load(buffer[0..msg_end]))
-          # get rid of teh stuff we've dealt with, plus the delimeter
-          buffer = buffer[msg_end+1..-1]
-          # and check to see if there's another message within the
-          # buffer (which is unlikely, but not impossible)
-          msg_end = buffer.index(0)
+        if chunk == 0
+          begin
+            msg = YAML.load(String.from_java_bytes(buffer))
+          rescue ArgumentError
+            msg = nil
+            puts "Bad YAML recieved by #{self.class}"
+          end
+          handle_msg(msg) if msg
+          buffer = ''
         end
       end
 
