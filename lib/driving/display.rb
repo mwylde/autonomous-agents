@@ -19,9 +19,9 @@ module Driving
     MAX_DISPLAY_CRUMBS = 1000
     
     WORLD_DOT_RADIUS = 0.01
-    INIT_ZOOM = 1.75
-    MIN_ZOOM = 0.2
-    MAX_ZOOM = 30
+    INIT_ZOOM = 30
+    MIN_ZOOM = 5
+    MAX_ZOOM = 1000000
     SLEEP_DURATION = 0.05
     attr_accessor :map
     
@@ -52,7 +52,7 @@ module Driving
       createBufferStrategy(2)
       @strategy = getBufferStrategy
 
-      @c_pos = camera_pos || Point.new(map.world_max.x/2.0, map.world_max.y/2.0)
+      @c_pos = camera_pos || Point.new(*DEFAULT_AGENT_POS_A)
 
       @display_crumbs = []
       @hidden_crumbs = []
@@ -79,23 +79,22 @@ module Driving
       @g.setColor(Color.white)
       @g.fillRect(0,0,getWidth,getHeight)
 
-      if @input.following
+      if @input.following && ! @agents[0].nil?
         @c_pos = @agents[0].pos.clone
         @input.c_pos = @c_pos.clone
       else
         @c_pos = @input.c_pos.clone
       end
-      
+
       @z_y = @input.zoom
 
       @current_agents = @agents.collect { |a| a.clone }
 
-      # @hidden_crumbs = @current_agents[0].crumbs.clone
+      @hidden_crumbs = @agents.collect { |a| a.crumbs.collect { |c| c.clone }}.flatten
       
       render_map
       render_crumbs :both
       render_agents
-      
 
       @g.dispose
 
@@ -201,7 +200,7 @@ module Driving
           w_vect = Vector.new(v.x, -v.y)
         else
           w_start = p
-          w_vect = v
+          w_vect = vn
         end
       else
         if v.y > 0

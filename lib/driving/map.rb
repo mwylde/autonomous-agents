@@ -65,11 +65,27 @@ module Driving
     end
 
     def latlong_to_world p
-      # translate
-      p.subtract_vector!(Vector.new(@lat_min, @long_min))
 
-      # scale
-      Point.from_vector(Vector.from_point(p).scale(1000.0))
+      latlong_displacement = p - Vector.new(@lat_min, @long_min) - Point::ZERO
+
+      earth_radius = 3958.75 * 1609.0      # 1609 is miles -> meter conversion
+
+      deg_to_rad = Math::PI / 180.0
+
+      lat1 = @lat_min
+      lat2 = p.x
+      lng1 = @long_min
+      lng2 = p.y
+
+      d_lat = (lat2-lat1) * deg_to_rad
+      d_lng = (lng2-lng1) * deg_to_rad
+      a = Math.sin(d_lat/2.0) * Math.sin(d_lat/2.0) +
+        Math.cos(lat1 * deg_to_rad) * Math.cos(lat2 * deg_to_rad) *
+        Math.sin(d_lng/2.0) * Math.sin(d_lng/2.0)
+      c = 2.0 * Math.atan2(Math.sqrt(a), Math.sqrt(1.0 - a))
+      dist = earth_radius * c
+
+      Point.from_vector Vector.from_mag_dir dist, latlong_displacement.dir
     end
 
     def self.from_file(filename)

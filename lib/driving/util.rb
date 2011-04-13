@@ -4,12 +4,12 @@ module Driving
   # between p0 and p1
   def self.calculate_road p0, p1
     # unit vector pointing from p0 to p1
-    n = (p1.subtract_point p0).normalize.normal_vector.scale ROAD_WIDTH
+    n = (p1 - p0).normalize.normal_vector * ROAD_WIDTH
     
-    a = p0.add_vector n
-    b = p0.subtract_vector n
-    c = p1.add_vector n
-    d = p1.subtract_vector n
+    a = p0 + n
+    b = p0 - n
+    c = p1 + n
+    d = p1 - n
     [a, b, c, d]
   end
   
@@ -24,6 +24,8 @@ module Driving
       @x = x.to_f
       @y = y.to_f
     end
+
+    ZERO = self.new 0, 0
 
     def to_s p = 3
       "Point (%.#{p}f, %.#{p}f)" % [x, y]
@@ -123,6 +125,9 @@ module Driving
       @y = y.to_f
     end
 
+    ZERO = Vector.new 0, 0
+    
+
     def to_s p = 3
       "Vector <%.#{p}f, %.#{p}f>" % [@x, @y]
     end
@@ -132,12 +137,7 @@ module Driving
     end
 
     def dir
-      atan = Math.atan(@y/@x)
-      if @x > 0
-        atan
-      else
-        atan + Math::PI
-      end
+      Math.atan2(@y, @x)
     end
     
     def unit?
@@ -184,7 +184,7 @@ module Driving
 
     def -(v)
       cname = v.class.name
-      unless cname == "Vector"
+      unless cname == "Driving::Vector"
         raise "Can only subtract a vector, not a #{cname}, from a vector"
       end
       subtract_vector v

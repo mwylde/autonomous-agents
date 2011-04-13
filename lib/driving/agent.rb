@@ -3,13 +3,11 @@ module Driving
 
     MAX_CRUMBS = 1000
     
-    DEFAULT_WIDTH = 0.075
+    DEFAULT_WIDTH = 1.5
 
-    DEFAULT_LENGTH = 0.1
+    DEFAULT_LENGTH = 3.5
 
-    # these are the world coordinates  of (37.5716897, -122.0797629) in latlong.
-    DEFAULT_POS = Point.new(27.3725, 52.4647)
-    DEFAULT_PHI = Math::PI/2 # Math::PI * 2.5 / 4.0
+    DEFAULT_PHI = Math::PI*2.75/4
 
     DEFAULT_SPEED = 0.0
 
@@ -21,7 +19,7 @@ module Driving
     
     # Creates a default agent with positional parameters set to 0; requires
     # width and heigh tspecification
-    def initialize(id, map, pos = DEFAULT_POS,
+    def initialize(id, map, pos = Point.new(*DEFAULT_AGENT_POS_A),
                    w = DEFAULT_WIDTH, l = DEFAULT_LENGTH, phi = DEFAULT_PHI,
                    delta = 0, delta_speed = 0, speed = DEFAULT_SPEED, accel = 0)
       @id = id
@@ -60,7 +58,6 @@ module Driving
       Thread.new do
         curr_time = Time.now
         loop do
-          puts @speed
           last_time = curr_time
           curr_time = Time.now
           move(curr_time - last_time)
@@ -149,8 +146,8 @@ module Driving
       c = @nw - @u*(@tl/2.0) - @n*(@tw/2.0)
 
       # get the scaled heading and normal vectors for the tire
-      tire_u = @u.rotate(@delta).scale(@tl/2.0)
-      tire_n = @n.rotate(@delta).scale(@tw/2.0)
+      tire_u = @u.rotate(-@delta).scale(@tl/2.0)
+      tire_n = @n.rotate(-@delta).scale(@tw/2.0)
       
       [ c + tire_u - tire_n, c + tire_u + tire_n,
         c - tire_u + tire_n, c - tire_u - tire_n ]
@@ -161,8 +158,8 @@ module Driving
       c = @ne - @u*(@tl/2.0) + @n*(@tw/2.0)
 
       # get the scaled heading and normal vectors for the tire
-      tire_u = @u.rotate(@delta).scale(@tl/2.0)
-      tire_n = @n.rotate(@delta).scale(@tw/2.0)
+      tire_u = @u.rotate(-@delta).scale(@tl/2.0)
+      tire_n = @n.rotate(-@delta).scale(@tw/2.0)
 
       [ c + tire_u - tire_n, c + tire_u + tire_n,
         c - tire_u + tire_n, c - tire_u - tire_n ]
@@ -235,30 +232,6 @@ module Driving
       end
     end
 
-    # Rotates the agent by arclength theta a. The agent is rotated such that the
-    # back right (or left) tire is pivoted by theta along the point where normal
-    # lines from the back right (or left) tire and front right (or left) tire
-    # meet. Rotated to the right if delta>0, to the left if delta<0.
-    def rotate theta, r
-      tire_d_mag = 2.0 * r * Math.sin(theta/2)
-      tire_d_ang = theta / 2.0
-
-      # translate the car so that the southwest tire is moved to the correct
-      # position.
-      update_pos @pos + Vector.from_mag_dir(tire_d_mag, tire_d_ang)
-
-      # rotate the car about the southwest or southeast tire, depending on which
-      # way it's turning
-      if @delta > 0
-        update_pos @pos.rotate(@sw + @n*r, theta)
-      else
-        update_pos @pos.rotate(@se - @n*r, theta)
-      end
-
-      # update phi to reflect the rotation
-      update_phi @phi + theta
-    end
-    
     # Causes the agent to accelerate or decellerate at a rate
     # determined by x for a time period t.
     # @param x Float the acceleration, in meters per second per second.
