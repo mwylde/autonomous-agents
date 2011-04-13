@@ -19,7 +19,7 @@ module Driving
     MAX_DISPLAY_CRUMBS = 1000
     
     WORLD_DOT_RADIUS = 0.01
-    INIT_ZOOM = 3
+    INIT_ZOOM = 1.75
     MIN_ZOOM = 0.2
     MAX_ZOOM = 30
     SLEEP_DURATION = 0.05
@@ -129,10 +129,10 @@ module Driving
     def render_agents
       @current_agents.each do |a|
         if @display_crumbs.size >= MAX_DISPLAY_CRUMBS * @current_agents.size
-          @display_crumbs[0] = a.pos
-        else
-          @display_crumbs << a.pos
+          @display_crumbs.pop
         end
+
+        @display_crumbs.unshift a.pos
         
         next unless on_screen? a.ne or on_screen? a.ne or on_screen? a.sw or
           on_screen? a.se

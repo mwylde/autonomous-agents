@@ -91,9 +91,9 @@ module Driving
       Vector.new(@x - p.x, @y - p.y)
     end
 
-    def rotate p, theta
-      v = self.subtract_point p
-      p.add_vector v.rotate(theta)
+    def rotate_about p, theta
+      v = self.-(p)
+      p + v.rotate(theta)
     end
 
     def dist p
@@ -132,7 +132,12 @@ module Driving
     end
 
     def dir
-      Math.atan(@y / @x)
+      atan = Math.atan(@y/@x)
+      if @x > 0
+        atan
+      else
+        atan + Math::PI
+      end
     end
     
     def unit?

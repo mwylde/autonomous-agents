@@ -13,6 +13,9 @@ module Driving
 
     DEFAULT_SPEED = 0.0
 
+    STATE_UPDATE_FREQUENCY = 100.0
+    MOVE_FREQUENCY = 10.0
+
     
 
     
@@ -59,14 +62,16 @@ module Driving
       Thread.new do
         curr_time = Time.now
         loop do
+          puts @speed
           last_time = curr_time
           curr_time = Time.now
           move(curr_time - last_time)
-          sleep 0.1
+          sleep 1.0 / MOVE_FREQUENCY
         end
       end
     end
 
+    # set phi and phi dependencies
     def update_phi new_phi
       @phi = new_phi
 
@@ -80,6 +85,7 @@ module Driving
       @north = create_north
     end
 
+    # set pos and pos dependencies
     def update_pos new_pos
       @pos = new_pos.clone
 
@@ -91,6 +97,21 @@ module Driving
       @north = create_north
     end
 
+    # set pos, phi, and dependencies thereof
+    def update_pos_phi new_pos, new_phi
+      @pos = new_pos
+      @phi = new_phi
+
+      # instance variables that depend on either position or phi
+      @u = create_u
+      @n = create_n
+      @ne = create_ne
+      @nw = create_nw
+      @se = create_se
+      @sw = create_sw
+      @north = create_north
+    end
+      
     # unit vector pointing in the direction of phi
     def create_u
       Vector.new(Math.cos(@phi), Math.sin(@phi))
@@ -179,31 +200,40 @@ module Driving
       end
 
       if @crumbs.size >= MAX_CRUMBS
-        @crumbs[0] = @pos.clone
-      else
-        @crumbs << @pos.clone
+        @crumbs.pop
       end
+      
+      @crumbs.unshift @pos.clone
     end
     
     # Move the agent in a straight path as if time t (in seconds) has
     # elapsed. Note: this should only be used when delta is very small.
     def move_straight t
-      update_pos @pos + @u*t*@speed
+       update_pos @pos + @u*t*@speed
     end
 
     # Move the agent in a curved path as if time t (in seconds) has
     # elapsed. Note: this should be used instead of move_straight whenever delta
     # is sizeable.
     def move_curved t
-      r = @l / Math.cos(@delta.abs)      
-      theta = @speed * t / (2.0 * Math::PI * r)
+      # this is the distance between the appropriate back tire and the point
+      # around which the car rotates
+      r = @l / Math.tan(@delta.abs)
 
-      # puts (@pos.to_s(5) + " delta = %.3f, r = %.3f, theta = %.3f" % [@delta, r, theta*180.0/Math::PI])
+      # this is the angle, in radians, of the arc of the concentric circles
+      # which the car fills out in time t
+      theta = @speed * t / r
 
       # FIXME: this shouldn't be necessary, but the car zooms off now even if
       # given no speed. this might be useful to save computation, though.
-      if theta > 0.0001
-        rotate theta, r
+      if theta > 0.000001
+        if @delta > 0
+          rotate_pt = @se + @n*r
+          update_pos_phi @pos.rotate_about(rotate_pt, -theta), @phi+theta
+        else
+          rotate_pt = @sw - @n*r
+          update_pos_phi @pos.rotate_about(rotate_pt, theta), @phi-theta
+        end
       end
     end
 
@@ -232,35 +262,97 @@ module Driving
     end
     
     # Causes the agent to accelerate or decellerate at a rate
-    # determined by x.
-    # @param x Float the acceleration, in range [-1, 1]
-    def accelerate x
+    # determined by x for a time period t.
+    # @param x Float the acceleration, in meters per second per second.
+    # @param t Float the time, in seconds, to accelerate for.
+    def accelerate x, t
+      start_time = Time.now
+      incr = x / STATE_UPDATE_FREQUENCY
+      
       Thread.new do
-        loop do
-          @speed += x / 0.01
-          sleep 0.01
+        until Time.now > start_time + t do
+          @speed += incr
+          sleep 1.0 / STATE_UPDATE_FREQUENCY
         end
       end
     end
 
+    # Causes the agent to accelerate or decellerate for a time period t at a
+    # rate such that it reaches speed x.
+    # @param x Float the target speed, in meters per second, to reach at the
+    # end.
+    # @param t Float the time, in seconds, to accelerate for.
+    def accelerate_to x, t
+      rate = (x - @speed) / t
+      accelerate rate, t
+    end
+
+    # Causes the agents' wheels (angle delta) at a rate determined by x, for a
+    # period of time t.
+    # @param x Float the speed, in radians per second, to turn the wheel.
+    # @param t Float the time, in seconds, to turn the wheel
+    def wheel_turn x, t
+      predicted_end_delta = @delta + x*t
+      unless predicted_end_delta.abs < Math::PI/2
+        raise "End wheel position must be in range [-pi/2, pi/2]"
+      end
+
+      start_time = Time.now
+      
+      incr = x / STATE_UPDATE_FREQUENCY
+      
+      Thread.new do
+        until Time.now > start_time + t do
+          raise "fuck" if @delta.abs >= Math::PI/2
+          @delta += incr
+          sleep 1.0 / STATE_UPDATE_FREQUENCY
+        end
+      end
+    end
+
+    # Causes the agents' wheels (angle delta) to turn to a position x in a
+    # period of time t.
+    # @param x Float the angle to turn the wheels to.
+    # @param t Float the time it should take to turn the wheels.
+    def wheel_turn_to x, t
+      unless x.abs < Math::PI/2
+        raise "Target wheel position must be in range [-pi/2, pi/2]"
+      end
+        
+      rate = (x - @delta) / t
+      wheel_turn rate, t
+    end
+      
+
+    def turn_left
+      Thread.new do
+        accelerate_to 0.5, 5
+        sleep 3
+        accelerate_to 0.1, 1
+        sleep 1
+        wheel_turn_to -Math::PI/4, 0.5
+        sleep 0.5
+        wheel_turn_to 0, 0.5
+        sleep 0.5
+        accelerate_to 0.5, 1
+        sleep 1
+        accelerate_to 0, 5
+      end
+    end
+
     def go_crazy
-      @speed = 0.01
+      @speed = 0.5
       Thread.new do
         loop do
-          @delta = (rand - 0.5) * Math::PI
-          sleep 1
+          @delta = (rand - 0.5) * Math::PI/2
+          sleep 5
         end
       end
     end
 
     def go_straight
-      @speed = 0.1
+      @speed = 0.5
       @delta = 0.0
-    end
-
-    def head_right
-      @speed = 0.01
-      @delta = 0.01
     end
   end
 end

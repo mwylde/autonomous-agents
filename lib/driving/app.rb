@@ -47,8 +47,8 @@ module Driving
         @server.run
       end
       @agents[0].run
-      # @agents[0].go_crazy
-      
+      @agents[0].turn_left
+
       # blocking
       @display.run
     end
