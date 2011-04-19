@@ -169,11 +169,12 @@ module Driving
     # draws a very small circle of radius DOT_RADIUS centered at p in world
     # coordinates.
     def dot p
-      r = Vector.new(WORLD_DOT_RADIUS, WORLD_DOT_RADIUS)
-      s = p - r
-      v = r * 2
+      circle p, WORLD_DOT_RADIUS
+      # r = Vector.new(WORLD_DOT_RADIUS, WORLD_DOT_RADIUS)
+      # s = p - r
+      # v = r * 2
 
-      ellipse s, v
+      # ellipse s, v
     end
 
     def point p
@@ -198,6 +199,13 @@ module Driving
       @g.draw_line s_p0.x, s_p0.y, s_p1.x, s_p1.y
     end
 
+    # draws a circle of radius r at point c, both in world coordinates.
+    def circle c, r
+      vect = Vector.new(r,r)
+
+      ellipse(c - vect, vect * 2)
+    end
+    
     # draws an ellipse starting at point p and with width/height described by
     # the vector v, in world coordinates.
     def ellipse p, v
@@ -300,10 +308,10 @@ module Driving
       case p
       when Driving::Point
       when Driving::LineSegment, Driving::Road, Driving::Wall
-        # FIXME this should be smarter; right now the road won't render if the
-        # line is passing through the screen but both end points are off the
-        # screen.
-        return on_screen?(p.p0) || on_screen?(p.p1)
+        # FIXME this should be smarter; right now the road only renders if its
+        # end points or midpoint are on the screen, so this causes some funky
+        # behavior. 
+        return on_screen?(p.p0) || on_screen?(p.p1) || on_screen?(p.p0.midpt(p.p1))
       else
         return on_screen? p.pos
       end

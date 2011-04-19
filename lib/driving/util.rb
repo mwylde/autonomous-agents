@@ -219,17 +219,47 @@ module Driving
       @p1 = p1
     end
 
-    def dist_to_pt pt
+    # this computes the point which is closest to p on the line
+    def intersect_with_pt p
+      # algorithm from http://paulbourke.net/geometry/pointline/
+      
       x1 = @p0.x
-      x2 = @p1.x
       y1 = @p0.y
+      x2 = @p1.x
       y2 = @p1.y
+      x3 = p.x
+      y3 = p.y
 
-      a = (y2 - y1)/(x2 - x1)
-      b = 1.0
-      c = (y2-y1)/(x2-x1)*x1 - y1
+      if @p0.dist(@p1) == 0
+        raise "Trying to intersect a point with a line that has no length"
+      end
+        
+      u = ((x3-x1)*(x2-x1) + (y3-y1)*(y2-y1))/(@p0.dist @p1)**2
+        
+      x = x1 + u*(x2 - x1)
+      y = y1 + u*(y2 - y1)
 
-      (a*pt.x + b*pt.y + c).abs / Math.sqrt(a**2 + b**2)
+      Point.new x,y
+    end
+      
+
+    def dist_to_pt pt
+      pt.dist(intersect_with_pt(pt))
+      # x1 = @p0.x
+      # x2 = @p1.x
+      # y1 = @p0.y
+      # y2 = @p1.y
+      # 
+      # a = (y2 - y1)/(x2 - x1)
+      # b = 1.0
+      # c = (y2-y1)/(x2-x1)*x1 - y1
+      # 
+      # (a*pt.x + b*pt.y + c).abs / Math.sqrt(a**2 + b**2)
+    end
+
+    def unit_from_pt pt
+      intersect = intersect_with_pt pt
+      (intersect - pt).normalize!
     end
 
     def hits pt

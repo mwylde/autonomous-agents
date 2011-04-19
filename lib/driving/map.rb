@@ -34,7 +34,7 @@ module Driving
       [Wall.new(p0+n, p1+n), Wall.new(p0-n, p1-n)]
     end
     
-    attr_accessor :p0, :p1, :naive, :walls
+    attr_accessor :id, :p0, :p1, :naive, :walls
     def initialize(p0, p1, walls = nil)
       @p0 = p0
       @p1 = p1
@@ -60,6 +60,23 @@ module Driving
       c = naive_walls[1].p1
       d = naive_walls[1].p0
       p.in_convex_poly([a, b, c, d])
+    end
+
+    # finds the distance from p to each wall. returns a hash mapping the object
+    # id of each wall to the distance from p to that wall.
+    def dists_to_walls p
+      result = {}
+      @walls.each { |w| result[w.object_id] = w.dist_to_pt(p) }
+      return result
+    end
+
+    # finds the unit vectors from p to the closest point to p on each
+    # wall. returns a hash mapping the object id of each wall to the
+    # corresponding vector.      
+    def units_to_walls p
+      result = {}
+      @walls.each { |w| result[w.object_id] = w.unit_from_pt(p) }
+      return result
     end
   end
 
