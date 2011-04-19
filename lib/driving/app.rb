@@ -51,7 +51,7 @@ module Driving
 
       Thread.new do
         sleep 1
-        AStarAgent.new(@options[:address], @options[:port]).run
+        DynamicalAgent.new(@options[:address], @options[:port]).run
       end
 
       # blocking

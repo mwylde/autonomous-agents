@@ -29,9 +29,8 @@ module Driving
       @tl = l/4   # tire length
       
       @map = map
-      
-      @pos = pos
-      update_phi phi
+
+      update_pos_phi pos, phi
       # delta > 0 means turning to the right
       @delta = delta
       @delta_speed = delta_speed
@@ -121,6 +120,7 @@ module Driving
       @se = create_se
       @sw = create_sw
       @north = create_north
+      @curr_road = find_curr_road
     end
 
     # set pos, phi, and dependencies thereof
@@ -136,6 +136,7 @@ module Driving
       @se = create_se
       @sw = create_sw
       @north = create_north
+      @curr_road = find_curr_road
     end
       
     # unit vector pointing in the direction of phi
