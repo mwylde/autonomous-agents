@@ -162,7 +162,6 @@ module Driving
       # constructing a road object out of two arbitrary points on the map out of
       # convenience to use road's contain method.
       road = Road.new(@old_pos, @pos)
-      puts @route[0].pos
       @route.pop if at || road.contains(@route[0].pos)
       
       # find the difference in phi between our current position and
