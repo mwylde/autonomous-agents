@@ -209,5 +209,36 @@ module Driving
     def dot v
       @x * v.x + @y * v.y
     end
+
+    def angle_from v
+      dir - v.dir
+    end
   end
+
+  class LineSegment
+    attr_accessor :p0, :p1
+    def initialize p0, p1
+      @p0 = p0
+      @p1 = p1
+    end
+
+    def dist_to_pt pt
+      x1 = @p0.x
+      x2 = @p1.x
+      y1 = @p0.y
+      y2 = @p1.y
+
+      a = (y2 - y1)/(x2 - x1)
+      b = 1.0
+      c = (y2-y1)/(x2-x1)*x1 - y1
+
+      (a*pt.x + b*pt.y + c).abs / Math.sqrt(a**2 + b**2)
+    end
+
+    def hits pt
+      # FIXME: this is really primitive; this is really for the lien defined by
+      # this line segment, not the line segment itself. need to do a check to
+      # see if the point is actually on the extension of the segment.
+      dist_to_pt(pt) < 0.01
+    end
 end

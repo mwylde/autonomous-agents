@@ -27,7 +27,7 @@ module Driving
     [a, b, c, d]
   end
 
-  class Road
+  class Road < LineSegment
     def self.naive_walls p0, p1
       n = (p1 - p0).normalize.normal_vector * ROAD_WIDTH
 
@@ -49,7 +49,7 @@ module Driving
     end
   end
 
-  class Wall
+  class Wall < LineSegment
     attr_accessor :p0, :p1
     def initialize(p0, p1)
       @p0 = p0
@@ -135,6 +135,24 @@ module Driving
           elsif roads[m.pos][n.pos].nil?
             roads[m.pos][n.pos] = road
           end
+        end
+      end
+    end
+
+    def clip_walls
+      @nodes.each do |n|
+        if n.neighbors.size == 2
+          ms = n.neighbors
+          u0 = (ms[0].pos - n.pos).normalize!
+          u1 = (ms[1].pos - n.pos).normalize!
+
+          # unit vector pointing towards the inner wall intersection.
+          u = (u0 + u1).normalize!
+          inner_pt = n.pos + u*ROAD_WIDTH
+
+          @roads[n][ms[0]].walls.each do |w|
+            if w.hits inner_pt
+          
         end
       end
     end
