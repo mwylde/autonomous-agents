@@ -1,18 +1,4 @@
 module Driving
-
-  # Calculates the four points of the rectangle for the road segment
-  # between p0 and p1
-  def self.calculate_road p0, p1
-    # unit vector pointing from p0 to p1
-    n = (p1 - p0).normalize.normal_vector * ROAD_WIDTH
-    
-    a = p0 + n
-    b = p0 - n
-    c = p1 + n
-    d = p1 - n
-    [a, b, c, d]
-  end
-  
   class Point
     attr_accessor :x, :y
 
@@ -28,7 +14,7 @@ module Driving
     ZERO = self.new 0, 0
 
     def to_s p = 3
-      "Point (%.#{p}f, %.#{p}f)" % [x, y]
+      "(%.#{p}f, %.#{p}f)" % [x, y]
     end
 
     # Returns true if the point is in the convex polygon specified by
@@ -130,7 +116,7 @@ module Driving
     
 
     def to_s p = 3
-      "Vector <%.#{p}f, %.#{p}f>" % [@x, @y]
+      "<%.#{p}f, %.#{p}f>" % [@x, @y]
     end
 
     def mag
@@ -219,6 +205,48 @@ module Driving
 
     def dot v
       @x * v.x + @y * v.y
+    end
+
+    def angle_from v
+      dir - v.dir
+    end
+  end
+
+  class LineSegment
+    attr_accessor :p0, :p1
+    def initialize p0, p1
+      @p0 = p0
+      @p1 = p1
+    end
+
+    def dist_to_pt pt
+      x1 = @p0.x
+      x2 = @p1.x
+      y1 = @p0.y
+      y2 = @p1.y
+
+      a = (y2 - y1)/(x2 - x1)
+      b = 1.0
+      c = (y2-y1)/(x2-x1)*x1 - y1
+
+      (a*pt.x + b*pt.y + c).abs / Math.sqrt(a**2 + b**2)
+    end
+
+    def hits pt
+      # FIXME: this is really primitive; this is really for the lien defined by
+      # this line segment, not the line segment itself. need to do a check to
+      # see if the point is actually on the extension of the segment.
+      dist_to_pt(pt) < 0.01
+    end
+
+    # the unit vector pointing from p0 to p1
+    def unit
+      (@p1 - @p0).normalize!
+    end
+
+    # a unit vector normal to the vector from p0 to p1
+    def normal
+      unit.normal
     end
   end
 end

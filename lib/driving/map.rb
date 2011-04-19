@@ -14,11 +14,73 @@ module Driving
     end
   end
 
+  # Calculates the four points of the rectangle for the road segment
+  # between p0 and p1
+  def calculate_road p0, p1
+    # unit vector pointing from p0 to p1
+    n = (p1 - p0).normalize.normal_vector * ROAD_WIDTH
+    
+    a = p0 + n
+    b = p0 - n
+    c = p1 + n
+    d = p1 - n
+    [a, b, c, d]
+  end
+
+  class Road < LineSegment
+    def self.naive_walls p0, p1
+      n = (p1 - p0).normalize.normal_vector * ROAD_WIDTH
+
+      [Wall.new(p0+n, p1+n), Wall.new(p0-n, p1-n)]
+    end
+    
+    attr_accessor :p0, :p1, :naive, :walls
+    def initialize(p0, p1, walls = nil)
+      @p0 = p0
+      @p1 = p1
+
+      if walls.nil?
+        @walls = Set.new(Road.naive_walls p0, p1)
+        @naive = true
+      else
+        @walls = walls
+        @naive = false
+      end
+    end
+
+    def to_s
+      "Road: #{@p0} -> #{@p1} with #{@walls}"
+    end
+
+    # FIXME This is a naive implementation which uses naive walls. 
+    def contains p
+      naive_walls = Road.naive_walls @p0, @p1
+      a = naive_walls[0].p0
+      b = naive_walls[0].p1
+      c = naive_walls[1].p1
+      d = naive_walls[1].p0
+      p.in_convex_poly([a, b, c, d])
+    end
+  end
+
+  class Wall < LineSegment
+    attr_accessor :p0, :p1
+    def initialize(p0, p1)
+      @p0 = p0
+      @p1 = p1
+    end
+
+    def to_s
+      "Wall: #{@p0} -> #{@p1}"
+    end
+  end
+
   # A graph of Nodes represented by an adjacency list. Each node
   # represents a point on a road, and each edge represents a segment
   # of a road. Nodes with more than two edges are intersections.
   class Map
-    attr_reader :nodes, :lat_min, :lat_max, :long_min, :long_max, :world_max
+    attr_reader :nodes, :road_hash, :road_set, :lat_min, :lat_max,
+    :long_min, :long_max, :world_max
 
     # Creates a new map from a json file containing the graph data. An
     # appropriate json file can be generated from an osm file by using
@@ -62,6 +124,89 @@ module Driving
 
       @nodes = Set.new(nodes.values)
       @nodes.freeze
+
+      # create a two-layered hash storing roads
+      @road_hash = create_roads
+      @road_set = road_set_from_hash @road_hash
+    end
+
+    def create_roads
+      roads = {}
+      
+      @nodes.each do |n|
+        n.neighbors.each do |m|
+          road = Road.new(n.pos, m.pos)
+
+          # the hash is indexed by both start pos and end pos, but we don't care
+          # about directionality, so we store the road wall object both ways in
+          # the two-layered hash.
+          # we also only store a wall object if a wall object for those points
+          # doesn't already exist. this is because we want there to only be one
+          # real road object, so that updating it propoagets. 
+          
+          if roads[n.pos].nil?
+            roads[n.pos] = { m.pos => road }
+          elsif roads[n.pos][m.pos].nil?
+            roads[n.pos][m.pos] = road
+          end
+
+          if roads[m.pos].nil?
+            roads[m.pos] = { n.pos => road }
+          elsif roads[m.pos][n.pos].nil?
+            roads[m.pos][n.pos] = road
+          end
+        end
+      end
+
+      return roads
+    end
+
+    # returns a set of all the roads. this 
+    def road_set_from_hash hash
+      s = Set.new
+
+      # the road hash is indexed by start point and then by end point
+      hash.each do |p0, p0_hash|
+        p0_hash.each do |p1, r|
+          # FIXME: I think the fact that it's a set should handle the fact that
+          # the double-hash has duplicate references to roads. If not, then I
+          # can keep a list of sets of points that have been added and only add
+          # a road if it's not in the list of set of points.
+          s.add r
+        end
+      end
+
+      return s
+    end
+
+    def get_road p0, p1
+      if @road_hash[p0].nil? || @road_hash[p1].nil?
+        raise "Neither point specified has any roads"
+      elsif @road_hash[p0][p1].nil?
+        raise "The points specified do not define a road"
+      else
+        @road_hash[p0][p1]
+      end
+    end
+
+    def clip_walls
+      @nodes.each do |n|
+        if n.neighbors.size == 2
+          ms = n.neighbors
+          u0 = (ms[0].pos - n.pos).normalize!
+          u1 = (ms[1].pos - n.pos).normalize!
+
+          # unit vector pointing towards the inner wall intersection.
+          u = (u0 + u1).normalize!
+          inner_pt = n.pos + u*ROAD_WIDTH
+
+          @roads[n][ms[0]].walls.each do |w|
+            if w.hits inner_pt
+              # FIXME: LOTS MORE IMPLEMENTATINO
+            end
+          end
+        end
+      end
     end
 
     def latlong_to_world p
