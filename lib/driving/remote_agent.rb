@@ -25,7 +25,9 @@ module Driving
       initial = {
         :type => :initial,
         :map => @map.to_hash,
-        :dest => @dest.to_a
+        :dest => @dest.to_a,
+        :bound_r => 3.5/2.0 # FIXME this is a hack, should really be a
+                            # reference, not a hardcoded value
       }
       send initial.merge(self.to_hash)
     end
