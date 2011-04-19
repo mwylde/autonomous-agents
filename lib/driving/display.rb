@@ -104,8 +104,10 @@ module Driving
 
     def render_map
       @map.road_set.each do |r|
+        @g.set_color Color.red
         line r if on_screen? r
         r.walls.each do |w|
+          @g.set_color Color.black
           line w if on_screen? w
         end
       end

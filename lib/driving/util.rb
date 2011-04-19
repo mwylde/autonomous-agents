@@ -14,7 +14,7 @@ module Driving
     ZERO = self.new 0, 0
 
     def to_s p = 3
-      "Point (%.#{p}f, %.#{p}f)" % [x, y]
+      "(%.#{p}f, %.#{p}f)" % [x, y]
     end
 
     # Returns true if the point is in the convex polygon specified by
@@ -119,7 +119,7 @@ module Driving
     
 
     def to_s p = 3
-      "Vector <%.#{p}f, %.#{p}f>" % [@x, @y]
+      "<%.#{p}f, %.#{p}f>" % [@x, @y]
     end
 
     def mag
@@ -240,6 +240,16 @@ module Driving
       # this line segment, not the line segment itself. need to do a check to
       # see if the point is actually on the extension of the segment.
       dist_to_pt(pt) < 0.01
+    end
+
+    # the unit vector pointing from p0 to p1
+    def unit
+      (@p1 - @p0).normalize!
+    end
+
+    # a unit vector normal to the vector from p0 to p1
+    def normal
+      unit.normal
     end
   end
 end
