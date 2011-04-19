@@ -34,10 +34,10 @@ module Driving
       [Wall.new(p0+n, p1+n), Wall.new(p0-n, p1-n)]
     end
     
-    attr_accessor :p0, :p1, :naive, :walls
-    def initialize(p0, p1, walls = nil)
-      @p0 = p0
-      @p1 = p1
+    attr_accessor :p0, :p1, :n0, :n1, :naive, :walls
+    def initialize(n0, n1, walls = nil)
+      @n0, @n1 = n0, n1
+      @p0, @p1 = @n0.pos, @n1.pos
 
       if walls.nil?
         @walls = Set.new(Road.naive_walls p0, p1)
@@ -135,7 +135,7 @@ module Driving
       
       @nodes.each do |n|
         n.neighbors.each do |m|
-          road = Road.new(n.pos, m.pos)
+          road = Road.new(n, m)
 
           # the hash is indexed by both start pos and end pos, but we don't care
           # about directionality, so we store the road wall object both ways in
@@ -238,6 +238,12 @@ module Driving
         dist = point.dist(n.pos)
         best[1] < dist ? best : [n, dist]
       }[0]
+    end
+
+    def road_for_point point
+      @road_set.find{|r|
+        r.contains point
+      }
     end
 
     def self.from_file(filename)

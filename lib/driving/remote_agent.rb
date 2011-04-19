@@ -9,6 +9,11 @@ module Driving
       curr = @map.closest_node @pos
       facing = curr.neighbors.to_a.choice
       puts facing.inspect
+      # displace a bit along the vector from current position to
+      # facing so that we're not directly on a node
+      update_phi (facing.pos - @pos).dir
+      update_pos @pos + @u*3
+      
       # pick a random dest that is relatively accessible from the
       # current position
       dest_node = facing
@@ -18,10 +23,11 @@ module Driving
         # choices = dest_node.neighbors.to_a
         # choices.delete last
         seen << dest_node
-        dest_node = dest_node.neighbors.max_by{|n| seen.include?(n) ? -1 :  n.neighbors.size}
+        choices = dest_node.neighbors.reject{|n| seen.include?(n)}
+        break if choices.size == 0
+        dest_node = choices.max_by{|n| n.neighbors.size}
       end
       @dest = dest_node.pos
-      update_phi (facing.pos - @pos).dir
       initial = {
         :type => :initial,
         :map => @map.to_hash,

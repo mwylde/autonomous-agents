@@ -275,6 +275,7 @@ module Driving
           last_time = curr_time
           curr_time = Time.now
           @speed += x * (curr_time - last_time)
+          @speed = 0 if @speed < 0
           sleep 1.0 / STATE_UPDATE_FREQUENCY
         end
       end
@@ -287,6 +288,7 @@ module Driving
     # @param t Float the time, in seconds, to accelerate for.
     def accelerate_to x, t
       rate = (x - @speed) / t
+      @speed = 0 if @speed < 0
       accelerate rate, t
     end
 
