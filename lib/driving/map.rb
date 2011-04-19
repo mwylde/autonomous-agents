@@ -14,6 +14,49 @@ module Driving
     end
   end
 
+  # Calculates the four points of the rectangle for the road segment
+  # between p0 and p1
+  def self.calculate_road p0, p1
+    # unit vector pointing from p0 to p1
+    n = (p1 - p0).normalize.normal_vector * ROAD_WIDTH
+    
+    a = p0 + n
+    b = p0 - n
+    c = p1 + n
+    d = p1 - n
+    [a, b, c, d]
+  end
+
+  class Road
+    def self.naive_walls p0, p1
+      n = (p1 - p0).normalize.normal_vector * ROAD_WIDTH
+
+      Set.new [Wall.new(p0+n, p1+n), Wall.new(p0-n, p1-n)]
+    end
+    
+    attr_accessor :p0, :p1, :naive, :walls
+    def initialize(p0, p1, walls = [])
+      @p0 = p0
+      @p1 = p1
+
+      if walls.nil?
+        @walls = self.naive_walls p0, p1
+        @naive = true
+      else
+        @walls = walls
+        @naive = false
+      end
+    end
+  end
+
+  class Wall
+    attr_accessor :p0, :p1
+    def initialize(p0, p1)
+      @p0 = p0
+      @p1 = p1
+    end
+  end
+
   # A graph of Nodes represented by an adjacency list. Each node
   # represents a point on a road, and each edge represents a segment
   # of a road. Nodes with more than two edges are intersections.
@@ -62,6 +105,38 @@ module Driving
 
       @nodes = Set.new(nodes.values)
       @nodes.freeze
+
+      # create a two-layered hash storing roads
+      @roads = create_roads
+    end
+
+    def create_roads
+      roads = {}
+      
+      @nodes.each do |n|
+        n.neighbors.each do |m|
+          road = Road.new(n.pos, m.pos)
+
+          # the hash is indexed by both start pos and end pos, but we don't care
+          # about directionality, so we store the road wall object both ways in
+          # the two-layered hash.
+          # we also only store a wall object if a wall object for those points
+          # doesn't already exist. this is because we want there to only be one
+          # real road object, so that updating it propoagets. 
+          
+          if roads[n.pos].nil?
+            roads[n.pos] = { m.pos => road }
+          elsif roads[n.pos][m.pos].nil?
+            roads[n.pos][m.pos] = road
+          end
+
+          if roads[m.pos].nil?
+            roads[m.pos] = { n.pos => road }
+          elsif roads[m.pos][n.pos].nil?
+            roads[m.pos][n.pos] = road
+          end
+        end
+      end
     end
 
     def latlong_to_world p

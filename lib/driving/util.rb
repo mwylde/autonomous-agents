@@ -1,18 +1,4 @@
 module Driving
-
-  # Calculates the four points of the rectangle for the road segment
-  # between p0 and p1
-  def self.calculate_road p0, p1
-    # unit vector pointing from p0 to p1
-    n = (p1 - p0).normalize.normal_vector * ROAD_WIDTH
-    
-    a = p0 + n
-    b = p0 - n
-    c = p1 + n
-    d = p1 - n
-    [a, b, c, d]
-  end
-  
   class Point
     attr_accessor :x, :y
 
