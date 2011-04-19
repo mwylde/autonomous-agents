@@ -3,7 +3,7 @@ java_import java.util.PriorityQueue
 
 module Driving
   class AStarAgent < ClientAgent
-    MAX_NODES_EXPANDED = 1000000
+    MAX_NODES_EXPANDED = 10000
     class AStarNode
       attr_accessor :state, :parent, :g, :h
       def initialize state, parent
@@ -41,7 +41,7 @@ module Driving
       nodes_expanded = 0
       until fringe.isEmpty
         current = fringe.remove
-        next if closed_states.include? current
+        next if closed_states.include? current.state
         return current if current.state == @goal
 
         expanded = current.expand

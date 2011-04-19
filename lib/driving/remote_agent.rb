@@ -12,13 +12,13 @@ module Driving
       # pick a random dest that is relatively accessible from the
       # current position
       dest_node = facing
-      last = curr
+      seen = Set[curr]
       while rand > 0.001 && dest_node.neighbors.size > 1
         puts dest_node.inspect
-        choices = dest_node.neighbors.to_a
-        choices.delete last
-        last = dest_node
-        dest_node = choices.choice #get random
+        # choices = dest_node.neighbors.to_a
+        # choices.delete last
+        seen << dest_node
+        dest_node = dest_node.neighbors.max_by{|n| seen.include?(n) ? -1 :  n.neighbors.size}
       end
       @dest = dest_node.pos
       update_phi (facing.pos - @pos).dir
