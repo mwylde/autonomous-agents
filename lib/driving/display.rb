@@ -24,7 +24,7 @@ module Driving
     MIN_ZOOM = 5
     MAX_ZOOM = 1000000
     SLEEP_DURATION = 0.05
-    attr_accessor :map, :g
+    attr_accessor :map, :g, :agents
     
     def initialize map, agents, w, h, camera_pos = nil
       puts "Creating display"
@@ -80,8 +80,8 @@ module Driving
       @g.setColor(Color.white)
       @g.fillRect(0,0,getWidth,getHeight)
 
-      if @input.following && ! @agents[0].nil?
-        @c_pos = @agents[0].pos.clone
+      if @input.following != -1
+        @c_pos = @agents[@input.following].pos.clone
         @input.c_pos = @c_pos.clone
       else
         @c_pos = @input.c_pos.clone
@@ -337,7 +337,7 @@ module Driving
       @zoom = zoom
       @zoom_min = zoom_min
       @zoom_max = zoom_max
-      @following = false
+      @following = -1
     end
 
     def mousePressed e
@@ -370,8 +370,13 @@ module Driving
     end
 
     def keyPressed e
-      if e.getKeyCode == KeyEvent::VK_SPACE
-        @following = ! @following
+      if e.getKeyCode == KeyEvent::VK_SPACE && @display.agents.size > 0
+        if @following != -1
+          @following += 1
+          @following %= @display.agents.size
+        else
+          @following = 0
+        end
       end
     end
 

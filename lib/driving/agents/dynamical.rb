@@ -1,11 +1,9 @@
 module Driving
   class DynamicalAgent < ClientAgent
 
-    CIRCLE_RADIUS = 1.0
-
     # Parameters
     D0 = 1.0
-    SIGMA = 1.0
+    SIGMA = 0.1
     H1 = 1.0
     A = 1.0
 
@@ -25,7 +23,7 @@ module Driving
 
       psi = (obs_c - @pos).dir
 
-      d_psi = 1.0 # ???
+      d_psi = Math.asin((@bound_r+obs_r)/(@pos.dist obs_c)) # ???
 
       d_i = dist_scale dm, d0
       w_i = windower h1, psi, d_psi, sig
@@ -37,6 +35,7 @@ module Driving
     def delta_dot
       dd = f_tar @tar
       @obs.each do |o|
+        puts "Obstacle #{o}: #{f_obs_i o}"
         dd += f_obs_i o
       end
       return dd
@@ -58,8 +57,8 @@ module Driving
       @speed = msg[:speed]
       @accel = msg[:accel]
       @curr_road = msg[:curr_road]
-      @obs = create_obs
 
+      resp = {}
       
       case msg[:type]
       when :initial
@@ -67,9 +66,12 @@ module Driving
         @dest = msg[:dest]
         @bound_r = msg[:bound_r]
         @tar = create_tar
+        resp[:speed] = 0.5
+        resp[:accel] = 0.1
+        resp[:delta] = 0.1
       end
 
-      resp = {}
+      @obs = create_obs
       
       renders = ["@g.set_color Color.red"]
       @obs.each do |o|
@@ -87,7 +89,7 @@ module Driving
 
       time_step = 0.05 # FIXME really this should be calculated as the differenc
                        # in time between the last messaeg and the current one
-      new_delta = @delta + delta_dot * time_step
+      # new_delta = @delta + delta_dot * time_step
 
       send resp
     end
@@ -98,12 +100,13 @@ module Driving
 
       @curr_road.walls.collect do |w|
         id = w.object_id
-        [@pos + units[id] * (ROAD_WIDTH + CIRCLE_RADIUS), CIRCLE_RADIUS]
+        r = @bound_r / dists[id]**2
+        [@pos + units[id] * (dists[id] + r), r]
       end
     end
 
     def create_tar
-      [@pos + Vector.from_mag_dir(20, @phi), CIRCLE_RADIUS]
+      [@pos + Vector.from_mag_dir(20, @phi), @bound_r]
     end
 
     def socket; @socket; end
