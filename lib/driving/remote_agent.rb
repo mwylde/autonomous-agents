@@ -5,8 +5,9 @@ module Driving
     def initialize socket, *agent_params
       super *agent_params
       @socket = socket
-      map = @map.to_hash
-      dest_node = @map.closest_node @pos
+      @pos = @map.nodes.to_a.choice.pos
+      curr = @map.closest_node @pos
+      dest_node = curr
       # pick a random dest that is relatively accessible from the
       # current position
       last = @dest
@@ -17,8 +18,8 @@ module Driving
         last = dest_node
       end
       @dest = dest_node.pos
-      facing = dest_node.neighbors.to_a.choice
-      @phi = (facing.pos - @pos).dir
+      facing = curr.neighbors.to_a.choice
+      update_phi (facing.pos - @pos).dir
       initial = {
         :type => :initial,
         :map => @map.to_hash,

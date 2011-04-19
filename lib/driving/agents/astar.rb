@@ -123,9 +123,9 @@ module Driving
 
       # puts "Got update"
       # puts "Speed: #{@speed}"
-      # new_delta, new_accel = navigate
-      # resp[:delta] = new_delta
-      # resp[:accel] = new_accel
+      new_delta, new_accel = navigate
+      resp[:delta] = new_delta
+      resp[:accel] = new_accel
       send resp
     end
 
@@ -138,6 +138,17 @@ module Driving
     end
 
     def socket; @socket; end
+
+    # Neville's algorithm for finding the quadratic spline through
+    # three points (en.wikipedia.org/wiki/Neville's_algorithm)
+    # def neville(ps, x)
+    #   n = ps.size
+    #   xs = ps.map{|p| p.x}
+    #   ys = ps.map{|p| p.y}
+    #   1.upto(n) do |i|
+    #     y[0..n-i] = ((x - xs[k
+    #   end
+    # end
     
     def navigate
       if @route.size == 0
