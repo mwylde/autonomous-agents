@@ -48,7 +48,18 @@ module Driving
         :delta_speed => @delta_speed,
         :speed => @speed,
         :accel => @accel
+        :curr_road => @curr_road
       }
+    end
+
+    # FIXME this is a very inefficient implementation that just searches through
+    # all the roads when it's called. should ideally be tracking the current
+    # road and updating whenever the agent moves into a new road.
+    def find_curr_road
+      @map.road_set.each do |road|
+        return road if road.contains @pos
+      end
+      return nil
     end
 
     # Starts the update loop which periodically updates the state
