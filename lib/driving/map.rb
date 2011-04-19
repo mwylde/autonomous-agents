@@ -16,7 +16,7 @@ module Driving
 
   # Calculates the four points of the rectangle for the road segment
   # between p0 and p1
-  def self.calculate_road p0, p1
+  def calculate_road p0, p1
     # unit vector pointing from p0 to p1
     n = (p1 - p0).normalize.normal_vector * ROAD_WIDTH
     
@@ -61,7 +61,8 @@ module Driving
   # represents a point on a road, and each edge represents a segment
   # of a road. Nodes with more than two edges are intersections.
   class Map
-    attr_reader :nodes, :lat_min, :lat_max, :long_min, :long_max, :world_max
+    attr_reader :nodes, :road_hash, :road_set, :lat_min, :lat_max,
+    :long_min, :long_max, :world_max
 
     # Creates a new map from a json file containing the graph data. An
     # appropriate json file can be generated from an osm file by using
@@ -107,7 +108,8 @@ module Driving
       @nodes.freeze
 
       # create a two-layered hash storing roads
-      @roads = create_roads
+      @road_hash = create_roads
+      @road_set = road_set_from_hash @road_hash
     end
 
     def create_roads
@@ -137,6 +139,26 @@ module Driving
           end
         end
       end
+
+      return roads
+    end
+
+    # returns a set of all the roads. this 
+    def road_set_from_hash hash
+      s = Set.new
+
+      # the road hash is indexed by start point and then by end point
+      hash.each do |p0, p0_hash|
+        p0_hash.each do |p1, r|
+          # FIXME: I think the fact that it's a set should handle the fact that
+          # the double-hash has duplicate references to roads. If not, then I
+          # can keep a list of sets of points that have been added and only add
+          # a road if it's not in the list of set of points.
+          s.add r
+        end
+      end
+
+      return s
     end
 
     def clip_walls
@@ -152,7 +174,9 @@ module Driving
 
           @roads[n][ms[0]].walls.each do |w|
             if w.hits inner_pt
-          
+              # FIXME: LOTS MORE IMPLEMENTATINO
+            end
+          end
         end
       end
     end

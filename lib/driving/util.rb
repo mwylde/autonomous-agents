@@ -241,4 +241,5 @@ module Driving
       # see if the point is actually on the extension of the segment.
       dist_to_pt(pt) < 0.01
     end
+  end
 end

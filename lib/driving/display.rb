@@ -103,13 +103,10 @@ module Driving
     end
 
     def render_map
-      @map.nodes.each do |n|
-        n.neighbors.each do |m|
-          # we don't want to draw stuff twice
-          next if m.object_id > n.object_id
-          if on_screen? n or on_screen? m
-            road n.pos, m.pos
-          end
+      @map.road_set.each do |r|
+        line r if on_screen? r
+        r.walls.each do |w|
+          line w if on_screen? w
         end
       end
     end
@@ -160,18 +157,6 @@ module Driving
       end
     end
 
-    # draws a road with lines connecting points p0 and p1), specified in world
-    # coordinates
-    def road p0, p1
-      a, b, c, d = Driving::calculate_road p0, p1
-      @g.setColor Color.black
-      line a, c
-      line b, d
-
-      @g.setColor Color.red
-      line p0, p1
-    end
-
     # draws a very small circle of radius DOT_RADIUS centered at p in world
     # coordinates.
     def dot p
@@ -189,9 +174,17 @@ module Driving
     end
 
     # draws a line between two points specified in world coordinates.
-    def line p0, p1
-      s_p0 = world_to_screen p0
-      s_p1 = world_to_screen p1
+    def line *args
+      case args[0]
+      when Driving::Point
+        s_p0 = world_to_screen p0
+        s_p1 = world_to_screen p1
+      when Driving::LineSegment, Driving::Road, Driving::Wall
+        s_p0 = world_to_screen(args[0].p0)
+        s_p1 = world_to_screen(args[0].p1)
+      else
+        raise "Invalid specification of line to draw"
+      end
       
       @g.draw_line s_p0.x, s_p0.y, s_p1.x, s_p1.y
     end
@@ -292,12 +285,18 @@ module Driving
       Point.new(wx, wy)
     end
 
-    # determines if a point in world coordinates is on the screen.
-    def on_screen?(p)
-      # allow on_screen? to be passed not only points, but objects which have a
-      # point variable named pos
-      if defined? p.pos
-        p = p.pos
+    # valid inputs are: points, linesegments (and roads/walls), and items that
+    # have a pos variable.
+    def on_screen? p
+      case p
+      when Driving::Point
+      when Driving::LineSegment, Driving::Road, Driving::Wall
+        # FIXME this should be smarter; right now the road won't render if the
+        # line is passing through the screen but both end points are off the
+        # screen.
+        return on_screen?(p.p0) || on_screen?(p.p1)
+      else
+        return on_screen? p.pos
       end
 
       screen_p = world_to_screen p
