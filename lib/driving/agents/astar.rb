@@ -3,7 +3,7 @@ java_import java.util.PriorityQueue
 
 module Driving
   class AStarAgent < ClientAgent
-    MAX_NODES_EXPANDED = 10000
+    MAX_NODES_EXPANDED = 1000000
     class AStarNode
       attr_accessor :state, :parent, :g, :h
       def initialize state, parent
@@ -32,12 +32,15 @@ module Driving
     # destination node using A*
     def astar
       fringe = PriorityQueue.new
-      fringe.add(AStarNode.new(@curr, nil))
+      # figure out which neighbor we're facing
+      _, facing = @curr.neighbors.collect{|n|
+        [((n.pos - @curr.pos).dir - @phi).abs, n]
+      }.min
+      fringe.add(AStarNode.new(facing, AStarNode.new(@curr, nil)))
       closed_states = Set.new
       nodes_expanded = 0
       until fringe.isEmpty
-        current = fringe.peek
-        fringe.remove current # stupid java
+        current = fringe.remove
         next if closed_states.include? current
         return current if current.state == @goal
 
@@ -48,7 +51,10 @@ module Driving
         # node, it seems kind of silly to count those as expansions
         nodes_expanded += 1 if expanded.size > 1
         
-        return nil if nodes_expanded > MAX_NODES_EXPANDED
+        if nodes_expanded > MAX_NODES_EXPANDED
+          puts "Reached max expansion depth"
+          return nil
+        end
         expanded.each{|successor|
           successor.g = current.g + current.state.pos.dist(successor.state.pos)
           successor.h = successor.state.pos.dist @goal.pos
@@ -103,20 +109,30 @@ module Driving
       # find cloest node to our current pos
       @curr = @map.closest_node @pos
 
+      resp = {}
+      
       case msg[:type]
       when :initial, :dest_change
         change_dest Point.new(*msg[:dest])
+        renders = ["@g.set_color Color.blue"]
+        @route.each{|r|
+          renders << "dot Point.new(#{r.pos.x.to_s}, #{r.pos.y.to_s})"
+        }
+        resp[:renders] = renders
       end
 
       # puts "Got update"
-      puts "Speed: #{@speed}"
-      new_delta, new_accel = navigate
-      send({:delta => new_delta, :accel => new_accel})
+      # puts "Speed: #{@speed}"
+      # new_delta, new_accel = navigate
+      # resp[:delta] = new_delta
+      # resp[:accel] = new_accel
+      send resp
     end
 
     def change_dest p
       @dest = p
       @goal = @map.closest_node @dest
+      puts "Found goal: #{@goal}"
       @route = calculate_route
       puts "Route: #{@route.inspect}"
     end
@@ -126,6 +142,9 @@ module Driving
     def navigate
       if @route.size == 0
         puts "Can't navigate, no route #{@route.inspect}"
+        return [0, 0]
+      elsif @route.size == 1
+        puts "Found goal"
         return [0, 0]
       end
       # check if we're at the current way point
@@ -149,7 +168,7 @@ module Driving
       else
         new_delta = [@delta + 0.005, Math::PI/2-0.01].min
       end
-      [new_delta, @speed > 5 ? 0 : 0.2]
+      [new_delta, @speed > 0.5 ? 0 : 0.05]
     end
   end
 end

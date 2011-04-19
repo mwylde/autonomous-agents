@@ -18,13 +18,13 @@ module Driving
   class Display < Canvas
     MAX_DISPLAY_CRUMBS = 1000
     
-    WORLD_DOT_RADIUS = 0.3
+    WORLD_DOT_RADIUS = 0.6
     POINT_RADIUS = 1
     INIT_ZOOM = 30
     MIN_ZOOM = 5
     MAX_ZOOM = 1000000
     SLEEP_DURATION = 0.05
-    attr_accessor :map
+    attr_accessor :map, :g
     
     def initialize map, agents, w, h, camera_pos = nil
       puts "Creating display"
@@ -137,7 +137,18 @@ module Driving
         end
 
         @display_crumbs.unshift a.pos
-        
+
+        if a.dest
+          @g.set_color Color.green
+          dot a.dest
+        end
+
+        if a.renders
+          a.renders.each{|x|
+            eval x
+          }
+        end
+
         next unless on_screen? a.ne or on_screen? a.ne or on_screen? a.sw or
           on_screen? a.se
         
@@ -153,10 +164,6 @@ module Driving
 
         dot a.north
 
-        if a.dest
-          @g.set_color Color.green
-          ellipse a.dest, Vector.new(10, 10)
-        end
       end
     end
 

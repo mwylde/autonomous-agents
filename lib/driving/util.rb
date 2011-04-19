@@ -51,9 +51,8 @@ module Driving
     end
 
     def +(v)
-      cname = v.class.name
-      unless cname == "Driving::Vector"
-        raise "Can only add a vector, not a #{cname}, to a point"
+      unless v.is_a? Driving::Vector
+        raise "Can only add a vector, not a #{a.class}, to a point"
       end
       add_vector v
     end
@@ -69,13 +68,11 @@ module Driving
     end
 
     def -(a)
-      cname = a.class.name
-      if cname == "Driving::Vector"
-        subtract_vector a
-      elsif cname == "Driving::Point"
-        subtract_point a
+      case a
+      when Driving::Vector then subtract_vector a
+      when Driving::Point then subtract_point a
       else
-        raise "Can only subtract a vector or a point, not a #{cname}, from a point"
+        raise "Can only subtract a vector or a point, not a #{a.class}, from a point"
       end
     end
 

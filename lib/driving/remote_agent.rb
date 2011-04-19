@@ -6,17 +6,19 @@ module Driving
       super *agent_params
       @socket = socket
       map = @map.to_hash
-      @dest = @map.closest_node @pos
+      dest_node = @map.closest_node @pos
       # pick a random dest that is relatively accessible from the
       # current position
       last = @dest
-      while rand > 0.01
-        choices = @dest.neighbors.to_a
+      while rand > 0.001
+        choices = dest_node.neighbors.to_a
         choices.delete last
-        @dest = choices.choice #get random
-        last = @dest
+        dest_node = choices.choice #get random
+        last = dest_node
       end
-      @dest = @dest.pos
+      @dest = dest_node.pos
+      facing = dest_node.neighbors.to_a.choice
+      @phi = (facing.pos - @pos).dir
       initial = {
         :type => :initial,
         :map => @map.to_hash,
@@ -39,8 +41,9 @@ module Driving
     def handle_msg msg
       # get actions from agents, which is choice of delta_speed (how
       # fast it's turning the wheel) and acceleration
-      @delta = msg[:delta]
-      @accel = msg[:accel]
+      @delta = msg[:delta] if msg[:delta]
+      @accel = msg[:accel] if msg[:accel]
+      @renders = msg[:renders] if msg[:renders]
       puts "delta = #{@delta}; accel = #{@accel}" if rand < 0.01
       send(self.to_hash.merge({:type => :update}))
     end
