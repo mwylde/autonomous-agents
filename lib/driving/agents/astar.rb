@@ -134,8 +134,16 @@ module Driving
       # we determine by calculating the rectangle of the road that
       # we've passed since our last nav op and check if the current
       # waypoint is inside
-      road_segment = Driving::calculate_road(@old_pos, @pos)
-      @route.pop if at || @route[0].pos.in_convex_poly(road_segment)
+
+      # to determine if we've passed a way point since our last update, we
+      # create a pseudo-road object from the path traveled since the last nav
+      # op, and then see if the current waypoint is within that
+      # pseudo-road. (note: by pesudo-road, we mean to convey that a road is
+      # meant to represent a connection between two nodes on the map, but we are
+      # constructing a road object out of two arbitrary points on the map out of
+      # convenience to use road's contain method.
+      road = Road.new(@old_pos, @pos)
+      @route.pop if at || road.contains(@route[0].pos)
       
       # find the difference in phi between our current position and
       # our next waypoint

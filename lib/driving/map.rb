@@ -31,21 +31,35 @@ module Driving
     def self.naive_walls p0, p1
       n = (p1 - p0).normalize.normal_vector * ROAD_WIDTH
 
-      Set.new [Wall.new(p0+n, p1+n), Wall.new(p0-n, p1-n)]
+      [Wall.new(p0+n, p1+n), Wall.new(p0-n, p1-n)]
     end
     
     attr_accessor :p0, :p1, :naive, :walls
-    def initialize(p0, p1, walls = [])
+    def initialize(p0, p1, walls = nil)
       @p0 = p0
       @p1 = p1
 
       if walls.nil?
-        @walls = self.naive_walls p0, p1
+        @walls = Set.new(Road.naive_walls p0, p1)
         @naive = true
       else
         @walls = walls
         @naive = false
       end
+    end
+
+    def to_s
+      "Road: #{@p0} -> #{@p1} with #{@walls}"
+    end
+
+    # FIXME This is a naive implementation which uses naive walls. 
+    def contains p
+      naive_walls = Road.naive_walls @p0, @p1
+      a = naive_walls[0].p0
+      b = naive_walls[0].p1
+      c = naive_walls[1].p1
+      d = naive_walls[1].p0
+      p.in_convex_poly([a, b, c, d])
     end
   end
 
@@ -54,6 +68,10 @@ module Driving
     def initialize(p0, p1)
       @p0 = p0
       @p1 = p1
+    end
+
+    def to_s
+      "Wall: #{@p0} -> #{@p1}"
     end
   end
 
@@ -159,6 +177,16 @@ module Driving
       end
 
       return s
+    end
+
+    def get_road p0, p1
+      if @road_hash[p0].nil? || @road_hash[p1].nil?
+        raise "Neither point specified has any roads"
+      elsif @road_hash[p0][p1].nil?
+        raise "The points specified do not define a road"
+      else
+        @road_hash[p0][p1]
+      end
     end
 
     def clip_walls
