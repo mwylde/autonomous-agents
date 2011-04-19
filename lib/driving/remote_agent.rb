@@ -7,18 +7,20 @@ module Driving
       @socket = socket
       @pos = @map.nodes.to_a.choice.pos
       curr = @map.closest_node @pos
-      dest_node = curr
+      facing = curr.neighbors.to_a.choice
+      puts facing.inspect
       # pick a random dest that is relatively accessible from the
       # current position
-      last = @dest
-      while rand > 0.001
+      dest_node = facing
+      last = curr
+      while rand > 0.001 && dest_node.neighbors.size > 1
+        puts dest_node.inspect
         choices = dest_node.neighbors.to_a
         choices.delete last
-        dest_node = choices.choice #get random
         last = dest_node
+        dest_node = choices.choice #get random
       end
       @dest = dest_node.pos
-      facing = curr.neighbors.to_a.choice
       update_phi (facing.pos - @pos).dir
       initial = {
         :type => :initial,
@@ -44,8 +46,10 @@ module Driving
       # fast it's turning the wheel) and acceleration
       @delta = msg[:delta] if msg[:delta]
       @accel = msg[:accel] if msg[:accel]
+      # cheating
+      update_phi msg[:phi] if msg[:phi]
       @renders = msg[:renders] if msg[:renders]
-      puts "delta = #{@delta}; accel = #{@accel}" if rand < 0.01
+      puts "phi = #{@phi}; accel = #{@accel}" if rand < 0.01
       send(self.to_hash.merge({:type => :update}))
     end
   end

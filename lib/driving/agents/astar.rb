@@ -114,48 +114,60 @@ module Driving
       case msg[:type]
       when :initial, :dest_change
         change_dest Point.new(*msg[:dest])
-        renders = ["@g.set_color Color.blue"]
-        @route.each{|r|
-          renders << "dot Point.new(#{r.pos.x.to_s}, #{r.pos.y.to_s})"
-        }
-        resp[:renders] = renders
       end
 
       # puts "Got update"
       # puts "Speed: #{@speed}"
       new_delta, new_accel = navigate
-      resp[:delta] = new_delta
+      resp[:phi] = new_delta
       resp[:accel] = new_accel
+      
+      renders = ["@g.set_color Color.blue"]
+      @route.each{|r|
+        s = "dot Point.new(#{r.pos.x.to_s}, #{r.pos.y.to_s})"
+        if r == @curr
+          s = "@g.set_color Color.green; #{s}; @g.set_color Color.blue"
+        end
+        renders << s
+      }
+      resp[:renders] = renders
+      
       send resp
     end
 
     def change_dest p
       @dest = p
       @goal = @map.closest_node @dest
-      puts "Found goal: #{@goal}"
       @route = calculate_route
       puts "Route: #{@route.inspect}"
     end
 
     def socket; @socket; end
 
-    # Neville's algorithm for finding the quadratic spline through
-    # three points (en.wikipedia.org/wiki/Neville's_algorithm)
-    # def neville(ps, x)
-    #   n = ps.size
-    #   xs = ps.map{|p| p.x}
-    #   ys = ps.map{|p| p.y}
-    #   1.upto(n) do |i|
-    #     y[0..n-i] = ((x - xs[k
-    #   end
-    # end
+    # Neville's algorithm for finding the spline through n points
+    # (en.wikipedia.org/wiki/Neville's_algorithm)
+    def neville(ps, x)
+      n = ps.size
+      xs = ps.map{|p| p.x}
+      ys = ps.map{|p| p.y}
+      ps = []
+      n.times{|i|
+        (n-i).times{|j|
+          if i == 0
+            ps[j] = ys[j]
+          else
+            ps[j] = ((x-xs[j+i])*ps[j]+(xs[j]-x)*ps[j+1])/(xs[j]-xs[j+i])
+          end
+        }
+      }
+      ps[0]
+    end
     
     def navigate
       if @route.size == 0
-        puts "Can't navigate, no route #{@route.inspect}"
         return [0, 0]
       elsif @route.size == 1
-        puts "Found goal"
+
         return [0, 0]
       end
       # check if we're at the current way point
@@ -165,21 +177,42 @@ module Driving
       # we've passed since our last nav op and check if the current
       # waypoint is inside
       road_segment = Driving::calculate_road(@old_pos, @pos)
-      @route.pop if at || @route[0].pos.in_convex_poly(road_segment)
+      @last = @route.pop if at || @route[0].pos.in_convex_poly(road_segment)
       
-      # find the difference in phi between our current position and
-      # our next waypoint
-      u = Vector.from_mag_dir 1, @phi
-      v = @pos.subtract_point @route[-1].pos
-      theta = Math.acos(u.dot(v)/v.mag)
-      # on right side, should move left
-      new_delta = 0
-      if theta > v.dir
-        new_delta = [@delta - 0.005, -Math::PI/2+0.01].max
-      else
-        new_delta = [@delta + 0.005, Math::PI/2-0.01].min
-      end
-      [new_delta, @speed > 0.5 ? 0 : 0.05]
+      [get_new_delta, @speed > 5 ? 0 : 0.1]
+    end
+
+    # The basic idea behind this algorithm is as follows. We want to
+    # figure out how often we get to run, so we compute a rolling
+    # average of the time between the last five invocation of
+    # handle_message. We use this and our current speed to predict how
+    # far ahead we'll be by the next time we get to react. We find the
+    # point that we predict we'll reach, and then use spline
+    # interpolation to figure out the angle we'll want to be at when
+    # we get there.
+    #
+    # Actually, that's how I'd like to do it. For now, I'm just going
+    # to calculute the tangent of the spline at the current point and
+    # try to turn so that I'm parallel
+    def get_new_delta
+      return @delta unless @last && @route.size > 1
+      # points that define the center-road spline
+      x, y, z = @last.pos, @route[-1].pos, @route[-2].pos
+
+      # points that define the edge-road spline
+      xp, _, yp, _ = Driving::calculate_road(x, y)
+      _, _, zp, _  = Driving::calculate_road(y, z)
+
+      # average of the above points, to get the path that we want the
+      # car to follow (the center of the lane)
+      xb = Point.new((x.x + xp.x)/2, (x.y + xp.y))
+      yb = Point.new((y.x + yp.x)/2, (y.y + yp.y))
+      zb = Point.new((z.x + zp.x)/2, (z.y + zp.y))
+
+      # find the approx tangent
+      xs = [@pos.x-0.05, @pos.x+0.05]
+      a, b = xs.map{|x| Point.new(x, neville([xb, yb, zb], x)) }
+      phi_wanted = (a-b).dir
     end
   end
 end
