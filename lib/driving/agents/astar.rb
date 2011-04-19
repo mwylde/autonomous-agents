@@ -178,7 +178,11 @@ module Driving
 
     def get_facing nodes
       nodes.sort_by{|n|
-        ((n.pos - @pos).dir - @phi).abs
+        if n.pos.dist(@pos) < 0.1
+          10000000
+        else
+          ((n.pos - @pos).dir - @phi).abs
+        end
       }
     end
     
@@ -190,34 +194,39 @@ module Driving
       end
 
       facing, other = get_facing [@curr.n0, @curr.n1]
+      # for now we're cheating and jsut setting our phi to be parallel
+      # to the road
+      phi = (facing.pos-other.pos).dir
 
-      # check if we've moved onto a different road since our last time running
+      # check if we've moved onto a different road since our last time
+      # running
       if @old_curr != @curr
         # make sure we're on the right track. If we're not,
         # replan
-        facingp, otherp = get_facing [@old_curr.n0, @old_curr.n1]
-        if facingp != @route[-1]
+        waypoint, passed = [@curr.n0, @curr.n1].sort_by{|n|
+          n.pos.dist(@route[-1].pos)
+        }
+        if waypoint != @route[-1] && waypoint != @route[-2]
           @needs_replan = true
           # slow down as fast as possible
           return [0, -5]
         else
           # otherwise pop the passed node off the queue and continue
           @route.pop
+          phi = (@route[-1].pos-@pos).dir
         end
       end
 
       # If we're clsoe to the end point we want to slow down so we can
       # make the turn
-      accel = 0.1
-      if other.pos.dist(@pos) < 10
+      accel = 1
+      if facing.pos.dist(@pos) < 10
         #accel = -0.5
       elsif @speed > 5
         accel = 0
       end
 
-      # for now we're cheating and jsut setting our phi to be parallel
-      # to the road
-      [(facing.pos-other.pos).dir, accel]
+      [phi, accel]
     end
 
     # The basic idea behind this algorithm is as follows. We want to
