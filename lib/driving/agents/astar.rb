@@ -9,18 +9,20 @@ module Driving
     MAX_NODES_EXPANDED = 10000
     # Mode in which the agent simply goes straight, following the
     # current road
-    STRAIGHT_MODE = :follow
+    STRAIGHT_MODE = :straight
     # Mode in which the agent executes a turn towards the next
     # waypoint
     TURN_MODE = :turn
     # Mode in which the agent stops and replans
     REPLAN_MODE = :replan
+    # Just goes forward until outside of the range of the start node
+    START_MODE = :start
     
     def initialize *args
       super *args
 
       # current operation mode of the agent
-      @mode = STRAIGHT_MODE
+      @mode = START_MODE
     end
 
     # Node class used for A* navigation. Includes the state, which is
@@ -225,6 +227,11 @@ module Driving
       [phi, @speed > 2 ? -0.1 : 0]
     end
 
+    def mode= mode
+      puts "Mode transitioned from #{@mode} to #{mode}"
+      @mode = mode
+    end
+
     # Figure out which mode we're in and run the corresponding
     # navigation action
     def navigate
@@ -235,15 +242,14 @@ module Driving
       end
 
       facing, other = get_facing [@curr.n0, @curr.n1]
-      
       if @mode == STRAIGHT_MODE
         # check if we should transition
         if facing.pos.dist(@pos) < ROAD_WIDTH
-          @mode = TURN_MODE
+          self.mode = TURN_MODE
           @turn_from_node = facing
           @turn_to_node = @route[-1]
           if !facing.neighbors.include? @route[-1]
-            @mode = REPLAN_MODE
+            self.mode = REPLAN_MODE
             return [0, -5]
           end
           return turn_navigate
@@ -253,12 +259,17 @@ module Driving
       elsif @mode == TURN_MODE
         closest = @map.closest_node @pos
         if closest.pos.dist(@pos) > ROAD_WIDTH
-          @mode = STRAIGHT_MODE
+          self.mode = STRAIGHT_MODE
           @route.pop
           return straight_navigate
         else
           return turn_navigate
         end
+      elsif @mode == START_MODE
+        if other.pos.dist(@pos) > ROAD_WIDTH
+          self.mode = STRAIGHT_MODE
+        end
+        straight_navigate
       end
     end
 

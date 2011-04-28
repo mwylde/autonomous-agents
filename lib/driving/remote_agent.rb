@@ -1,5 +1,7 @@
 module Driving
   class RemoteServerAgent < ServerAgent
+    attr_reader :paused
+    
     include Communicator
 
     def initialize socket, *agent_params
@@ -43,11 +45,22 @@ module Driving
       end
     end
 
+    def paused= p
+      @paused = p
+      if !p
+        handle_msg @paused_msg
+      end
+    end
+
     def socket
       @socket
     end
 
     def handle_msg msg
+      if @paused
+        @paused_msg = msg
+        return
+      end
       # get actions from agents, which is choice of delta_speed (how
       # fast it's turning the wheel) and acceleration
       @delta = msg[:delta] if msg[:delta]

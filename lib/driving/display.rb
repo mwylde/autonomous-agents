@@ -25,6 +25,7 @@ module Driving
     MAX_ZOOM = 1000000
     SLEEP_DURATION = 0.05
     attr_accessor :map, :g
+    attr_reader :paused
     
     def initialize map, agents, w, h, camera_pos = nil
       puts "Creating display"
@@ -59,10 +60,18 @@ module Driving
       @hidden_crumbs = []
 
       @input = InputHandler.new @c_pos.clone, INIT_ZOOM, MIN_ZOOM, MAX_ZOOM, self
+      @paused = false
       addMouseMotionListener @input
       addMouseListener @input
       addMouseWheelListener @input
       addKeyListener @input
+    end
+
+    def paused= p
+      @paused = p
+      if p
+        @agents.each{|a| a.paused = p}
+      end
     end
 
     def center a
@@ -370,8 +379,12 @@ module Driving
     end
 
     def keyPressed e
-      if e.getKeyCode == KeyEvent::VK_SPACE
-        @following = ! @following
+      case e.getKeyCode
+      when KeyEvent::VK_SPACE then @following = !@following
+      end
+
+      case e.getKeyChar
+      when 'p' then @display.paused = !@display.paused
       end
     end
 
