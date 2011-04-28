@@ -68,10 +68,9 @@ module Driving
     end
 
     def paused= p
+      puts "Setting paused to #{p}"
       @paused = p
-      if p
-        @agents.each{|a| a.paused = p}
-      end
+      @agents.each{|a| a.paused = p}
     end
 
     def center a
@@ -94,6 +93,11 @@ module Driving
         @input.c_pos = @c_pos.clone
       else
         @c_pos = @input.c_pos.clone
+      end
+
+      if @paused
+        @g.setColor(Color.red)
+        @g.fillRect(0,0,20,20)
       end
 
       @z_y = @input.zoom
@@ -383,8 +387,9 @@ module Driving
       when KeyEvent::VK_SPACE then @following = !@following
       end
 
+      puts "KeyChar: #{e.getKeyChar.inspect}"
       case e.getKeyChar
-      when 'p' then @display.paused = !@display.paused
+      when 112 then @display.paused = !@display.paused # p
       end
     end
 

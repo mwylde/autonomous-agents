@@ -1,7 +1,5 @@
 module Driving
   class RemoteServerAgent < ServerAgent
-    attr_reader :paused
-    
     include Communicator
 
     def initialize socket, *agent_params

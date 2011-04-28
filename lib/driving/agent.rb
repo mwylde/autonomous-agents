@@ -16,6 +16,7 @@ module Driving
 
     attr_reader :id, :pos, :phi, :delta, :delta_speed, :speed, :accel, :w, :l,
     :tw, :tl, :u, :n, :ne, :nw, :se, :sw, :crumbs, :north, :map, :dest, :renders
+    attr_accessor :paused
     
     # Creates a default agent with positional parameters set to 0; requires
     # width and height specification
@@ -71,11 +72,12 @@ module Driving
         curr_time = Time.now
         
         loop do
-          last_time = curr_time
-          curr_time = Time.now
-
-          @speed += @accel * (curr_time - last_time)
-          @delta += @delta_speed * (curr_time - last_time)
+            last_time = curr_time
+            curr_time = Time.now
+          if !@paused
+            @speed += @accel * (curr_time - last_time)
+            @delta += @delta_speed * (curr_time - last_time)
+          end
 
           sleep 1.0 / STATE_UPDATE_FREQUENCY
         end
@@ -86,12 +88,13 @@ module Driving
         curr_time = Time.now
         
         loop do
-          last_time = curr_time
-          curr_time = Time.now
+            last_time = curr_time
+            curr_time = Time.now
+          if !@paused          
+            move(curr_time - last_time)
           
-          move(curr_time - last_time)
-          
-          sleep 1.0 / MOVE_FREQUENCY
+            sleep 1.0 / MOVE_FREQUENCY
+          end
         end
       end
     end
