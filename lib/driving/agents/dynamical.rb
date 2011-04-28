@@ -7,6 +7,35 @@ module Driving
     H1 = 1.0
     A = 1.0
 
+=begin
+    def f_tar phi, a, psi_tar
+      -a * Math.sin(phi - psi_tar)
+    end
+
+    def R phi, psi, d_psi
+      frac = (phi - psi) / d_psi
+      frac * Math.exp(1 - Math.abs(frac))
+    end
+
+    def W h1, phi, psi, d_psi, sigma
+      0.5 * (Math.tanh(h1*Math.cos(phi-psi)-Math.cos(d_psi+sigma))+1)
+    end
+
+    def D dm, d0
+      Math.exp(-1 * dm/d0)
+    end
+
+    def F_obs_i phi, obs_i, d0, sig, h1
+      # unpack obs attributes
+      dm, psi, d_psi = obs_i
+
+      D_i = D dm, d0
+      W_i = W h1, phi, psi, d_psi, sig
+      R_i = R phi, psi, d_psi
+      D_i * W_i * R_i
+    end
+=end
+                                        
     def f_tar tar, a = A
       psi = (tar[0] - @pos).dir
       
