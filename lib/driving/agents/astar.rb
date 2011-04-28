@@ -134,6 +134,8 @@ module Driving
       if msg[:type] == :initial
         @map = Map.new(msg[:map])
         @old_pos = @pos
+        @mode = :start
+        @start_node = @map.closest_node @pos
       end
       # find the road segment we're currently on, if we're on one
       @old_curr = @curr
@@ -174,7 +176,7 @@ module Driving
       if @mode == REPLAN_MODE
         puts "Off-track, recalculating..."
         change_dest @dest
-        @need_replan = false
+        self.mode = START_MODE
       end
     end
 
@@ -217,13 +219,14 @@ module Driving
     end
 
     def straight_navigate
-      [0, @speed > 5 ? 0 : 0.5]
+      facing, other = get_facing [@curr.n0, @curr.n1]
+      [(facing.pos-other.pos).dir, @speed > 5 ? 0 : 0.5]
     end
 
     def turn_navigate
       # for now we're cheating and just setting our phi to be parallel
       # to the road
-      phi = (@turn_to_node.pos-@pos).dir
+      phi = (@pos-@turn_to_node.pos).dir
       [phi, @speed > 2 ? -0.1 : 0]
     end
 
@@ -266,7 +269,7 @@ module Driving
           return turn_navigate
         end
       elsif @mode == START_MODE
-        if other.pos.dist(@pos) > ROAD_WIDTH
+        if @start_node.pos.dist(@pos) > ROAD_WIDTH
           self.mode = STRAIGHT_MODE
         end
         straight_navigate

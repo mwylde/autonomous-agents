@@ -46,7 +46,7 @@ module Driving
     def paused= p
       @paused = p
       if !p
-        handle_msg @paused_msg
+        handle_msg @paused_msg if @paused_msg
       end
     end
 
