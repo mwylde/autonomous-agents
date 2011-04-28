@@ -131,11 +131,11 @@ module Driving
 
     def render_agents
       @current_agents.each do |a|
-        if @display_crumbs.size >= MAX_DISPLAY_CRUMBS * @current_agents.size
-          @display_crumbs.pop
-        end
+        #if @display_crumbs.size >= MAX_DISPLAY_CRUMBS * @current_agents.size
+        #  @display_crumbs.pop
+        #end
 
-        @display_crumbs.unshift a.pos
+        #@display_crumbs.unshift a.pos
 
         if a.dest
           @g.set_color Color.green

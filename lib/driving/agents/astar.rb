@@ -3,7 +3,30 @@ java_import java.util.PriorityQueue
 
 module Driving
   class AStarAgent < ClientAgent
+    # The maximum number of nodes to expand during A* search. Larger
+    # values will ensure that we can find paths to destinations that
+    # are further away, while smaller values will make planning faster.
     MAX_NODES_EXPANDED = 10000
+    # Mode in which the agent simply goes straight, following the
+    # current road
+    STRAIGHT_MODE = :follow
+    # Mode in which the agent executes a turn towards the next
+    # waypoint
+    TURN_MODE = :turn
+    # Mode in which the agent stops and replans
+    REPLAN_MODE = :replan
+    
+    def initialize *args
+      super *args
+
+      # current operation mode of the agent
+      @mode = STRAIGHT_MODE
+    end
+
+    # Node class used for A* navigation. Includes the state, which is
+    # the Driving::Node this AStarNode represents, parent, which is
+    # the AStarNode that expanded this one, and g and h which are the
+    # current cost and expected remaining cost respectively.
     class AStarNode
       attr_accessor :state, :parent, :g, :h
       def initialize state, parent
@@ -13,6 +36,7 @@ module Driving
         @h = 0
       end
 
+      # Creates an array of AStarNodes from this node's neighbors
       def expand
         @state.neighbors.map{|n|
           AStarNode.new(n, self)
@@ -28,6 +52,7 @@ module Driving
       end
         
     end
+    
     # calculates the best route from the current node to the
     # destination node using A*
     def astar
@@ -102,6 +127,8 @@ module Driving
       # puts "Current pos: #{@pos}"
       @route ||= []
 
+      resp = {}
+      
       if msg[:type] == :initial
         @map = Map.new(msg[:map])
         @old_pos = @pos
@@ -109,13 +136,14 @@ module Driving
       # find the road segment we're currently on, if we're on one
       @old_curr = @curr
       @curr = @map.road_for_point @pos
-      # we're off-road, we can't do much
+      # we're off-road, we can't do much but stop
       if !@curr
         puts "Fell off road"
+        resp[:phi] = 0
+        resp[:accel] = -20
+        send resp
         return
       end
-
-      resp = {}
       
       case msg[:type]
       when :initial, :dest_change
@@ -141,7 +169,7 @@ module Driving
       
       send resp
 
-      if @needs_replan
+      if @mode == REPLAN_MODE
         puts "Off-track, recalculating..."
         change_dest @dest
         @need_replan = false
@@ -185,7 +213,20 @@ module Driving
         end
       }
     end
-    
+
+    def straight_navigate
+      [0, @speed > 5 ? 0 : 0.5]
+    end
+
+    def turn_navigate
+      # for now we're cheating and just setting our phi to be parallel
+      # to the road
+      phi = (@turn_to_node.pos-@pos).dir
+      [phi, @speed > 2 ? -0.1 : 0]
+    end
+
+    # Figure out which mode we're in and run the corresponding
+    # navigation action
     def navigate
       if @route.size == 0
         return [0, 0]
@@ -194,39 +235,31 @@ module Driving
       end
 
       facing, other = get_facing [@curr.n0, @curr.n1]
-      # for now we're cheating and jsut setting our phi to be parallel
-      # to the road
-      phi = (facing.pos-other.pos).dir
-
-      # check if we've moved onto a different road since our last time
-      # running
-      if @old_curr != @curr
-        # make sure we're on the right track. If we're not,
-        # replan
-        waypoint, passed = [@curr.n0, @curr.n1].sort_by{|n|
-          n.pos.dist(@route[-1].pos)
-        }
-        if waypoint != @route[-1] && waypoint != @route[-2]
-          @needs_replan = true
-          # slow down as fast as possible
-          return [0, -5]
+      
+      if @mode == STRAIGHT_MODE
+        # check if we should transition
+        if facing.pos.dist(@pos) < ROAD_WIDTH
+          @mode = TURN_MODE
+          @turn_from_node = facing
+          @turn_to_node = @route[-1]
+          if !facing.neighbors.include? @route[-1]
+            @mode = REPLAN_MODE
+            return [0, -5]
+          end
+          return turn_navigate
         else
-          # otherwise pop the passed node off the queue and continue
+          return straight_navigate
+        end
+      elsif @mode == TURN_MODE
+        closest = @map.closest_node @pos
+        if closest.pos.dist(@pos) > ROAD_WIDTH
+          @mode = STRAIGHT_MODE
           @route.pop
-          phi = (@route[-1].pos-@pos).dir
+          return straight_navigate
+        else
+          return turn_navigate
         end
       end
-
-      # If we're clsoe to the end point we want to slow down so we can
-      # make the turn
-      accel = 1
-      if facing.pos.dist(@pos) < 10
-        #accel = -0.5
-      elsif @speed > 5
-        accel = 0
-      end
-
-      [phi, accel]
     end
 
     # The basic idea behind this algorithm is as follows. We want to
