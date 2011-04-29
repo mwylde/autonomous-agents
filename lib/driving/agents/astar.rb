@@ -275,7 +275,6 @@ module Driving
           self.mode = STRAIGHT_MODE
           @route.pop if @route[-1] == @start_node
         end
-        puts "Start mode: #{[0, 2]}"
         return [@phi, 2]
       end
     end

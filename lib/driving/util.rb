@@ -93,6 +93,12 @@ module Driving
       self + (p - self)/2.0
     end
 
+    # Finds the point in between this point and the argument point
+    def centerpt p
+      xp, yp = p.to_a
+      Point.new((xp+@x)/2.0, (yp+@y)/2.0) 
+    end
+
     def to_a
       [@x, @y]
     end

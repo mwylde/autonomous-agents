@@ -97,7 +97,7 @@ module Driving
   # of a road. Nodes with more than two edges are intersections.
   class Map
     attr_reader :nodes, :road_hash, :road_set, :lat_min, :lat_max,
-    :long_min, :long_max, :world_max
+    :long_min, :long_max, :world_max, :world_min
 
     # Creates a new map from a json file containing the graph data. An
     # appropriate json file can be generated from an osm file by using
@@ -116,14 +116,15 @@ module Driving
 
       # determine the extreme values
       @graph.each do |k,v|
-        @lat_min = v[0] if v[0] < lat_min
-        @lat_max = v[0] if v[0] > lat_max
-        @long_min = v[1] if v[1] < long_min
-        @long_max = v[1] if v[1] > long_max
+        @lat_min = v[0] if v[0] < @lat_min
+        @lat_max = v[0] if v[0] > @lat_max
+        @long_min = v[1] if v[1] < @long_min
+        @long_max = v[1] if v[1] > @long_max
       end
 
-      # store the the highest (x,y) coordinates of the map
+      # store the the highest and lowest (x,y) coordinates of the map
       @world_max = latlong_to_world Point.new(lat_max, long_max)
+      @world_min = latlong_to_world Point.new(lat_min+0.000001, long_min+0.000001)
 
       # create a new node with world coordinates
       @graph.each do |k,v|

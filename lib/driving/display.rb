@@ -20,7 +20,7 @@ module Driving
     
     WORLD_DOT_RADIUS = 0.6
     POINT_RADIUS = 1
-    INIT_ZOOM = 30
+    INIT_ZOOM = 2300.0
     MIN_ZOOM = 5
     MAX_ZOOM = 1000000
     SLEEP_DURATION = 0.05
@@ -54,8 +54,11 @@ module Driving
       createBufferStrategy(2)
       @strategy = getBufferStrategy
 
-      @c_pos = camera_pos || Point.new(*DEFAULT_AGENT_POS_A)
-
+      puts @map.world_max
+      puts @map.world_min
+      default_pos = @map.world_max.centerpt @map.world_min
+      @c_pos = camera_pos || default_pos
+       
       @display_crumbs = []
       @hidden_crumbs = []
 
@@ -102,8 +105,6 @@ module Driving
 
       @z_y = @input.zoom
 
-      @current_agents = @agents.collect { |a| a.clone }
-
       # @hidden_crumbs = @agents.collect { |a| a.crumbs.collect { |c| c.clone }}.flatten
       
       render_map
@@ -143,13 +144,12 @@ module Driving
     end
 
     def render_agents
-      @current_agents.each do |a|
+      @agents.each do |a|
         #if @display_crumbs.size >= MAX_DISPLAY_CRUMBS * @current_agents.size
         #  @display_crumbs.pop
         #end
 
-        #@display_crumbs.unshift a.pos
-
+        # @display_crumbs.unshift a.pos
         if a.dest
           @g.set_color Color.green
           dot a.dest
