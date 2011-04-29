@@ -2,9 +2,10 @@ module Driving
   class RemoteServerAgent < ServerAgent
     include Communicator
 
-    def initialize socket, *agent_params
+    def initialize socket, server, *agent_params
       super *agent_params
       @socket = socket
+      @server = server
       @pos = @map.nodes.to_a.choice.pos
       curr = @map.closest_node @pos
       facing = curr.neighbors.to_a.choice
@@ -41,6 +42,11 @@ module Driving
       Thread.new do
         read
       end
+    end
+
+    def close
+      puts "Agent disconnected"
+      @server.remove_agent self
     end
 
     def paused= p

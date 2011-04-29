@@ -132,7 +132,7 @@ module Driving
     end
 
     def dir
-      Math.atan2(@y/mag, @x/mag)
+      Math.atan2(@y, @x)
     end
     
     def unit?

@@ -91,8 +91,9 @@ module Driving
       @g.setColor(Color.white)
       @g.fillRect(0,0,getWidth,getHeight)
 
-      if @input.following && ! @agents[0].nil?
-        @c_pos = @agents[0].pos.clone
+      if @input.following && @agents.size > 0
+        a = @agents[@input.follow_agent % @agents.size]
+        @c_pos = a.pos.clone
         @input.c_pos = @c_pos.clone
       else
         @c_pos = @input.c_pos.clone
@@ -343,7 +344,7 @@ module Driving
     include MouseMotionListener
     include MouseWheelListener
 
-    attr_accessor :c_pos, :following, :zoom, :zoom_min, :zoom_max
+    attr_accessor :c_pos, :following, :follow_agent, :zoom, :zoom_min, :zoom_max
     def initialize c_pos, zoom, zoom_min, zoom_max, display
       @display = display
       @c_pos = c_pos
@@ -351,6 +352,7 @@ module Driving
       @zoom_min = zoom_min
       @zoom_max = zoom_max
       @following = false
+      @follow_agent = 0
     end
 
     def mousePressed e
@@ -385,9 +387,10 @@ module Driving
     def keyPressed e
       case e.getKeyCode
       when KeyEvent::VK_SPACE then @following = !@following
+      when KeyEvent::VK_LEFT then @follow_agent -= 1 if @following
+      when KeyEvent::VK_RIGHT then @follow_agent += 1 if @following
       end
 
-      puts "KeyChar: #{e.getKeyChar.inspect}"
       case e.getKeyChar
       when 112 then @display.paused = !@display.paused # p
       end
