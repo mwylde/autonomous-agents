@@ -162,10 +162,11 @@ module Driving
       resp[:accel] = new_accel
       
       renders = ["@g.set_color Color.blue"]
+      facing, other = get_facing [@curr.n0, @curr.n1]
       @route.each{|r|
         s = "dot Point.new(#{r.pos.x.to_s}, #{r.pos.y.to_s})"
-        if r == @curr.n0 || r == @curr.n1
-          s = "@g.set_color Color.yellow; #{s}; @g.set_color Color.blue"
+        if r == @route[-1]
+          s = "@g.set_color Color.red; #{s}; @g.set_color Color.blue"
         end
         renders << s
       }
@@ -210,7 +211,7 @@ module Driving
 
     def get_facing nodes
       nodes.sort_by{|n|
-        if n.pos.dist(@pos) < 0.1
+        if false && n.pos.dist(@pos) < 0.1
           10000000
         else
           ((n.pos - @pos).dir - @phi).abs
@@ -226,7 +227,9 @@ module Driving
     def turn_navigate
       # for now we're cheating and just setting our phi to be parallel
       # to the road
-      phi = (@pos-@turn_to_node.pos).dir
+      phi = (@turn_to_node.pos-@pos).dir
+      puts [@turn_to_node.pos, @pos, phi, @phi].inspect
+      #phi = @phi if phi + @phi < 0.01
       [phi, @speed > 2 ? -0.1 : 0]
     end
 
@@ -239,9 +242,9 @@ module Driving
     # navigation action
     def navigate
       if @route.size == 0
-        return [0, 0]
+        return [@phi, 0]
       elsif @route.size == 1
-        return [0, 0]
+        return [@phi, 0]
       end
 
       facing, other = get_facing [@curr.n0, @curr.n1]
@@ -251,9 +254,9 @@ module Driving
           self.mode = TURN_MODE
           @turn_from_node = facing
           @turn_to_node = @route[-1]
-          if !facing.neighbors.include? @route[-1]
+          if false && !facing.neighbors.include?(@route[-1])
             self.mode = REPLAN_MODE
-            return [0, -5]
+            return [@phi, -5]
           end
           return turn_navigate
         else
@@ -261,18 +264,21 @@ module Driving
         end
       elsif @mode == TURN_MODE
         closest = @map.closest_node @pos
-        if closest.pos.dist(@pos) > ROAD_WIDTH
+        if closest.pos.dist(@pos) > ROAD_WIDTH * 2
           self.mode = STRAIGHT_MODE
           @route.pop
+          puts "Popping node"
           return straight_navigate
         else
           return turn_navigate
         end
       elsif @mode == START_MODE
-        if @start_node.pos.dist(@pos) > ROAD_WIDTH
+        if @start_node.pos.dist(@pos) > ROAD_WIDTH * 2
           self.mode = STRAIGHT_MODE
+          @route.pop if @route[-1] == @start_node
         end
-        straight_navigate
+        puts "Start mode: #{[0, 2]}"
+        return [@phi, 2]
       end
     end
 

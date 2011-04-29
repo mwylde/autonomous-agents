@@ -17,6 +17,8 @@ module Driving
       "(%.#{p}f, %.#{p}f)" % [x, y]
     end
 
+    def inspect; to_s end
+
     # Returns true if the point is in the convex polygon specified by
     # the four points a, b, c, d, false otherwise
     def in_convex_poly points
