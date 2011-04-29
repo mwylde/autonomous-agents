@@ -99,7 +99,7 @@ module Driving
   end
   
   class Vector
-    attr_accessor :x, :y
+    attr_reader :x, :y
 
     def self.from_point p
       Vector.new p.x, p.y
@@ -122,11 +122,11 @@ module Driving
     end
 
     def mag
-      Math.sqrt(@x*@x + @y*@y)
+      return @mag || @mag = Math.sqrt(@x*@x + @y*@y)
     end
 
     def dir
-      Math.atan2(@y, @x)
+      Math.atan2(@y/mag, @x/mag)
     end
     
     def unit?

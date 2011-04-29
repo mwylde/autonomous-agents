@@ -165,7 +165,7 @@ module Driving
       facing, other = get_facing [@curr.n0, @curr.n1]
       @route.each{|r|
         s = "dot Point.new(#{r.pos.x.to_s}, #{r.pos.y.to_s})"
-        if r == @route[-1]
+        if r == @turn_to_node
           s = "@g.set_color Color.red; #{s}; @g.set_color Color.blue"
         end
         renders << s
@@ -228,8 +228,7 @@ module Driving
       # for now we're cheating and just setting our phi to be parallel
       # to the road
       phi = (@turn_to_node.pos-@pos).dir
-      puts [@turn_to_node.pos, @pos, phi, @phi].inspect
-      #phi = @phi if phi + @phi < 0.01
+      
       [phi, @speed > 2 ? -0.1 : 0]
     end
 
@@ -251,6 +250,7 @@ module Driving
       if @mode == STRAIGHT_MODE
         # check if we should transition
         if facing.pos.dist(@pos) < ROAD_WIDTH
+          @route.pop
           self.mode = TURN_MODE
           @turn_from_node = facing
           @turn_to_node = @route[-1]
@@ -266,8 +266,6 @@ module Driving
         closest = @map.closest_node @pos
         if closest.pos.dist(@pos) > ROAD_WIDTH * 2
           self.mode = STRAIGHT_MODE
-          @route.pop
-          puts "Popping node"
           return straight_navigate
         else
           return turn_navigate
