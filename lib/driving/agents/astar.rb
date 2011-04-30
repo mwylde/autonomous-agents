@@ -1,5 +1,9 @@
 require 'set'
-java_import java.util.PriorityQueue
+if RUBY_ENGINE == 'jruby'
+  java_import java.util.PriorityQueue
+else
+  require './pqueue'
+end
 
 module Driving
   class AStarAgent < ClientAgent

@@ -1,9 +1,56 @@
 module Driving
+  if RUBY_ENGINE == 'jruby'
+    java_import java.net.Socket
+    class StandardSocket
+      def initialize host, port
+        @socket = Socket.new host, port
+      end
+
+      def self.from_socket socket
+        s = self.allocate
+        s.instance_variable_set(:@socket, socket)
+        s
+      end
+
+      def method_missing name, *args
+        @socket.send(name, *args)
+      end
+      
+      def get_chunk
+        @socket.get_input_stream.read()
+      end
+
+      def send_msg str
+        @socket.get_output_stream.write(str.to_java_bytes)
+      end
+    end
+  else
+    require 'socket'
+    class StandardSocket
+      def initialize host, port
+        super :INET, :STREAM
+        sockaddr = Socket.pack_sockaddr_in(port, host)
+        connect(sockaddr)
+      end
+
+      def get_chunk
+        self.recv(1).bytes.first
+      end
+
+      def send_msg str
+        write str
+      end
+
+      def close
+      end
+    end
+  end
+  
   module Communicator
     # Sends a message on the socket.
     def send msg
       str = YAML.dump(msg) + "\x0"
-      socket.get_output_stream.write(str.to_java_bytes)
+      socket.send_msg str
     end
 
     # Message read loop (blocking call) which waits for messages on
@@ -19,7 +66,7 @@ module Driving
       loop do
         # receive at most 8192 bytes, which is a mostly arbitrary
         # value that should work well
-        chunk = socket.get_input_stream.read()
+        chunk = socket.get_chunk
         # a zero-length chunk means the connection was closed
         if chunk == nil || chunk == '' || chunk == -1
           puts "Lost connection"
