@@ -124,7 +124,7 @@ module Driving
 
       # store the the highest and lowest (x,y) coordinates of the map
       @world_max = latlong_to_world Point.new(lat_max, long_max)
-      @world_min = latlong_to_world Point.new(lat_min+0.000001, long_min+0.000001)
+      @world_min = Point.new(0,0)
 
       # create a new node with world coordinates
       @graph.each do |k,v|

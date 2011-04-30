@@ -3,9 +3,9 @@ module Driving
 
     MAX_CRUMBS = 1000
     
-    DEFAULT_WIDTH = 1.5
+    DEFAULT_WIDTH = 1.75
 
-    DEFAULT_LENGTH = 3.5
+    DEFAULT_LENGTH = 4.46
 
     DEFAULT_PHI = Math::PI*2.75/4
 
