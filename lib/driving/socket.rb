@@ -26,7 +26,7 @@ module Driving
     end
   else
     require 'socket'
-    class StandardSocket
+    class StandardSocket < Socket
       def initialize host, port
         super :INET, :STREAM
         sockaddr = Socket.pack_sockaddr_in(port, host)

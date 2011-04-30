@@ -2,7 +2,7 @@ require 'set'
 if RUBY_ENGINE == 'jruby'
   java_import java.util.PriorityQueue
 else
-  require './pqueue'
+  require File.expand_path(File.dirname(__FILE__)) + '/../pqueue'
 end
 
 module Driving
@@ -51,6 +51,10 @@ module Driving
 
       def <=> y
           (@g + @h)  <=> (y.g + y.h)
+      end
+
+      def > y
+        (self <=> y) > 0
       end
 
       def inspect
