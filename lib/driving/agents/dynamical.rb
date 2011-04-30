@@ -78,8 +78,12 @@ module Driving
       end
     end
 
+    # Computes the angle subtended by two circles, given their positions and
+    # radii. This utilizes the fact that the subtended angle forms similar
+    # triangles.
     def subtended_angle(p0, r0, p1, r1)
-      # FIXME: COMPUTE STUFF!
+      d = p0.dist p1
+      Math.asin((r0 + r1)/d)
     end
 
     def handle_msg msg
