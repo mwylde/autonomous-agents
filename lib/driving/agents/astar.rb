@@ -72,7 +72,7 @@ module Driving
         ((n.pos - @pos).dir - @phi).abs
       }
       fringe.add(AStarNode.new(facing, AStarNode.new(other, nil)))
-      closed_states = Set.new
+      closed_states = Set.new [other]
       nodes_expanded = 0
       until fringe.isEmpty
         current = fringe.remove
@@ -229,7 +229,7 @@ module Driving
 
     def straight_navigate
       facing, other = get_facing [@curr.n0, @curr.n1]
-      [(facing.pos-other.pos).dir, @speed > 5 ? 0 : 0.5]
+      [(facing.pos-other.pos).dir, @speed > 15 ? 0 : 0.5]
     end
 
     def turn_navigate
@@ -272,6 +272,12 @@ module Driving
         end
       elsif @mode == TURN_MODE
         closest = @map.closest_node @pos
+        
+        # sometimes the current node fails to get removed from the
+        # route, which leads to issues when we next get to TURN_MODE
+        # and the old node hasn't yet been popped
+        @route.delete closest
+        
         if closest.pos.dist(@pos) > ROAD_WIDTH * 2
           self.mode = STRAIGHT_MODE
           return straight_navigate

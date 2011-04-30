@@ -1,22 +1,27 @@
 module Driving
   class Point
-    attr_accessor :x, :y
-
-    def self.from_vector v
-      Point.new v.x, v.y
-    end
-    
+    # Creates a new point with specified x, y coordinates
     def initialize x, y
       @x = x.to_f
       @y = y.to_f
     end
 
+    # Point (0, 0)
     ZERO = self.new 0, 0
 
+    attr_reader :x, :y
+
+    # Creates point (x, y) from vector (x, y)
+    def self.from_vector v
+      Point.new v.x, v.y
+    end
+
+    # String representation of point
     def to_s p = 3
       "(%.#{p}f, %.#{p}f)" % [x, y]
     end
 
+    # See `to_s`
     def inspect; to_s end
 
     # Returns true if the point is in the convex polygon specified by
@@ -38,23 +43,18 @@ module Driving
       return c
     end
 
-    def +(v)
+    # Finds the point along the specificed vector using this pooint as
+    # the base
+    def + v
       unless v.is_a? Driving::Vector
         raise "Can only add a vector, not a #{a.class}, to a point"
       end
-      add_vector v
-    end
-    
-    def add_vector v
       Point.new(@x + v.x, @y + v.y)
     end
 
-    def add_vector! v
-      @x += v.x
-      @y += v.y
-      self
-    end
+    alias :addvector :+
 
+    # For vectors does `subtract_vector`. For pooints does `subtract_point`
     def -(a)
       case a
       when Driving::Vector then subtract_vector a
@@ -64,25 +64,23 @@ module Driving
       end
     end
 
+    # Calculates p-v
     def subtract_vector v
       Point.new(@x - v.x, @y - v.y)
     end
 
-    def subtract_vector! v
-      @x -= v.x
-      @y -= v.y
-      self
-    end
-
+    # Finds vector between this point and the passed in point
     def subtract_point p
       Vector.new(@x - p.x, @y - p.y)
     end
 
+    # Rotates the point around the vector from this point to p by theta
     def rotate_about p, theta
       v = self.-(p)
       p + v.rotate(theta)
     end
 
+    # Euclidean distance between this point and p
     def dist p
       dx = p.x - @x
       dy = p.y - @y
@@ -94,6 +92,7 @@ module Driving
       self + (p - self)/2.0
     end
 
+    # Converts to the array [x, y]
     def to_a
       [@x, @y]
     end
@@ -102,80 +101,77 @@ module Driving
       Point.new(a[0], a[1])
     end
   end
-  
+
+  # 2D vector class
   class Vector
     attr_reader :x, :y
 
+    # Returns the vector (x, y) for point (x, y)
     def self.from_point p
       Vector.new p.x, p.y
     end
 
+    # Computes a vector for the supplied magnitude and direction
     def self.from_mag_dir mag, dir
       Vector.new(mag * Math.cos(dir), mag * Math.sin(dir))
     end
-    
+
+    # Creates the vector terminating at the specified (x, y) point
     def initialize x, y
       @x = x.to_f
       @y = y.to_f
     end
 
+    # The zero vector (0, 0)
     ZERO = Vector.new 0, 0
-    
 
+    # String representation of the vector
     def to_s p = 3
       "<%.#{p}f, %.#{p}f>" % [@x, @y]
     end
 
+    # Magnitude of the vector
     def mag
       return @mag || @mag = Math.sqrt(@x*@x + @y*@y)
     end
 
+    # Direction of the vector in radians
     def dir
       Math.atan2(@y, @x)
     end
-    
+
+    # Returns true if this vector is unit (has magnitude 1), false
+    # otherwise
     def unit?
       (mag - 1.0).abs < 0.001
     end
 
+    # Returns a new vector with same direction and this one but unit
+    # magnitude
     def normalize
       Vector.new(@x / mag, @y / mag)
     end
-    
-    def normalize!
-      unless unit?
-        @x /= mag
-        @y /= mag
-      end
-      self
-    end
 
+    # Computes the vector normal to this one
     def normal_vector
       Vector.new(@y, -@x)
     end
 
+    # Takes a vector and adds it to this one
     def +(v)
       cname = v.class.name
-      unless cname == "Driving::Vector"
-        raise "Can only add a vector, not a #{cname}, to vector"
+      unless self.is_a? Driving::Vector
+        raise "Can only add a vector, not a #{v}, to vector"
       end
       add_vector v
     end
-    
+
+    # Takes a vector and adds it to this one
     def add_vector v
       Vector.new(@x + v.x, @y + v.y)
     end
 
-    def add_vector! v
-      @x += v.x
-      @y += v.y
-      self
-    end
-
-    def subtract_vector v
-      Vector.new(@x - v.x, @y - v.y)
-    end
-
+    # Subtracts a vector form this one
     def -(v)
       cname = v.class.name
       unless cname == "Driving::Vector"
@@ -184,16 +180,17 @@ module Driving
       subtract_vector v
     end
 
-    def subtract_vector! v
-      @x -= v.x
-      @y -= v.y
-      self
+    # Takes a vector v and subtracts it from this one
+    def subtract_vector v
+      Vector.new(@x - v.x, @y - v.y)
     end
 
+    # Scales the vector by the supplied constant
     def scale c
       Vector.new(c*@x, c*@y)
     end
 
+    # See `scale`
     def *(c)
       cname = c.class.name
       unless cname == "Fixnum" or cname == "Float"
@@ -202,23 +199,28 @@ module Driving
       scale c
     end
 
+    # Scales by the inverse of the constant
     def /(c)
       self*(1/c)
     end
 
+    # Rotates the vector by theta
     def rotate theta
       Vector.from_mag_dir(mag, dir + theta)
     end
 
+    # Computes the dot product between this vector and v
     def dot v
       @x * v.x + @y * v.y
     end
 
+    # Computes the angle between this vector and v
     def angle_from v
       dir - v.dir
     end
   end
 
+  # A linesegment connects two points
   class LineSegment
     attr_accessor :p0, :p1
     def initialize p0, p1
