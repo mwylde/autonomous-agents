@@ -21,10 +21,11 @@ module Driving
         # value that should work well
         chunk = socket.get_input_stream.read()
         # a zero-length chunk means the connection was closed
-        if chunk == nil || chunk == ''
-          socket.close
-          puts "Lost connection, shutting down"
-          exit
+        if chunk == nil || chunk == '' || chunk == -1
+          puts "Lost connection"
+          @socket.close
+          close
+          break
         end
 
         # we use a single \x000 (i.e., null) as a messag eterminator,
@@ -41,8 +42,16 @@ module Driving
           handle_msg(msg) if msg
           buffer = ''
         else
-          buffer << chunk
+          begin
+            buffer << chunk
+          rescue
+            puts $!
+          end
         end
+      end
+
+      # Called when the socket connection is lost.
+      def close
       end
 
       # Returns the socket object to be used in other operations. Must

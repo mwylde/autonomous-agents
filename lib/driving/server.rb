@@ -35,6 +35,10 @@ module Driving
       exit
     end
 
+    def remove_agent a
+      @agents.delete a
+    end
+
     # Starts the server on the specified port
     def run
       # bind to the correct address/port
@@ -46,7 +50,7 @@ module Driving
         # blocking call that waits for connections
         client = @socket.accept
         puts "Agent connected"
-        @agents << RemoteServerAgent.new(client, @id_counter, @map)
+        @agents << RemoteServerAgent.new(client, self, @id_counter, @map)
         # start the agent's non-blocking run loop
         @agents[-1].run
         @id_counter += 1

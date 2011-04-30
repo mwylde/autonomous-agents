@@ -17,6 +17,8 @@ module Driving
       "(%.#{p}f, %.#{p}f)" % [x, y]
     end
 
+    def inspect; to_s end
+
     # Returns true if the point is in the convex polygon specified by
     # the four points a, b, c, d, false otherwise
     def in_convex_poly points
@@ -91,13 +93,19 @@ module Driving
       self + (p - self)/2.0
     end
 
+    # Finds the point in between this point and the argument point
+    def centerpt p
+      xp, yp = p.to_a
+      Point.new((xp+@x)/2.0, (yp+@y)/2.0) 
+    end
+
     def to_a
       [@x, @y]
     end
   end
   
   class Vector
-    attr_accessor :x, :y
+    attr_reader :x, :y
 
     def self.from_point p
       Vector.new p.x, p.y
@@ -120,7 +128,7 @@ module Driving
     end
 
     def mag
-      Math.sqrt(@x*@x + @y*@y)
+      return @mag || @mag = Math.sqrt(@x*@x + @y*@y)
     end
 
     def dir

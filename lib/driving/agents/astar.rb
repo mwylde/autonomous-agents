@@ -3,7 +3,32 @@ java_import java.util.PriorityQueue
 
 module Driving
   class AStarAgent < ClientAgent
+    # The maximum number of nodes to expand during A* search. Larger
+    # values will ensure that we can find paths to destinations that
+    # are further away, while smaller values will make planning faster.
     MAX_NODES_EXPANDED = 10000
+    # Mode in which the agent simply goes straight, following the
+    # current road
+    STRAIGHT_MODE = :straight
+    # Mode in which the agent executes a turn towards the next
+    # waypoint
+    TURN_MODE = :turn
+    # Mode in which the agent stops and replans
+    REPLAN_MODE = :replan
+    # Just goes forward until outside of the range of the start node
+    START_MODE = :start
+    
+    def initialize *args
+      super *args
+
+      # current operation mode of the agent
+      @mode = START_MODE
+    end
+
+    # Node class used for A* navigation. Includes the state, which is
+    # the Driving::Node this AStarNode represents, parent, which is
+    # the AStarNode that expanded this one, and g and h which are the
+    # current cost and expected remaining cost respectively.
     class AStarNode
       attr_accessor :state, :parent, :g, :h
       def initialize state, parent
@@ -13,6 +38,7 @@ module Driving
         @h = 0
       end
 
+      # Creates an array of AStarNodes from this node's neighbors
       def expand
         @state.neighbors.map{|n|
           AStarNode.new(n, self)
@@ -28,15 +54,16 @@ module Driving
       end
         
     end
+    
     # calculates the best route from the current node to the
     # destination node using A*
     def astar
       fringe = PriorityQueue.new
-      # figure out which neighbor we're facing
-      _, facing = @curr.neighbors.collect{|n|
-        [((n.pos - @curr.pos).dir - @phi).abs, n]
-      }.min
-      fringe.add(AStarNode.new(facing, AStarNode.new(@curr, nil)))
+      # figure out which node of our road we're facing
+      facing, other = [@curr.n0, @curr.n1].sort_by{|n|
+        ((n.pos - @pos).dir - @phi).abs
+      }
+      fringe.add(AStarNode.new(facing, AStarNode.new(other, nil)))
       closed_states = Set.new
       nodes_expanded = 0
       until fringe.isEmpty
@@ -102,18 +129,30 @@ module Driving
       # puts "Current pos: #{@pos}"
       @route ||= []
 
+      resp = {}
+      
       if msg[:type] == :initial
         @map = Map.new(msg[:map])
         @old_pos = @pos
+        @mode = :start
+        @start_node = @map.closest_node @pos
       end
-      # find cloest node to our current pos
-      @curr = @map.closest_node @pos
-
-      resp = {}
+      # find the road segment we're currently on, if we're on one
+      @old_curr = @curr
+      @curr = @map.road_for_point @pos
+      # we're off-road, we can't do much but stop
+      if !@curr
+        puts "Fell off road"
+        resp[:phi] = 0
+        resp[:accel] = -20
+        send resp
+        return
+      end
       
       case msg[:type]
       when :initial, :dest_change
         change_dest Point.new(*msg[:dest])
+        @old_curr = @curr
       end
 
       # puts "Got update"
@@ -123,16 +162,23 @@ module Driving
       resp[:accel] = new_accel
       
       renders = ["@g.set_color Color.blue"]
+      facing, other = get_facing [@curr.n0, @curr.n1]
       @route.each{|r|
         s = "dot Point.new(#{r.pos.x.to_s}, #{r.pos.y.to_s})"
-        if r == @curr
-          s = "@g.set_color Color.green; #{s}; @g.set_color Color.blue"
+        if r == @turn_to_node
+          s = "@g.set_color Color.red; #{s}; @g.set_color Color.blue"
         end
         renders << s
       }
       resp[:renders] = renders
       
       send resp
+
+      if @mode == REPLAN_MODE
+        puts "Off-track, recalculating..."
+        change_dest @dest
+        self.mode = START_MODE
+      end
     end
 
     def change_dest p
@@ -162,32 +208,75 @@ module Driving
       }
       ps[0]
     end
-    
+
+    def get_facing nodes
+      nodes.sort_by{|n|
+        if false && n.pos.dist(@pos) < 0.1
+          10000000
+        else
+          ((n.pos - @pos).dir - @phi).abs
+        end
+      }
+    end
+
+    def straight_navigate
+      facing, other = get_facing [@curr.n0, @curr.n1]
+      [(facing.pos-other.pos).dir, @speed > 5 ? 0 : 0.5]
+    end
+
+    def turn_navigate
+      # for now we're cheating and just setting our phi to be parallel
+      # to the road
+      phi = (@turn_to_node.pos-@pos).dir
+      
+      [phi, @speed > 2 ? -0.1 : 0]
+    end
+
+    def mode= mode
+      puts "Mode transitioned from #{@mode} to #{mode}"
+      @mode = mode
+    end
+
+    # Figure out which mode we're in and run the corresponding
+    # navigation action
     def navigate
       if @route.size == 0
-        return [0, 0]
+        return [@phi, 0]
       elsif @route.size == 1
-
-        return [0, 0]
+        return [@phi, 0]
       end
-      # check if we're at the current way point
-      at = @curr == @route[-1]
-      # see if we've passed a way point since our last update, which
-      # we determine by calculating the rectangle of the road that
-      # we've passed since our last nav op and check if the current
-      # waypoint is inside
 
-      # to determine if we've passed a way point since our last update, we
-      # create a pseudo-road object from the path traveled since the last nav
-      # op, and then see if the current waypoint is within that
-      # pseudo-road. (note: by pesudo-road, we mean to convey that a road is
-      # meant to represent a connection between two nodes on the map, but we are
-      # constructing a road object out of two arbitrary points on the map out of
-      # convenience to use road's contain method.
-      road = Road.new(@old_pos, @pos)
-      @route.pop if at || road.contains(@route[0].pos)
-      
-      [get_new_delta, @speed > 5 ? 0 : 0.1]
+      facing, other = get_facing [@curr.n0, @curr.n1]
+      if @mode == STRAIGHT_MODE
+        # check if we should transition
+        if facing.pos.dist(@pos) < ROAD_WIDTH
+          @route.pop
+          self.mode = TURN_MODE
+          @turn_from_node = facing
+          @turn_to_node = @route[-1]
+          if false && !facing.neighbors.include?(@route[-1])
+            self.mode = REPLAN_MODE
+            return [@phi, -5]
+          end
+          return turn_navigate
+        else
+          return straight_navigate
+        end
+      elsif @mode == TURN_MODE
+        closest = @map.closest_node @pos
+        if closest.pos.dist(@pos) > ROAD_WIDTH * 2
+          self.mode = STRAIGHT_MODE
+          return straight_navigate
+        else
+          return turn_navigate
+        end
+      elsif @mode == START_MODE
+        if @start_node.pos.dist(@pos) > ROAD_WIDTH * 2
+          self.mode = STRAIGHT_MODE
+          @route.pop if @route[-1] == @start_node
+        end
+        return [@phi, 2]
+      end
     end
 
     # The basic idea behind this algorithm is as follows. We want to
@@ -202,7 +291,7 @@ module Driving
     # Actually, that's how I'd like to do it. For now, I'm just going
     # to calculute the tangent of the spline at the current point and
     # try to turn so that I'm parallel
-    def get_new_delta
+    def get_new_delta_spline
       return @delta unless @last && @route.size > 1
       # points that define the center-road spline
       x, y, z = @last.pos, @route[-1].pos, @route[-2].pos
@@ -222,5 +311,6 @@ module Driving
       a, b = xs.map{|x| Point.new(x, neville([xb, yb, zb], x)) }
       phi_wanted = (a-b).dir
     end
+
   end
 end

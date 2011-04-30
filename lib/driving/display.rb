@@ -20,11 +20,12 @@ module Driving
     
     WORLD_DOT_RADIUS = 0.6
     POINT_RADIUS = 1
-    INIT_ZOOM = 30
+    INIT_ZOOM = 2300.0
     MIN_ZOOM = 5
     MAX_ZOOM = 1000000
     SLEEP_DURATION = 0.05
     attr_accessor :map, :g, :agents
+    attr_reader :paused
     
     def initialize map, agents, w, h, camera_pos = nil
       puts "Creating display"
@@ -53,16 +54,26 @@ module Driving
       createBufferStrategy(2)
       @strategy = getBufferStrategy
 
-      @c_pos = camera_pos || Point.new(*DEFAULT_AGENT_POS_A)
-
+      puts @map.world_max
+      puts @map.world_min
+      default_pos = @map.world_max.centerpt @map.world_min
+      @c_pos = camera_pos || default_pos
+       
       @display_crumbs = []
       @hidden_crumbs = []
 
       @input = InputHandler.new @c_pos.clone, INIT_ZOOM, MIN_ZOOM, MAX_ZOOM, self
+      @paused = false
       addMouseMotionListener @input
       addMouseListener @input
       addMouseWheelListener @input
       addKeyListener @input
+    end
+
+    def paused= p
+      puts "Setting paused to #{p}"
+      @paused = p
+      @agents.each{|a| a.paused = p}
     end
 
     def center a
@@ -80,16 +91,20 @@ module Driving
       @g.setColor(Color.white)
       @g.fillRect(0,0,getWidth,getHeight)
 
-      if @input.following != -1
-        @c_pos = @agents[@input.following].pos.clone
+      if @input.following && @agents.size > 0
+        a = @agents[@input.follow_agent % @agents.size]
+        @c_pos = a.pos.clone
         @input.c_pos = @c_pos.clone
       else
         @c_pos = @input.c_pos.clone
       end
 
-      @z_y = @input.zoom
+      if @paused
+        @g.setColor(Color.red)
+        @g.fillRect(0,0,20,20)
+      end
 
-      @current_agents = @agents.collect { |a| a.clone }
+      @z_y = @input.zoom
 
       # @hidden_crumbs = @agents.collect { |a| a.crumbs.collect { |c| c.clone }}.flatten
       
@@ -130,13 +145,12 @@ module Driving
     end
 
     def render_agents
-      @current_agents.each do |a|
-        if @display_crumbs.size >= MAX_DISPLAY_CRUMBS * @current_agents.size
-          @display_crumbs.pop
-        end
+      @agents.each do |a|
+        #if @display_crumbs.size >= MAX_DISPLAY_CRUMBS * @current_agents.size
+        #  @display_crumbs.pop
+        #end
 
-        @display_crumbs.unshift a.pos
-
+        # @display_crumbs.unshift a.pos
         if a.dest
           @g.set_color Color.green
           dot a.dest
@@ -330,14 +344,15 @@ module Driving
     include MouseMotionListener
     include MouseWheelListener
 
-    attr_accessor :c_pos, :following, :zoom, :zoom_min, :zoom_max
+    attr_accessor :c_pos, :following, :follow_agent, :zoom, :zoom_min, :zoom_max
     def initialize c_pos, zoom, zoom_min, zoom_max, display
       @display = display
       @c_pos = c_pos
       @zoom = zoom
       @zoom_min = zoom_min
       @zoom_max = zoom_max
-      @following = -1
+      @following = false
+      @follow_agent = 0
     end
 
     def mousePressed e
@@ -370,13 +385,14 @@ module Driving
     end
 
     def keyPressed e
-      if e.getKeyCode == KeyEvent::VK_SPACE && @display.agents.size > 0
-        if @following != -1
-          @following += 1
-          @following %= @display.agents.size
-        else
-          @following = 0
-        end
+      case e.getKeyCode
+      when KeyEvent::VK_SPACE then @following = !@following
+      when KeyEvent::VK_LEFT then @follow_agent -= 1 if @following
+      when KeyEvent::VK_RIGHT then @follow_agent += 1 if @following
+      end
+
+      case e.getKeyChar
+      when 112 then @display.paused = !@display.paused # p
       end
     end
 
