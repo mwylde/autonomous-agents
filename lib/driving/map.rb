@@ -12,6 +12,20 @@ module Driving
     def inspect
       "(#{@pos.x}, #{@pos.y}) #{@neighbors.size} neighbors"
     end
+
+    def to_hash
+      {
+        :pos => @pos.to_a,
+        :neighbors => neighbors.collect{|n| n.to_hash}
+      }
+    end
+
+    def self.from_hash params
+      pos = Point.from_a params[:pos]
+      neighbors = params[:neighbors].collect{|n| Node.from_hash(n)}
+      self.new pos, neighbors
+    end
+      
   end
 
   # Calculates the four points of the rectangle for the road segment
@@ -27,20 +41,19 @@ module Driving
     [a, b, c, d]
   end
 
-  class Road < LineSegment
+  class Road
     def self.naive_walls p0, p1
       n = (p1 - p0).normalize.normal_vector * ROAD_WIDTH
 
-      [Wall.new(p0+n, p1+n), Wall.new(p0-n, p1-n)]
+      [LineSegment.new(p0+n, p1+n), LineSegment.new(p0-n, p1-n)]
     end
     
     attr_accessor :p0, :p1, :n0, :n1, :naive, :walls
     def initialize(n0, n1, walls = nil)
       @n0, @n1 = n0, n1
-      @p0, @p1 = @n0.pos, @n1.pos
 
       if walls.nil?
-        @walls = Set.new(Road.naive_walls p0, p1)
+        @walls = Set.new(Road.naive_walls(@n0.pos, @n1.pos))
         @naive = true
       else
         @walls = walls
@@ -52,9 +65,25 @@ module Driving
       "Road: #{@p0} -> #{@p1} with #{@walls}"
     end
 
+    def to_hash
+      {
+        :n0 => @n0.to_hash,
+        :n1 => @n1.to_hash,
+        :walls => @walls.collect{|w| w.to_a},
+        :naive => @naive
+      }
+    end
+
+    def self.from_hash params
+      n0 = Node.from_hash params[:n0]
+      n1 = Node.from_hash params[:n1]
+      walls = params[:walls].collect{|w| LineSegment.from_a w}
+      self.new n0, n1, walls
+    end
+
     # FIXME This is a naive implementation which uses naive walls. 
     def contains p
-      naive_walls = Road.naive_walls @p0, @p1
+      naive_walls = Road.naive_walls @n0.pos, @n1.pos
       a = naive_walls[0].p0
       b = naive_walls[0].p1
       c = naive_walls[1].p1
@@ -77,18 +106,6 @@ module Driving
       result = {}
       @walls.each { |w| result[w.object_id] = w.unit_from_pt(p) }
       return result
-    end
-  end
-
-  class Wall < LineSegment
-    attr_accessor :p0, :p1
-    def initialize(p0, p1)
-      @p0 = p0
-      @p1 = p1
-    end
-
-    def to_s
-      "Wall: #{@p0} -> #{@p1}"
     end
   end
 

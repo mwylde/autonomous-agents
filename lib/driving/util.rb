@@ -89,18 +89,17 @@ module Driving
       Math.sqrt(dx*dx + dy*dy)
     end
 
+    # Find the midpoint between this point and point p.
     def midpt p
       self + (p - self)/2.0
     end
 
-    # Finds the point in between this point and the argument point
-    def centerpt p
-      xp, yp = p.to_a
-      Point.new((xp+@x)/2.0, (yp+@y)/2.0) 
-    end
-
     def to_a
       [@x, @y]
+    end
+
+    def self.from_a a
+      Point.new(a[0], a[1])
     end
   end
   
@@ -227,10 +226,23 @@ module Driving
       @p1 = p1
     end
 
-    # this computes the point which is closest to p on the line
-    def intersect_with_pt p
-      # algorithm from http://paulbourke.net/geometry/pointline/
+    def to_s
+      "Segment #{@p0}->#{@p1}"
+    end
+
+    def to_a
+      [@p0.to_a, @p1.to_a]
+    end
+
+    def self.from_a a
+      p0 = Point.from_a a[0]
+      p1 = Point.from_a a[1]
+      self.new p0, p1
+    end
       
+    # This computes the point which is closest to p on the line. The algorithm
+    # is taken from http://paulbourke.net/geometry/pointline/
+    def intersect_with_pt p
       x1 = @p0.x
       y1 = @p0.y
       x2 = @p1.x

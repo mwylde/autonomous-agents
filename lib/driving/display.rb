@@ -56,7 +56,7 @@ module Driving
 
       puts @map.world_max
       puts @map.world_min
-      default_pos = @map.world_max.centerpt @map.world_min
+      default_pos = @map.world_max.midpt @map.world_min
       @c_pos = camera_pos || default_pos
        
       @display_crumbs = []
@@ -203,9 +203,12 @@ module Driving
       when Driving::Point
         s_p0 = world_to_screen p0
         s_p1 = world_to_screen p1
-      when Driving::LineSegment, Driving::Road, Driving::Wall
+      when Driving::LineSegment
         s_p0 = world_to_screen(args[0].p0)
         s_p1 = world_to_screen(args[0].p1)
+      when Driving::Road
+        s_p0 = world_to_screen(args[0].n0.pos)
+        s_p1 = world_to_screen(args[0].n1.pos)
       else
         raise "Invalid specification of line to draw"
       end
@@ -321,11 +324,18 @@ module Driving
     def on_screen? p
       case p
       when Driving::Point
-      when Driving::LineSegment, Driving::Road, Driving::Wall
-        # FIXME this should be smarter; right now the road only renders if its
+      when Driving::LineSegment
+        # FIXME this should be smarter; right now the line only renders if its
         # end points or midpoint are on the screen, so this causes some funky
         # behavior. 
-        return on_screen?(p.p0) || on_screen?(p.p1) || on_screen?(p.p0.midpt(p.p1))
+        return on_screen?(p.p0) || on_screen?(p.p1) ||
+          on_screen?(p.p0.midpt(p.p1))
+      when Driving::Road
+        # FIXME: This should be smarter; right now the road only renders if its
+        # end points or midpoints are on the screen, so this causes some funky
+        # behavior.
+        return on_screen?(p.n0) || on_screen?(p.n1) ||
+          on_screen?(p.n0.pos.midpt(p.n1.pos))
       else
         return on_screen? p.pos
       end

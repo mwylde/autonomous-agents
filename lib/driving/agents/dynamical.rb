@@ -147,5 +147,6 @@ module Driving
     end
 
     def socket; @socket; end
+    
   end
 end

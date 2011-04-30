@@ -47,8 +47,8 @@ module Driving
         :delta => @delta,
         :delta_speed => @delta_speed,
         :speed => @speed,
-        :accel => @accel #,
-#        :curr_road => @curr_road
+        :accel => @accel,
+        :curr_road => @curr_road.to_hash
       }
     end
 
