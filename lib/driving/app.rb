@@ -61,6 +61,11 @@ module Driving
         @server.run
       end
 
+      # Thread.new do
+      #   sleep 1
+      #   AStarAgent.new(@options[:address], @options[:port]).run
+      # end
+
       # blocking
       @display.run
     end

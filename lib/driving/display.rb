@@ -24,7 +24,7 @@ module Driving
     MIN_ZOOM = 5
     MAX_ZOOM = 1000000
     SLEEP_DURATION = 0.05
-    attr_accessor :map, :g
+    attr_accessor :map, :g, :agents
     attr_reader :paused
     
     def initialize map, agents, w, h, camera_pos = nil
