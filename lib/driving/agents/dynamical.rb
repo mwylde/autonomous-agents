@@ -1,13 +1,6 @@
 module Driving
   class DynamicalAgent < ClientAgent
 
-    # Parameters
-    D0 = 1.0
-    SIGMA = 0.1
-    H1 = 1.0
-    A = 1.0
-
-=begin
     def f_tar phi, a, psi_tar
       -a * Math.sin(phi - psi_tar)
     end
@@ -34,50 +27,61 @@ module Driving
       R_i = R phi, psi, d_psi
       D_i * W_i * R_i
     end
-=end
-                                        
-    def f_tar tar, a = A
-      psi = (tar[0] - @pos).dir
-      
-      -a * Math.sin(@phi-psi)
-    end
-
-    def repeller psi, d_psi
-      ((@phi-psi)/d_psi) * Math.exp((1-(@phi-psi)/d_psi).abs)
-    end
-
-    def f_obs_i obs_i, d0 = D0, sig = SIGMA, h1 = H1
-      obs_c, obs_r = obs_i
-      dm = @pos.dist(obs_c) - obs_r
-
-      psi = (obs_c - @pos).dir
-
-      d_psi = Math.asin((@bound_r+obs_r)/(@pos.dist obs_c)) # ???
-
-      d_i = dist_scale dm, d0
-      w_i = windower h1, psi, d_psi, sig
-      r_i = repeller psi, d_psi
-      
-      d_i * w_i * r_i
-    end
 
     def delta_dot
-      dd = f_tar @tar
-      @obs.each do |o|
-        puts "Obstacle #{o}: #{f_obs_i o}"
-        dd += f_obs_i o
+      # We're treating phi as the heading direction. Since we're dealing with
+      # cars, it's not exactly clear what we should be using as a heading
+      # direction. It might turn out that delta is a better measure of the car's
+      # heading direction, but using phi makes sense because phi is the
+      # instantaneous direction the car is heading.
+      phi = @phi
+      pos = @pos
+      size = @size
+
+      # weights = agent.weights
+
+      d0 = @params[:d0]
+      c1 = @params[:c1]
+      c2 = @params[:a]
+      sigma = @params[:sigma]
+      a_tar = @params[:a_tar]
+      g_tar_obs = @params[:g_tar_obs]
+      h1 = @params[:h1]
+
+      # each obs is of the form [dm, psi, d_psi]
+      obs_list = @perceived_obs
+
+      tar_pos, tar_size = @target
+      
+      psi_tar = (tar_pos - pos).dir
+
+      # w_tar, w_obs = get_weights(phi, psi_tar, obs_list, weights, timestep, d0,
+      #                            c1, c2, a, h1, sigma, a_tar, g_tar_obs)
+      # agent.weights = [w_tar, w_obs]
+      
+      f_obs = obs_list.collect{|obs_i| f_obs_i(phi, obs_i, d0, sigma, h1)}.sum
+
+      # (Math.abs(w_tar)*f_tar) + (Math.abs(w_obs)*f_obs) + 0.01*(rand-0.5)
+    end
+
+    def sense
+      tar_pos, tar_size = @target
+
+      @obs.collect do |obs|
+        obs_pos = obs[0]
+        obs_radius = obs[1]
+        
+        dm = @pos.dist(obs_pos) - @radius - obs_radius
+        psi = (obs_pos - @pos).dir
+        d_psi = subtended_angle(@pos, @radius, obs_pos, obs_radius)
+        [dm, psi, d_psi]
       end
-      return dd
     end
 
-    def windower h1, psi, d_psi, sigma
-      0.5 * (Math.tanh(h1*(Math.cos(@phi-psi) - Math.cos(d_psi + sigma))) + 1)
+    def subtended_angle(p0, r0, p1, r1)
+      # FIXME: COMPUTE STUFF!
     end
 
-    def dist_scale dm, d0
-      Math.exp(-1*(dm/d0))
-    end
-    
     def handle_msg msg
       @pos = Point.new(*msg[:pos])
       @phi = msg[:phi]
@@ -86,6 +90,7 @@ module Driving
       @speed = msg[:speed]
       @accel = msg[:accel]
       @curr_road = msg[:curr_road]
+      @target = create_tar # msg[:target] <- put in when want to use real tar
 
       resp = {}
       
@@ -94,7 +99,6 @@ module Driving
         @map = Map.new(msg[:map])
         @dest = msg[:dest]
         @bound_r = msg[:bound_r]
-        @tar = create_tar
         resp[:speed] = 0.5
         resp[:accel] = 0.1
         resp[:delta] = 0.1
@@ -105,24 +109,24 @@ module Driving
       renders = ["@g.set_color Color.red"]
       @obs.each do |o|
         c, r = o
-        cx, cy = c.to_a
-        renders << "circle Point.new(#{cx}, #{cy}), #{r}"
+        renders << "circle Point.new(#{c.x}, #{c.y}), #{r}"
       end
 
-      c, r = @tar
-      cx, cy = c.to_a
+      c, r = @target
       renders << "@g.set_color Color.blue"
-      renders << "circle Point.new(#{cx}, #{cy}), #{r}"
+      renders << "circle Point.new(#{c.x}, #{c.y}), #{r}"
       
       resp[:renders] = renders
 
-      time_step = 0.05 # FIXME really this should be calculated as the differenc
-                       # in time between the last messaeg and the current one
-      # new_delta = @delta + delta_dot * time_step
+      time_step = 0.05 # FIXME really this should be calculated as the difference
+                       # in time between the last message and the current one
+      resp[:delta] = @delta + delta_dot * time_step
 
       send resp
     end
 
+    # Creates an object on each side of the current road. This should be
+    # sufficient for keeping the agent from veering off the side of the road.
     def create_obs
       units = @curr_road.units_to_walls @pos
       dists = @curr_road.dists_to_walls @pos
