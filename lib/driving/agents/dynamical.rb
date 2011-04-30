@@ -5,16 +5,16 @@ module Driving
       -a * Math.sin(phi - psi_tar)
     end
 
-    def R phi, psi, d_psi
+    def repeller phi, psi, d_psi
       frac = (phi - psi) / d_psi
       frac * Math.exp(1 - Math.abs(frac))
     end
 
-    def W h1, phi, psi, d_psi, sigma
+    def windower h1, phi, psi, d_psi, sigma
       0.5 * (Math.tanh(h1*Math.cos(phi-psi)-Math.cos(d_psi+sigma))+1)
     end
 
-    def D dm, d0
+    def dist_scale dm, d0
       Math.exp(-1 * dm/d0)
     end
 
@@ -22,10 +22,10 @@ module Driving
       # unpack obs attributes
       dm, psi, d_psi = obs_i
 
-      D_i = D dm, d0
-      W_i = W h1, phi, psi, d_psi, sig
-      R_i = R phi, psi, d_psi
-      D_i * W_i * R_i
+      d_i = dist_scale dm, d0
+      w_i = windower h1, phi, psi, d_psi, sig
+      r_i = repeller phi, psi, d_psi
+      d_i * w_i * r_i
     end
 
     def delta_dot
