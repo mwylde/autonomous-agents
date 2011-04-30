@@ -194,6 +194,8 @@ class PriorityQueue
     return @size.zero?
   end
 
+  alias :isEmpty :empty?
+
   # Remove all elements from the priority queue.
   def clear
     @qarray.replace([nil])

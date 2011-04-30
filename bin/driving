@@ -1,4 +1,4 @@
-#!/usr/bin/env jruby
+#!/usr/bin/env ruby
 
 root = File.expand_path(File.dirname(__FILE__))
 
