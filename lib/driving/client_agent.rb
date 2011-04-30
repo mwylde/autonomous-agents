@@ -1,5 +1,3 @@
-java_import java.net.Socket
-
 module Driving
   class ClientAgent
     include Communicator
@@ -7,7 +5,7 @@ module Driving
     def initialize host, port
       @port = port
       @host = host
-      @socket = Socket.new @host, @port
+      @socket = StandardSocket.new @host, @port
       puts "Started #{self.class} on port #{@port}"
     end
 

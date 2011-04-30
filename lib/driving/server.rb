@@ -49,8 +49,9 @@ module Driving
       loop do
         # blocking call that waits for connections
         client = @socket.accept
+        ssocket = StandardSocket.from_socket(client)
         puts "Agent connected"
-        @agents << RemoteServerAgent.new(client, self, @id_counter, @map)
+        @agents << RemoteServerAgent.new(ssocket, self, @id_counter, @map)
         # start the agent's non-blocking run loop
         @agents[-1].run
         @id_counter += 1
