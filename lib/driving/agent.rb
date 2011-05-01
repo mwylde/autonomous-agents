@@ -49,7 +49,7 @@ module Driving
         :delta_speed => @delta_speed,
         :speed => @speed,
         :accel => @accel,
-        :facing_node => @facing_node? @facing_node.to_hash : nil
+        :facing_node => @facing_node? @facing_node.to_hash : nil,
         :curr_road => @curr_road ? @curr_road.to_hash : nil
       }
     end
