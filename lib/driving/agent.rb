@@ -15,7 +15,8 @@ module Driving
     MOVE_FREQUENCY = 10.0
 
     attr_reader :id, :pos, :phi, :delta, :delta_speed, :speed, :accel, :w, :l,
-    :tw, :tl, :u, :n, :ne, :nw, :se, :sw, :crumbs, :north, :map, :dest, :renders
+    :tw, :tl, :u, :n, :ne, :nw, :se, :sw, :crumbs, :north, :map, :dest, :renders,
+    :curr_road
     attr_accessor :paused
     
     # Creates a default agent with positional parameters set to 0; requires
@@ -48,8 +49,8 @@ module Driving
         :delta_speed => @delta_speed,
         :speed => @speed,
         :accel => @accel,
-        :curr_road => @curr_road.to_hash,
-        :facing_node => @facing_node.to_hash
+        :facing_node => @facing_node? @facing_node.to_hash : nil
+        :curr_road => @curr_road ? @curr_road.to_hash : nil
       }
     end
 
@@ -101,7 +102,7 @@ module Driving
     end
 
     # set phi and phi dependencies
-    def update_phi new_phi
+    def phi= new_phi
       @phi = new_phi
 
       # instance variables that depend on phi
@@ -116,8 +117,10 @@ module Driving
       @facing_node = get_facing_node
     end
 
+    alias :update_phi :phi=
+
     # set pos and pos dependencies
-    def update_pos new_pos
+    def pos= new_pos
       @pos = new_pos.clone
 
       # instance variables that depend on position
@@ -129,6 +132,8 @@ module Driving
       @curr_road = find_curr_road
       @facing_node = get_facing_node
     end
+
+    alias :update_pos :pos=
 
     # set pos, phi, and dependencies thereof
     def update_pos_phi new_pos, new_phi
