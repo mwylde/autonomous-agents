@@ -1,4 +1,8 @@
 module Driving
+  # Server agents represent agents in the environment. They have all
+  # of the state variables needed to simulate agent movement on the
+  # map. When running, they constantly update their state variables in
+  # response to their current velocity and turning speed.
   class ServerAgent
 
     attr_reader :id, :pos, :phi, :delta, :delta_speed, :speed, :accel, :w, :l,
@@ -30,6 +34,8 @@ module Driving
       @crumbs = []
     end
 
+    # Converts an agent to a hash representation which can be sent
+    # across a socket to a ClientAgent.
     def to_hash
       {
         :pos => @pos.to_a,
@@ -195,7 +201,10 @@ module Driving
     # instance variable) so that average speed over the time interval can be
     # used, instead of instantaneous speed at the end.
     def move t, spd
-      raise "Delta must be in [-Pi/2, Pi/2]" unless (@delta.abs <= Math::PI/2)
+      puts "Delta must be in [-Pi/2, Pi/2]" unless (@delta.abs <= Math::PI/2)
+
+      @delta = [-Math::PI/2, @delta].max
+      @delta = [Math::PI/2, @delta].min
       
       if @delta.abs < 0.01
         move_straight t, spd

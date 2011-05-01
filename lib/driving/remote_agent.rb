@@ -1,4 +1,6 @@
 module Driving
+  # RemoteServerAgent is a subclass of ServerAgent with extra methods
+  # for dealing with ClientAgents. 
   class RemoteServerAgent < ServerAgent
     include Communicator
 

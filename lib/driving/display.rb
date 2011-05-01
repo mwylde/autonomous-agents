@@ -202,7 +202,10 @@ module Driving
 
         if a.renders
           a.renders.each{|x|
-            eval x
+            begin
+              eval x
+            rescue
+            end
           }
         end
 
