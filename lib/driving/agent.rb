@@ -61,7 +61,7 @@ module Driving
       @map.road_set.each do |road|
         return road if road.contains @pos
       end
-      close
+      nil
     end
 
     # Starts the update loop which periodically updates the state
@@ -114,7 +114,6 @@ module Driving
       @sw = create_sw
       @north = create_north
       @curr_road = find_curr_road
-      @facing_node = get_facing_node
     end
 
     alias :update_phi :phi=
@@ -130,7 +129,6 @@ module Driving
       @sw = create_sw
       @north = create_north
       @curr_road = find_curr_road
-      @facing_node = get_facing_node
     end
 
     alias :update_pos :pos=
@@ -149,7 +147,6 @@ module Driving
       @sw = create_sw
       @north = create_north
       @curr_road = find_curr_road
-      @facing_node = get_facing_node
     end
 
     # Determines which node of the current road the agent is facing; this
