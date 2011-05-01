@@ -3,10 +3,13 @@ module Driving
   # (given by lattitude/longitude) and a set of other nodes to which
   # this one is connected by a road of some kind.
   class Node
+    @@nodes = {}
+    
     attr_accessor :pos, :neighbors
     def initialize(pos, neighbors = Set.new)
       @pos = pos
       @neighbors = neighbors
+      @@nodes[self.object_id] = self
     end
 
     def inspect
@@ -16,13 +19,13 @@ module Driving
     def to_hash
       {
         :pos => @pos.to_a,
-        :neighbors => neighbors.collect{|n| n.to_hash}
+        :neighbors => neighbors.collect{|n| n.object_id}
       }
     end
 
     def self.from_hash params
       pos = Point.from_a params[:pos]
-      neighbors = params[:neighbors].collect{|n| Node.from_hash(n)}
+      neighbors = params[:neighbors].collect{|id| @@nodes[id]}
       self.new pos, neighbors
     end
       

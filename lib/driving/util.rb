@@ -281,7 +281,7 @@ module Driving
 
     def unit_from_pt pt
       intersect = intersect_with_pt pt
-      (intersect - pt).normalize!
+      (intersect - pt).normalize
     end
 
     def hits pt
@@ -293,7 +293,7 @@ module Driving
 
     # the unit vector pointing from p0 to p1
     def unit
-      (@p1 - @p0).normalize!
+      (@p1 - @p0).normalize
     end
 
     # a unit vector normal to the vector from p0 to p1

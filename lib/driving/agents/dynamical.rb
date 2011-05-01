@@ -7,7 +7,7 @@ module Driving
 
     def repeller phi, psi, d_psi
       frac = (phi - psi) / d_psi
-      frac * Math.exp(1 - Math.abs(frac))
+      frac * Math.exp(1 - frac.abs)
     end
 
     def windower h1, phi, psi, d_psi, sigma
@@ -18,7 +18,7 @@ module Driving
       Math.exp(-1 * dm/d0)
     end
 
-    def F_obs_i phi, obs_i, d0, sig, h1
+    def f_obs_i phi, obs_i, d0, sig, h1
       # unpack obs attributes
       dm, psi, d_psi = obs_i
 
@@ -49,7 +49,7 @@ module Driving
       h1 = @params[:h1]
 
       # each obs is of the form [dm, psi, d_psi]
-      obs_list = @perceived_obs
+      obs_list = perceive_obs
 
       tar_pos, tar_size = @target
       
@@ -59,18 +59,21 @@ module Driving
       #                            c1, c2, a, h1, sigma, a_tar, g_tar_obs)
       # agent.weights = [w_tar, w_obs]
       
-      f_obs = obs_list.collect{|obs_i| f_obs_i(phi, obs_i, d0, sigma, h1)}.sum
+      f_obs = obs_list.collect{|obs_i| f_obs_i(phi, obs_i, d0, sigma, h1)}
+      f_obs = f_obs.reduce{|sum, x| sum + x}
 
-      # (Math.abs(w_tar)*f_tar) + (Math.abs(w_obs)*f_obs) + 0.01*(rand-0.5)
+      # w_tar.abs*f_tar + w_obs.abs*f_obs + 0.01*(rand-0.5)
     end
 
-    def sense
-      tar_pos, tar_size = @target
-
+    # Obstacles are ordinarily stored (in @obs) as arrays containing position
+    # and radius. Here we compute the parameters relevant to the obstacle needed
+    # for dynamical navigation calculations; each obstacle returned is an array
+    # of form [dm, psi, d_psi]
+    def perceive_obs
       @obs.collect do |obs|
         obs_pos = obs[0]
         obs_radius = obs[1]
-        
+
         dm = @pos.dist(obs_pos) - @radius - obs_radius
         psi = (obs_pos - @pos).dir
         d_psi = subtended_angle(@pos, @radius, obs_pos, obs_radius)
@@ -83,18 +86,22 @@ module Driving
     # triangles.
     def subtended_angle(p0, r0, p1, r1)
       d = p0.dist p1
+      puts (r0+r1)/d
       Math.asin((r0 + r1)/d)
     end
 
     def handle_msg msg
+      
+      # Get the data from the message
+      
       @pos = Point.new(*msg[:pos])
       @phi = msg[:phi]
       @delta = msg[:delta]
       @delta_speed = msg[:delta_speed]
       @speed = msg[:speed]
       @accel = msg[:accel]
-      @curr_road = msg[:curr_road]
-      @target = create_tar # msg[:target] <- put in when want to use real tar
+      @curr_road = Road.from_hash msg[:curr_road]
+      @target = create_tar # msg[:dest] <- put in when want to use real tar
 
       resp = {}
       
@@ -102,13 +109,33 @@ module Driving
       when :initial
         @map = Map.new(msg[:map])
         @dest = msg[:dest]
-        @bound_r = msg[:bound_r]
+        @radius = msg[:bound_r]
         resp[:speed] = 0.5
         resp[:accel] = 0.1
         resp[:delta] = 0.1
       end
 
+      # Create appropriate obstacles, and choose the new delta.
+
+      @params = {
+        :d0 => 1,
+        :c1 => 1,
+        :a => 1,
+        :sigma => 1,
+        :a_tar => 1,
+        :g_tar_obs => 1,
+        :h1 => 1
+      }
+      
+      # Create the obstacles (they are created dynamically to follow the car
+      # along the side of the road.
       @obs = create_obs
+
+      time_step = 0.05 # FIXME really this should be calculated as the difference
+                       # in time between the last message and the current one
+      resp[:delta] = @delta + delta_dot * time_step
+
+      # Render the obstacles and target for this agent.
       
       renders = ["@g.set_color Color.red"]
       @obs.each do |o|
@@ -122,28 +149,30 @@ module Driving
       
       resp[:renders] = renders
 
-      time_step = 0.05 # FIXME really this should be calculated as the difference
-                       # in time between the last message and the current one
-      resp[:delta] = @delta + delta_dot * time_step
-
+      # Send the final response
+      
       send resp
     end
 
     # Creates an object on each side of the current road. This should be
     # sufficient for keeping the agent from veering off the side of the road.
+    #
+    # Here obstacles are just arrays of position and radius, since these are
+    # their intrinsic attributes; in perceive_obs we compute the parameters of
+    # the obstacles needed for the dynamical navigation calculations.
     def create_obs
       units = @curr_road.units_to_walls @pos
       dists = @curr_road.dists_to_walls @pos
 
       @curr_road.walls.collect do |w|
         id = w.object_id
-        r = @bound_r / dists[id]**2
+        r = @radius / dists[id]**2
         [@pos + units[id] * (dists[id] + r), r]
       end
     end
 
     def create_tar
-      [@pos + Vector.from_mag_dir(20, @phi), @bound_r]
+      [@pos + Vector.from_mag_dir(20, @phi), @radius]
     end
 
     def socket; @socket; end
