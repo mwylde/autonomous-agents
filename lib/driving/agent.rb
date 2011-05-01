@@ -214,7 +214,7 @@ module Driving
     # with average speed spd during that time interval. Note: this should only
     # be used when delta is very small.
     def move_straight t, spd
-       @pos = @pos + @u*t*spd
+       self.pos= @pos + @u*t*spd
     end
 
     # Move the agent in a curved path as if time t (in seconds) has elapsed,

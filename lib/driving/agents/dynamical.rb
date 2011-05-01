@@ -87,6 +87,7 @@ module Driving
     # triangles.
     def subtended_angle(p0, r0, p1, r1)
       d = p0.dist p1
+      raise "Agent colliding with obstacle" if ((r0+r1)/d).abs > 1
       Math.asin((r0 + r1)/d)
     end
 
@@ -95,6 +96,7 @@ module Driving
       # Get the data from the message
       
       @pos = Point.new(*msg[:pos])
+      puts @pos
       @phi = msg[:phi]
       @delta = msg[:delta]
       @delta_speed = msg[:delta_speed]
