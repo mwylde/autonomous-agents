@@ -80,6 +80,31 @@ module Driving
       @c_pos = a.pos.clone
     end
 
+    # in placement mode, you can move around the agent and place it
+    # on a road somewhere and give it a target
+    def place
+      if @input.following
+        a = @agents[@input.follow_agent % @agents.size]
+        a.paused = true
+        @place_agent = a
+        @input.following = false
+      end
+    end
+
+    # If we got a mouse click in placement mode, place the agent at
+    # the location of the click
+    def click e
+      if @place_agent
+        @place_agent.pos = Point.new(e.getX, e.getY)
+        if cr = @place_agent.curr_road
+          # arbitrarily decide to orient the car towards one node
+          facing = cr.n1
+          @place_agent.phi = (facing - @place_agent.pos).dir
+        end
+        @choose_dest = true
+      end
+    end
+
     def run
       loop { draw }
     end
@@ -99,11 +124,6 @@ module Driving
         @c_pos = @input.c_pos.clone
       end
 
-      if @paused
-        @g.setColor(Color.red)
-        @g.fillRect(0,0,20,20)
-      end
-
       @z_y = @input.zoom
 
       # @hidden_crumbs = @agents.collect { |a| a.crumbs.collect { |c| c.clone }}.flatten
@@ -111,6 +131,16 @@ module Driving
       render_map
       # render_crumbs :both
       render_agents
+
+      if @paused
+        @g.setColor(Color.red)
+        @g.fillRect(0,0,20,20)
+      end
+
+      if @choose_dest
+        @g.setColor(Color.green)
+        # point 
+      end
 
       @g.dispose
 
@@ -145,6 +175,9 @@ module Driving
     end
 
     def render_agents
+      if @place_agent && @input.mouse_pos
+        @place_agent.pos = screen_to_world @input.mouse_pos
+      end
       @agents.each do |a|
         #if @display_crumbs.size >= MAX_DISPLAY_CRUMBS * @current_agents.size
         #  @display_crumbs.pop
@@ -176,7 +209,6 @@ module Driving
         polygon a.sw_tire_pts, fill=true
 
         dot a.north
-
       end
     end
 
@@ -354,7 +386,8 @@ module Driving
     include MouseMotionListener
     include MouseWheelListener
 
-    attr_accessor :c_pos, :following, :follow_agent, :zoom, :zoom_min, :zoom_max
+    attr_accessor :c_pos, :following, :follow_agent,
+      :zoom, :zoom_min, :zoom_max, :mouse_pos
     def initialize c_pos, zoom, zoom_min, zoom_max, display
       @display = display
       @c_pos = c_pos
@@ -374,7 +407,7 @@ module Driving
       p1 = @display.screen_to_world(Point.new(e.getX, e.getY))
 
       displacement = p0.subtract_point p1
-      @c_pos.add_vector! displacement
+      @c_pos = @c_pos.add_vector displacement
 
       @pmouse = Point.new(e.getX, e.getY)
     end
@@ -384,9 +417,13 @@ module Driving
     end
 
     def mouseEntered e; end;
-    def mouseClicked e; end;
+    def mouseClicked e
+      @display.click e
+    end
     def mouseExited e; end;
-    def mouseMoved e; end;
+    def mouseMoved e
+      @mouse_pos = Point.new(e.getX, e.getY)
+    end
 
     def mouseWheelMoved e
       increment = e.get_wheel_rotation   # increment/decrement
@@ -403,6 +440,7 @@ module Driving
 
       case e.getKeyChar
       when 112 then @display.paused = !@display.paused # p
+      when 100 then @display.place
       end
     end
 
