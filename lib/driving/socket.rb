@@ -17,11 +17,11 @@ module Driving
       end
       
       def get_chunk
-        @socket.get_input_stream.read()
+        @socket.get_input_stream.read() rescue nil
       end
 
       def send_msg str
-        @socket.get_output_stream.write(str.to_java_bytes)
+        @socket.get_output_stream.write(str.to_java_bytes) rescue nil
       end
     end
   else
