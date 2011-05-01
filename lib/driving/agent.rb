@@ -86,7 +86,7 @@ module Driving
 
     # set pos and cache various attributes.
     def pos= new_pos
-      @pos = new_pos
+      @pos = new_pos.clone
 
       cache_attributes
     end

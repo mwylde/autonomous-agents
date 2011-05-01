@@ -19,7 +19,7 @@ module Driving
     MAX_DISPLAY_CRUMBS = 1000
     
     WORLD_DOT_RADIUS = 0.6
-    POINT_RADIUS = 1
+    POINT_RADIUS = 2
     INIT_ZOOM = 2300.0
     MIN_ZOOM = 5
     MAX_ZOOM = 1000000
@@ -94,14 +94,24 @@ module Driving
     # If we got a mouse click in placement mode, place the agent at
     # the location of the click
     def click e
-      if @place_agent
-        @place_agent.pos = Point.new(e.getX, e.getY)
-        if cr = @place_agent.curr_road
-          # arbitrarily decide to orient the car towards one node
-          facing = cr.n1
-          @place_agent.phi = (facing - @place_agent.pos).dir
+      if e.clickCount == 2
+        screen_point = screen_to_world Point.new(e.getX, e.getY)
+        if @place_agent
+          @place_agent.pos = screen_point
+          if cr = @place_agent.curr_road
+            # arbitrarily decide to orient the car towards one node
+            facing = cr.n1
+            @place_agent.phi = (facing.pos - @place_agent.pos).dir
+          end
+          @choose_dest = @place_agent
+          @place_agent = nil
+        elsif @choose_dest
+          if @map.road_for_point screen_point
+            @choose_dest.new_dest screen_point
+            @choose_dest.paused = false
+            @choose_dest = nil
+          end
         end
-        @choose_dest = true
       end
     end
 
@@ -139,7 +149,8 @@ module Driving
 
       if @choose_dest
         @g.setColor(Color.green)
-        # point 
+        pos = @input.mouse_pos.to_a.collect{|x| x - 5}
+        @g.fillOval *(pos + [10, 10])
       end
 
       @g.dispose
