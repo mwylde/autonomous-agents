@@ -73,8 +73,7 @@ module Driving
     def run_agent
       puts "Starting agent: #{@options[:agent].inspect}"
       # get the agent corresponding to the one supplied at the command
-      # line
-      puts AStarAgent
+      # line 
       #begin
         klass = Driving.const_get(@options[:agent])
         klass.new(@options[:address], @options[:port]).run

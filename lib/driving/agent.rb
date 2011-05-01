@@ -1,19 +1,6 @@
 module Driving
   class ServerAgent
 
-    MAX_CRUMBS = 1000
-    
-    DEFAULT_WIDTH = 1.75
-
-    DEFAULT_LENGTH = 4.46
-
-    DEFAULT_PHI = Math::PI*2.75/4
-
-    DEFAULT_SPEED = 0.0
-
-    STATE_UPDATE_FREQUENCY = 100.0
-    MOVE_FREQUENCY = 10.0
-
     attr_reader :id, :pos, :phi, :delta, :delta_speed, :speed, :accel, :w, :l,
     :tw, :tl, :u, :n, :ne, :nw, :se, :sw, :crumbs, :north, :map, :dest, :renders,
     :curr_road
@@ -21,18 +8,20 @@ module Driving
     
     # Creates a default agent with positional parameters set to 0; requires
     # width and height specification
-    def initialize(id, map, pos = Point.new(*DEFAULT_AGENT_POS_A),
-                   w = DEFAULT_WIDTH, l = DEFAULT_LENGTH, phi = DEFAULT_PHI,
-                   delta = 0, delta_speed = 0, speed = DEFAULT_SPEED, accel = 0)
+    def initialize(id, map, pos = Point.new(0,0),
+                   w = AGENT_WIDTH, l = AGENT_LENGTH, phi = 0,
+                   delta = 0, delta_speed = 0, speed = 0, accel = 0)
       @id = id
-      @w = w      # car width
-      @l = l      # car length
-      @tw = w/10  # tire width
-      @tl = l/4   # tire length
+      @w = w                     # car width
+      @l = l                     # car length 
+      @tw = w*AGENT_TIRE_WIDTH   # tire width
+      @tl = l*AGENT_TIRE_LENGTH  # tire length
       
       @map = map
 
-      update_pos_phi pos, phi
+      # this will set all the parameters which depend on pos and phi
+      self.pos= pos
+      self.phi= phi
       # delta > 0 means turning to the right
       @delta = delta
       @delta_speed = delta_speed
@@ -49,7 +38,6 @@ module Driving
         :delta_speed => @delta_speed,
         :speed => @speed,
         :accel => @accel,
-        :facing_node => @facing_node? @facing_node.to_hash : nil,
         :curr_road => @curr_road ? @curr_road.to_hash : nil
       }
     end
@@ -61,105 +49,71 @@ module Driving
       @map.road_set.each do |road|
         return road if road.contains @pos
       end
-      close
+      nil
     end
 
     # Starts the update loop which periodically updates the state
     # variables. Spawns a thread, so non-blocking.
-    # @param start_time Time the start time of the simulation 
     def run
-
-      # update loop
       Thread.new do
         curr_time = Time.now
-        
+
         loop do
-            last_time = curr_time
-            curr_time = Time.now
+          last_time = curr_time
+          curr_time = Time.now
           if !@paused
+            old_spd = @speed
             @speed += @accel * (curr_time - last_time)
+            avg_spd = (old_spd + @speed) / 2.0
+            
             @delta += @delta_speed * (curr_time - last_time)
+            
+            move curr_time-last_time, avg_spd
           end
 
-          sleep 1.0 / STATE_UPDATE_FREQUENCY
-        end
-      end
-               
-      # move loop
-      Thread.new do
-        curr_time = Time.now
-        
-        loop do
-            last_time = curr_time
-            curr_time = Time.now
-          if !@paused          
-            move(curr_time - last_time)
-          
-            sleep 1.0 / MOVE_FREQUENCY
-          end
+          t = 1.0/AGENT_UPDATE_FREQ - (Time.now - curr_time)
+          sleep t > 0.0 ? t : 0
         end
       end
     end
 
-    # set phi and phi dependencies
+    # set phi and cache various attributes.
     def phi= new_phi
       @phi = new_phi
 
-      # instance variables that depend on phi
-      @u = create_u
-      @n = create_n
-      @ne = create_ne
-      @nw = create_nw
-      @se = create_se
-      @sw = create_sw
-      @north = create_north
-      @curr_road = find_curr_road
-      @facing_node = get_facing_node
+      cache_attributes
     end
 
-    alias :update_phi :phi=
-
-    # set pos and pos dependencies
+    # set pos and cache various attributes.
     def pos= new_pos
-      @pos = new_pos.clone
-
-      # instance variables that depend on position
-      @ne = create_ne
-      @nw = create_nw
-      @se = create_se
-      @sw = create_sw
-      @north = create_north
-      @curr_road = find_curr_road
-      @facing_node = get_facing_node
-    end
-
-    alias :update_pos :pos=
-
-    # set pos, phi, and dependencies thereof
-    def update_pos_phi new_pos, new_phi
       @pos = new_pos
-      @phi = new_phi
 
-      # instance variables that depend on either position or phi
-      @u = create_u
-      @n = create_n
-      @ne = create_ne
-      @nw = create_nw
-      @se = create_se
-      @sw = create_sw
-      @north = create_north
-      @curr_road = find_curr_road
-      @facing_node = get_facing_node
+      cache_attributes
     end
 
-    # Determines which node of the current road the agent is facing; this
-    # depends on the position and the heading direction (phi).
-    def get_facing_node
-      ang0 = ((@curr_road.n0.pos - @pos).dir - @phi).abs
-      ang1 = ((@curr_road.n1.pos - @pos).dir - @phi).abs
-      ang0 < ang1 ? @curr_road.n0 : @curr_road.n1
-    end      
-    
+    # this should be called whenever pos or phi is updated
+    def cache_attributes
+      # variables which depend on phi
+      unless @phi.nil?
+        @u = create_u
+        @n = create_n
+      end
+
+      # variables which depend on pos and phi
+      unless @phi.nil? || @pos.nil?
+        @ne = create_ne
+        @nw = create_nw
+        @se = create_se
+        @sw = create_sw
+        @north = create_north
+      end
+
+      # variables which depend on pos
+      unless @pos.nil?
+        @curr_road = find_curr_road
+      end
+    end
+
     # unit vector pointing in the direction of phi
     def create_u
       Vector.new(Math.cos(@phi), Math.sin(@phi))
@@ -236,149 +190,58 @@ module Driving
       [ @sw + u_scale, @sw + u_scale - n_scale, @sw - n_scale, @sw ]
     end
 
-    
-
-    def move t
+    # Moves the agent for the specified time and average speed over that
+    # time. The speed needs to be specified (instead of the agent's speed
+    # instance variable) so that average speed over the time interval can be
+    # used, instead of instantaneous speed at the end.
+    def move t, spd
       raise "Delta must be in [-Pi/2, Pi/2]" unless (@delta.abs <= Math::PI/2)
       
       if @delta.abs < 0.01
-        move_straight t
+        move_straight t, spd
       else
-        move_curved t
+        move_curved t, spd
       end
 
-      if @crumbs.size >= MAX_CRUMBS
+      if @crumbs.size >= AGENT_MAX_CRUMBS
         @crumbs.pop
       end
       
       @crumbs.unshift @pos.clone
     end
     
-    # Move the agent in a straight path as if time t (in seconds) has
-    # elapsed. Note: this should only be used when delta is very small.
-    def move_straight t
-       update_pos @pos + @u*t*@speed
+    # Move the agent in a straight path as if time t (in seconds) has elapsed,
+    # with average speed spd during that time interval. Note: this should only
+    # be used when delta is very small.
+    def move_straight t, spd
+       @pos = @pos + @u*t*spd
     end
 
-    # Move the agent in a curved path as if time t (in seconds) has
-    # elapsed. Note: this should be used instead of move_straight whenever delta
-    # is sizeable.
-    def move_curved t
+    # Move the agent in a curved path as if time t (in seconds) has elapsed,
+    # with average speed spd during that time interval. Note: this should be
+    # used instead of move_straight whenever delta is sizeable.
+    def move_curved t, spd
       # this is the distance between the appropriate back tire and the point
       # around which the car rotates
       r = @l / Math.tan(@delta.abs)
 
       # this is the angle, in radians, of the arc of the concentric circles
       # which the car fills out in time t
-      theta = @speed * t / r
+      theta = spd * t / r
 
       # FIXME: this shouldn't be necessary, but the car zooms off now even if
       # given no speed. this might be useful to save computation, though.
       if theta > 0.000001
         if @delta > 0
           rotate_pt = @se + @n*r
-          update_pos_phi @pos.rotate_about(rotate_pt, -theta), @phi+theta
+          self.pos= @pos.rotate_about(rotate_pt, -theta)
+          self.phi= @phi + theta
         else
           rotate_pt = @sw - @n*r
-          update_pos_phi @pos.rotate_about(rotate_pt, theta), @phi-theta
+          self.pos= @pos.rotate_about(rotate_pt, theta)
+          self.phi= @phi - theta
         end
       end
-    end
-
-    # Causes the agent to accelerate or decellerate at a rate
-    # determined by x for a time period t.
-    # @param x Float the acceleration, in meters per second per second.
-    # @param t Float the time, in seconds, to accelerate for.
-    def accelerate x, t
-      curr_time = Time.now
-      
-      Thread.new do
-        until Time.now > start_time + t do
-          last_time = curr_time
-          curr_time = Time.now
-          @speed += x * (curr_time - last_time)
-          @speed = 0 if @speed < 0
-          sleep 1.0 / STATE_UPDATE_FREQUENCY
-        end
-      end
-    end
-
-    # Causes the agent to accelerate or decellerate for a time period t at a
-    # rate such that it reaches speed x.
-    # @param x Float the target speed, in meters per second, to reach at the
-    # end.
-    # @param t Float the time, in seconds, to accelerate for.
-    def accelerate_to x, t
-      rate = (x - @speed) / t
-      @speed = 0 if @speed < 0
-      accelerate rate, t
-    end
-
-    # Causes the agents' wheels (angle delta) at a rate determined by x, for a
-    # period of time t.
-    # @param x Float the speed, in radians per second, to turn the wheel.
-    # @param t Float the time, in seconds, to turn the wheel
-    def wheel_turn x, t
-      predicted_end_delta = @delta + x*t
-      unless predicted_end_delta.abs < Math::PI/2
-        raise "End wheel position must be in range [-pi/2, pi/2]"
-      end
-
-      curr_time = Time.now
-      
-      Thread.new do
-        until Time.now > start_time + t do
-          last_time = curr_time
-          curr_time = Time.now
-          @delta += x * (curr_time - last_time)
-          sleep 1.0 / STATE_UPDATE_FREQUENCY
-        end
-      end
-    end
-
-    # Causes the agents' wheels (angle delta) to turn to a position x in a
-    # period of time t.
-    # @param x Float the angle to turn the wheels to.
-    # @param t Float the time it should take to turn the wheels.
-    def wheel_turn_to x, t
-      unless x.abs < Math::PI/2
-        raise "Target wheel position must be in range [-pi/2, pi/2]"
-      end
-        
-      rate = (x - @delta) / t
-      wheel_turn rate, t
-    end
-      
-
-    def turn_left
-      Thread.new do
-        accelerate_to 0.5, 5
-        sleep 3
-        accelerate_to 0.1, 1
-        sleep 1
-        wheel_turn_to -Math::PI/4, 0.5
-        sleep 0.5
-        wheel_turn_to 0, 0.5
-        sleep 0.5
-        accelerate_to 0.5, 1
-        sleep 1
-        accelerate_to 0, 5
-      end
-    end
-
-    def go_crazy
-      @speed = 0.5
-      Thread.new do
-        loop do
-          @delta = (rand - 0.5) * Math::PI/2
-          sleep 5
-        end
-      end
-    end
-
-    def go_straight
-      @speed = 0.5
-      @delta = 0.0
     end
   end
 end

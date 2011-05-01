@@ -6,14 +6,14 @@ module Driving
       super *agent_params
       @socket = socket
       @server = server
-      @pos = @map.nodes.to_a.choice.pos
+      self.pos = @map.nodes.to_a.choice.pos
       curr = @map.closest_node @pos
       facing = curr.neighbors.to_a.choice
       puts facing.inspect
       # displace a bit along the vector from current position to
       # facing so that we're not directly on a node
-      update_phi (facing.pos - @pos).dir
-      update_pos @pos + @u*3
+      self.phi= (facing.pos - @pos).dir
+      self.pos= @pos + @u*3
       
       # pick a random dest that is relatively accessible from the
       # current position
@@ -33,8 +33,6 @@ module Driving
         :type => :initial,
         :map => @map.to_hash,
         :dest => @dest.to_a,
-        :bound_r => 3.5/2.0 # FIXME this is a hack, should really be a
-                            # reference, not a hardcoded value
       }
       send initial.merge(self.to_hash)
     end
@@ -80,7 +78,7 @@ module Driving
       @delta = msg[:delta] if msg[:delta]
       @accel = msg[:accel] if msg[:accel]
       # cheating
-      update_phi msg[:phi] if msg[:phi]
+      self.phi= msg[:phi] if msg[:phi]
       @renders = msg[:renders] if msg[:renders]
       puts "phi = #{@phi}; accel = #{@accel}" if rand < 0.01
       send(self.to_hash.merge({:type => :update}))

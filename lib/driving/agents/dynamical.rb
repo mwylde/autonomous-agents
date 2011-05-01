@@ -51,7 +51,7 @@ module Driving
       # each obs is of the form [dm, psi, d_psi]
       obs_list = perceive_obs
 
-      tar_pos = Point.from_a @target[0]
+      tar_pos = @target[0]
       tar_size = @target[1]
       
       psi_tar = (tar_pos - pos).dir
@@ -101,7 +101,7 @@ module Driving
       @speed = msg[:speed]
       @accel = msg[:accel]
       @curr_road = Road.from_hash msg[:curr_road]
-      @facing = msg[:facing_node]
+      @facing = get_facing_node
       @target = create_tar # msg[:dest] <- put in when want to use real tar
 
       resp = {}
@@ -110,7 +110,7 @@ module Driving
       when :initial
         @map = Map.new(msg[:map])
         @dest = msg[:dest]
-        @radius = msg[:bound_r]
+        @radius = AGENT_LENGTH / 2.0
         resp[:speed] = 0.5
         resp[:accel] = 0.1
         resp[:delta] = 0.1
@@ -144,7 +144,7 @@ module Driving
         renders << "circle Point.new(#{c.x}, #{c.y}), #{r}"
       end
 
-      c = Point.from_a @target[0]
+      c = @target[0]
       r = @target[1]
       renders << "@g.set_color Color.blue"
       renders << "circle Point.new(#{c.x}, #{c.y}), #{r}"
@@ -174,8 +174,16 @@ module Driving
     end
 
     def create_tar
-      [@facing, @radius]
+      [@facing.pos, @radius]
     end
+
+    # Determines which node of the current road the agent is facing; this
+    # depends on the position and the heading direction (phi).
+    def get_facing_node
+      ang0 = ((@curr_road.n0.pos - @pos).dir - @phi).abs
+      ang1 = ((@curr_road.n1.pos - @pos).dir - @phi).abs
+      ang0 < ang1 ? @curr_road.n0 : @curr_road.n1
+    end      
 
     def socket; @socket; end
     
