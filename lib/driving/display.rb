@@ -3,6 +3,7 @@ include_class 'java.awt.Color'
 include_class 'java.awt.Dimension'
 include_class 'java.awt.Graphics2D'
 include_class 'java.awt.Polygon'
+include_class 'java.awt.BasicStroke'
 include_class 'java.awt.event.ActionListener'
 include_class 'java.awt.event.MouseListener'
 include_class 'java.awt.event.MouseMotionListener'
@@ -134,7 +135,7 @@ module Driving
         @c_pos = @input.c_pos.clone
       end
 
-      @z_y = @input.zoom
+      self.z_y= @input.zoom
 
       # @hidden_crumbs = @agents.collect { |a| a.crumbs.collect { |c| c.clone }}.flatten
       
@@ -158,12 +159,25 @@ module Driving
       @strategy.show
     end
 
+    def z_y= zoom
+      @z_y = zoom
+      @dash_mark_len = world_to_screen(Point.new(LANE_DASH_MARK_LEN, 0)).
+        dist(world_to_screen(Point::ZERO))
+      @dash_space_len = world_to_screen(Point.new(LANE_DASH_SPACE_LEN, 0)).
+        dist(world_to_screen(Point::ZERO))
+      @z_y
+    end
+
     def render_map
       @map.road_set.each do |r|
-        @g.set_color Color.red
+        @g.set_color Color.black
+        @g.set_stroke BasicStroke.new 0.0, BasicStroke::CAP_BUTT,
+                                      BasicStroke::JOIN_BEVEL, 0.0,
+                                      [@dash_mark_len, @dash_space_len].to_java(:float), 
+                                      0.0
         line r if on_screen? r
+        @g.set_stroke BasicStroke.new(1.0)
         r.walls.each do |w|
-          @g.set_color Color.black
           line w if on_screen? w
         end
       end
