@@ -132,9 +132,15 @@ module Driving
       # along the side of the road.
       @obs = create_obs
 
-      time_step = 0.05 # FIXME really this should be calculated as the difference
-                       # in time between the last message and the current one
+      @last_time = @curr_time ? @curr_time : Time.now
+      @curr_time = Time.now
+      time_step = @curr_time - @last_time
       resp[:delta] = @delta + delta_dot * time_step
+
+      # FIXME: we should have a better to handle avoiding extreme delta values;
+      # maybe some form of repeller?
+      resp[:delta] = -Math::PI/2.0 if resp[:delta] < -Math::PI/2.0
+      resp[:delta] =  Math::PI/2.0 if resp[:delta] >  Math::PI/2.0
 
       # Render the obstacles and target for this agent.
       
