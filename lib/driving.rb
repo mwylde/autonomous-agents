@@ -9,8 +9,8 @@ end
 require "#{root}/driving/constants"
 require "#{root}/driving/util"
 require "#{root}/driving/map"
-require "#{root}/driving/agent"
 require "#{root}/driving/socket"
+require "#{root}/driving/server_agent"
 require "#{root}/driving/remote_agent"
 require "#{root}/driving/client_agent"
 if RUBY_ENGINE == 'jruby'
