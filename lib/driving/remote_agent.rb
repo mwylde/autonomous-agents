@@ -38,6 +38,14 @@ module Driving
       }
       send initial.merge(self.to_hash)
     end
+
+    def new_dest p
+      msg = {
+        :type => :dest_change,
+        :dest => @dest.to_a
+      }
+      send msg.merge(self.to_hash)
+    end
     
     def run
       super

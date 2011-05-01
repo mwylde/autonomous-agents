@@ -52,7 +52,7 @@ module Driving
       Point.new(@x + v.x, @y + v.y)
     end
 
-    alias :addvector :+
+    alias :add_vector :+
 
     # For vectors does `subtract_vector`. For pooints does `subtract_point`
     def -(a)
