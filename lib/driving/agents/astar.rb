@@ -185,7 +185,6 @@ module Driving
       if @mode == REPLAN_MODE
         puts "Off-track, recalculating..."
         change_dest @dest
-        self.mode = START_MODE
       end
     end
 
@@ -193,6 +192,7 @@ module Driving
       @dest = p
       @goal = @map.closest_node @dest
       @route = calculate_route
+      self.mode = START_MODE
       puts "Route: #{@route.inspect}"
     end
 

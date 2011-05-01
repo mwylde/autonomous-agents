@@ -40,6 +40,7 @@ module Driving
     end
 
     def new_dest p
+      @dest = p
       msg = {
         :type => :dest_change,
         :dest => @dest.to_a
