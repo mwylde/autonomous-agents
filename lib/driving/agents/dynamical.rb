@@ -51,7 +51,8 @@ module Driving
       # each obs is of the form [dm, psi, d_psi]
       obs_list = perceive_obs
 
-      tar_pos, tar_size = @target
+      tar_pos = Point.from_a @target[0]
+      tar_size = @target[1]
       
       psi_tar = (tar_pos - pos).dir
 
@@ -86,7 +87,6 @@ module Driving
     # triangles.
     def subtended_angle(p0, r0, p1, r1)
       d = p0.dist p1
-      puts (r0+r1)/d
       Math.asin((r0 + r1)/d)
     end
 
@@ -101,6 +101,7 @@ module Driving
       @speed = msg[:speed]
       @accel = msg[:accel]
       @curr_road = Road.from_hash msg[:curr_road]
+      @facing = msg[:facing_node]
       @target = create_tar # msg[:dest] <- put in when want to use real tar
 
       resp = {}
@@ -143,7 +144,8 @@ module Driving
         renders << "circle Point.new(#{c.x}, #{c.y}), #{r}"
       end
 
-      c, r = @target
+      c = Point.from_a @target[0]
+      r = @target[1]
       renders << "@g.set_color Color.blue"
       renders << "circle Point.new(#{c.x}, #{c.y}), #{r}"
       
@@ -166,13 +168,13 @@ module Driving
 
       @curr_road.walls.collect do |w|
         id = w.object_id
-        r = @radius / dists[id]**2
+        r = @radius / dists[id]
         [@pos + units[id] * (dists[id] + r), r]
       end
     end
 
     def create_tar
-      [@pos + Vector.from_mag_dir(20, @phi), @radius]
+      [@facing, @radius]
     end
 
     def socket; @socket; end

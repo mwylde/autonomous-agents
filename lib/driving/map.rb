@@ -51,7 +51,7 @@ module Driving
       [LineSegment.new(p0+n, p1+n), LineSegment.new(p0-n, p1-n)]
     end
     
-    attr_accessor :p0, :p1, :n0, :n1, :naive, :walls
+    attr_accessor :n0, :n1, :naive, :walls
     def initialize(n0, n1, walls = nil)
       @n0, @n1 = n0, n1
 

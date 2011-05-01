@@ -374,7 +374,7 @@ module Driving
       p1 = @display.screen_to_world(Point.new(e.getX, e.getY))
 
       displacement = p0.subtract_point p1
-      @c_pos.add_vector! displacement
+      @c_pos = @c_pos.add_vector displacement
 
       @pmouse = Point.new(e.getX, e.getY)
     end
