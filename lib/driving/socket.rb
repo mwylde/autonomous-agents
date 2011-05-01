@@ -21,7 +21,7 @@ module Driving
       end
 
       def send_msg str
-        @socket.get_output_stream.write(str.to_java_bytes)
+        @socket.get_output_stream.write(str.to_java_bytes) rescue nil
       end
     end
   else
