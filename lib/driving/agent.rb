@@ -49,6 +49,7 @@ module Driving
         :delta_speed => @delta_speed,
         :speed => @speed,
         :accel => @accel,
+        :facing_node => @facing_node? @facing_node.to_hash : nil,
         :curr_road => @curr_road ? @curr_road.to_hash : nil
       }
     end
@@ -60,7 +61,7 @@ module Driving
       @map.road_set.each do |road|
         return road if road.contains @pos
       end
-      return nil
+      close
     end
 
     # Starts the update loop which periodically updates the state
@@ -112,6 +113,8 @@ module Driving
       @se = create_se
       @sw = create_sw
       @north = create_north
+      @curr_road = find_curr_road
+      @facing_node = get_facing_node
     end
 
     alias :update_phi :phi=
@@ -127,6 +130,7 @@ module Driving
       @sw = create_sw
       @north = create_north
       @curr_road = find_curr_road
+      @facing_node = get_facing_node
     end
 
     alias :update_pos :pos=
@@ -145,8 +149,17 @@ module Driving
       @sw = create_sw
       @north = create_north
       @curr_road = find_curr_road
+      @facing_node = get_facing_node
     end
-      
+
+    # Determines which node of the current road the agent is facing; this
+    # depends on the position and the heading direction (phi).
+    def get_facing_node
+      ang0 = ((@curr_road.n0.pos - @pos).dir - @phi).abs
+      ang1 = ((@curr_road.n1.pos - @pos).dir - @phi).abs
+      ang0 < ang1 ? @curr_road.n0 : @curr_road.n1
+    end      
+    
     # unit vector pointing in the direction of phi
     def create_u
       Vector.new(Math.cos(@phi), Math.sin(@phi))
