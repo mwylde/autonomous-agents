@@ -15,7 +15,8 @@ module Driving
   # How frequently (per second) an agent should update its parameters
   AGENT_UPDATE_FREQ = 50.0
   
-  DYNAMICAL_AGENT_RADIUS = 1.75
+  DYNAMICAL_AGENT_RADIUS = AGENT_WIDTH / 2.0
+  DYNAMICAL_OBSTACLES_AHEAD = true
 
   LANE_DASH_MARK_LEN = 1.0
   LANE_DASH_SPACE_LEN = 2.0

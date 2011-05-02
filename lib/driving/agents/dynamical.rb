@@ -3,9 +3,9 @@ module Driving
 
     PARAMS = {
       :d0 => 1,
-      :c1 => 4,
-      :a => 3,
-      :sigma => 2,
+      :c1 => 3,
+      :a => 4,
+      :sigma => 1,
       :a_tar => 1,
       :g_tar_obs => 1,
       :h1 => 1
@@ -70,7 +70,7 @@ module Driving
       #                            c1, c2, a, h1, sigma, a_tar, g_tar_obs)
       # agent.weights = [w_tar, w_obs]
       
-      f_obs = obs_list.collect{|obs_i| f_obs_i(@phi, obs_i, d0, sigma, h1)}
+      f_obs = obs_list.collect{|obs_i| f_obs_i(@phi-@delta, obs_i, d0, sigma, h1)}
       puts f_obs.inspect if rand < 0.01
       f_obs = f_obs.reduce(:+)
 
@@ -108,14 +108,16 @@ module Driving
         # get constant information
         @map = Map.new(msg[:map])
         @dest = msg[:dest]
-        @radius = AGENT_LENGTH / 2.0
+        @radius = DYNAMICAL_AGENT_RADIUS
+        @length = msg[:l]
+        @width = msg[:w]
 
         # need to set this so it's ready to use next time
         @curr_time = Time.now
         
         # send initial response
         send({
-          :speed => 0.5,
+          :speed => 1.0,
           :accel => 0.1,
           :delta => 0
         })
@@ -129,13 +131,17 @@ module Driving
         @accel = msg[:accel]
 
         # compute more advanced, dynamcial-specific things
+
+        # response hash that we'll build
+        resp = {}
+        renders = []
         
         # FIXME: we need to replace this with keeping track of the last position's
         # curr_road and seeing if the new position has passed into a new road.
         begin
           @curr_road = find_curr_road 
           raise "Fell off road!" if !@curr_road
-          @facing = get_facing_node
+          @facing = facing_node[0]
           @target = create_tar # msg[:dest] <- put in when want to use real tar
           @obs = create_obs
 
@@ -143,6 +149,19 @@ module Driving
           @curr_time = Time.now
           new_delta = @delta + delta_dot * (@curr_time - @last_time)
           new_phi = @phi + delta_dot * (@curr_time - @last_time)
+
+          # Render the obstacles
+          renders << "@g.set_color Color.red"
+          @obs.each do |o|
+            c, r = o
+            renders << "circle Point.new(#{c.x}, #{c.y}), #{r}"
+          end
+          # Render the target
+          c = @target[0]
+          r = @target[1]
+          renders << "@g.set_color Color.blue"
+          renders << "circle Point.new(#{c.x}, #{c.y}), #{r}"
+          resp[:renders] = renders
         rescue
           puts $!
           new_delta = @delta
@@ -150,21 +169,13 @@ module Driving
 
         # prepare and send the response
 
-        # resp = { :delta => new_delta }
-        resp  = { :phi => new_phi }
+        resp = { :delta => new_delta }
+        #resp[:phi]  = new_phi
 
-        # Render the obstacles and target for this agent.
-        renders = ["@g.set_color Color.red"]
-        @obs.each do |o|
-          c, r = o
-          renders << "circle Point.new(#{c.x}, #{c.y}), #{r}"
-        end
-        c = @target[0]
-        r = @target[1]
-        renders << "@g.set_color Color.blue"
-        renders << "circle Point.new(#{c.x}, #{c.y}), #{r}"
+        # Render the agent's bounding circle
+        renders << "@g.set_color Color.lightGray"
+        renders << "circle Point.new(#{@pos.x}, #{@pos.y}), #{@radius}"
         resp[:renders] = renders
-        
         send resp
       end
     end
@@ -181,8 +192,11 @@ module Driving
 
       @curr_road.walls.collect do |w|
         id = w.object_id
-        r = @radius / dists[id]
-        [@pos + units[id] * (dists[id] + r), r]
+        r = 2*@radius / dists[id]
+        facing, other = facing_node
+        par_comp = (facing.pos-other.pos).normalize*@length/2.0
+        perp_comp = units[id]*(dists[id]+r)
+        [@pos + perp_comp + (DYNAMICAL_OBSTACLES_AHEAD ? par_comp : Vector.new(0,0)), r]
       end
     end
 
@@ -201,9 +215,11 @@ module Driving
     end
 
     # Determines which node of the current road the agent is facing; this
-    # depends on the position and the heading direction (phi).
-    def get_facing_node
-      [@curr_road.n0, @curr_road.n1].min_by{|n|
+    # depends on the position and the heading direction (phi). Returned as an
+    # array where the first element is the facing node and the second is the
+    # other node.
+    def facing_node
+      [@curr_road.n0, @curr_road.n1].sort_by{|n|
         ((n.pos - @pos).dir - @phi).abs
       }
     end

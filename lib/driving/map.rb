@@ -68,6 +68,10 @@ module Driving
       "Road: #{@p0} -> #{@p1} with #{@walls}"
     end
 
+    def unit_vector
+      Vector.from_mag_dir 1, (@n1.pos - @n0.pos).dir
+    end
+
     def to_hash
       {
         :n0 => @n0.to_hash,
