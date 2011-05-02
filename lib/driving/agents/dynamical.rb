@@ -189,7 +189,7 @@ module Driving
         facing, other = facing_node
         par_comp = (facing.pos-other.pos).normalize*@length/2.0
         perp_comp = units[id]*(dists[id]+r)
-        [@pos + perp_comp + par_comp, r]
+        [@pos + perp_comp + (DYNAMICAL_OBSTACLES_AHEAD ? par_comp : Vector.new(0,0)), r]
       end
     end
 

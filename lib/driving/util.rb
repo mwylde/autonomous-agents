@@ -46,10 +46,13 @@ module Driving
     # Finds the point along the specificed vector using this pooint as
     # the base
     def + v
-      unless v.is_a? Driving::Vector
-        raise "Can only add a vector, not a #{a.class}, to a point"
+      case v
+      when Driving::Vector
+        Point.new(@x + v.x, @y + v.y)
+      else
+        raise "Can only add a vector, not a #{v.class.name}, to a point"
       end
-      Point.new(@x + v.x, @y + v.y)
+
     end
 
     alias :add_vector :+
