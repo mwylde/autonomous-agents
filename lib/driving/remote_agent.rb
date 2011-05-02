@@ -11,11 +11,13 @@ module Driving
       self.pos = @map.nodes.to_a.choice.pos
       curr = @map.closest_node @pos
       facing = curr.neighbors.to_a.choice
-      puts facing.inspect
       # displace a bit along the vector from current position to
       # facing so that we're not directly on a node
-      self.phi= (facing.pos - @pos).dir
-      self.pos= @pos + @u*3
+      self.phi = (facing.pos - @pos).dir
+
+      # we want to displace along the norm vector so that it ends up
+      # in a lane rather than the center of the road
+      self.pos = @pos + @u*3 + @n.normalize * (ROAD_WIDTH/2)
       
       # pick a random dest that is relatively accessible from the
       # current position
