@@ -2,6 +2,8 @@ module Driving
   # A SimpleAgent is an agent used for testing purposes that does not try to
   # perform any kind of navigation. 
   class SimpleAgent < ClientAgent
+    EPSILON = 0.01
+    
     def handle_msg msg
       @pos = Point.new(*msg[:pos])
       @phi = msg[:phi]
@@ -10,7 +12,7 @@ module Driving
       @speed = msg[:speed]
       @accel = msg[:accel]
 
-      puts "Pos #{@pos}, Delta #{@delta}, Spd #{@speed}, Accel #{@accel}"
+      puts "#{@pos}, Delta #{@delta}, Spd #{@speed}, Accel #{@accel}"
 
       resp = {}
       
@@ -19,12 +21,13 @@ module Driving
         # @map = Map.new(msg[:map])
         resp[:accel] = 0.1
         resp[:delta] = Math::PI / 4
+        @target_spd = 1.0
       end
 
-      resp[:accel] = 1.0 if @speed < 0.9999
-      resp[:accel] = -1.0 if @speed > 1.0001
-      resp[:accel] = 0.0 if @speed > 0.9999 and @speed < 1.0001
-      
+      resp[:accel] = 0.1 if @speed < @target_spd - EPSILON
+      resp[:accel] = -0.1 if @speed > @target_spd + EPSILON
+      resp[:accel] = 0.0 if @speed > @target_spd - EPSILON &&
+                            @speed < @target_spd + EPSILON
 
       send resp
     end

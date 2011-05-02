@@ -212,11 +212,8 @@ module Driving
         move_curved t, spd
       end
 
-      if @crumbs.size >= AGENT_MAX_CRUMBS
-        @crumbs.pop
-      end
-      
       @crumbs.unshift @pos.clone
+      @crumbs.pop if @crumbs.size >= AGENT_MAX_CRUMBS
     end
     
     # Move the agent in a straight path as if time t (in seconds) has elapsed,
@@ -237,18 +234,15 @@ module Driving
       # this is the angle, in radians, of the arc of the concentric circles
       # which the car fills out in time t
       theta = spd * t / r
-      puts theta
 
-      # FIXME: this shouldn't be necessary, but the car zooms off now even if
-      # given no speed. this might be useful to save computation, though.
       if theta > 0.00000001
         if @delta > 0
           rotate_pt = @se + @n*r
-          self.pos= @pos.rotate_about(rotate_pt, -theta)
+          self.pos= @pos.rotate_about(rotate_pt, theta)
           self.phi= @phi + theta
         else
           rotate_pt = @sw - @n*r
-          self.pos= @pos.rotate_about(rotate_pt, theta)
+          self.pos= @pos.rotate_about(rotate_pt, -theta)
           self.phi= @phi - theta
         end
       end

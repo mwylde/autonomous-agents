@@ -17,14 +17,6 @@ include_class 'javax.swing.JPanel'
 
 module Driving
   class Display < Canvas
-    MAX_DISPLAY_CRUMBS = 1000
-    
-    WORLD_DOT_RADIUS = 0.6
-    POINT_RADIUS = 2
-    INIT_ZOOM = 2300.0
-    MIN_ZOOM = 5
-    MAX_ZOOM = 1000000
-    SLEEP_DURATION = 0.05
     attr_accessor :map, :g, :agents
     attr_reader :paused
     
@@ -137,10 +129,10 @@ module Driving
 
       self.z_y= @input.zoom
 
-      # @hidden_crumbs = @agents.collect { |a| a.crumbs.collect { |c| c.clone }}.flatten
+      @hidden_crumbs = @agents.collect { |a| a.crumbs.collect { |c| c.clone}}.flatten
       
       render_map
-      # render_crumbs :both
+      render_crumbs :both
       render_agents
 
       if @paused
@@ -204,11 +196,9 @@ module Driving
         @place_agent.pos = screen_to_world @input.mouse_pos
       end
       @agents.each do |a|
-        #if @display_crumbs.size >= MAX_DISPLAY_CRUMBS * @current_agents.size
-        #  @display_crumbs.pop
-        #end
-
-        # @display_crumbs.unshift a.pos
+        @display_crumbs.unshift a.pos.clone
+        @display_crumbs.pop if @display_crumbs.size >= DISPLAY_MAX_CRUMBS
+          
         if a.dest
           @g.set_color Color.green
           dot a.dest

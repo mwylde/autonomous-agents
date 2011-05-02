@@ -7,7 +7,7 @@ module Driving
   # Length of an agent
   AGENT_LENGTH = 4.45
   # Maximum number of crumbs for an agent to record
-  AGENT_MAX_CRUMBS = 1000
+  AGENT_MAX_CRUMBS = 200
   # How wide an agent's tires are with respect to the agent's width
   AGENT_TIRE_WIDTH = 0.1
   # How long an agent's tires are with respect to the agent's length
@@ -19,4 +19,12 @@ module Driving
 
   LANE_DASH_MARK_LEN = 1.0
   LANE_DASH_SPACE_LEN = 2.0
+
+  DISPLAY_MAX_CRUMBS = 200
+  WORLD_DOT_RADIUS = 0.6
+  POINT_RADIUS = 2
+  INIT_ZOOM = 2300.0
+  MIN_ZOOM = 5
+  MAX_ZOOM = 1000000
+  DISPLAY_SLEEP_DURATION = 0.05
 end
