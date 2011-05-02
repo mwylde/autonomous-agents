@@ -191,7 +191,9 @@ module Driving
         [@dash_mark_len, @dash_space_len].to_java(:float), 
         0.0
         line r if on_screen? r
-      end        
+      end
+
+      @g.set_stroke BasicStroke.new(1.0)
     end
 
     def render_crumbs spec
