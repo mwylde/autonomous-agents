@@ -145,21 +145,24 @@ module Driving
         
         # FIXME: we need to replace this with keeping track of the last position's
         # curr_road and seeing if the new position has passed into a new road.
-        @curr_road = find_curr_road 
-        raise "Fell off road!" if !@curr_road
-        @facing = facing_node[0]
-        @target = create_tar # msg[:dest] <- put in when want to use real tar
-        @obs = create_obs
-
-        @last_time = @curr_time
-        @curr_time = Time.now
-        begin
-          new_phi = @phi + phi_dot * (@curr_time - @last_time)
-        rescue
-          puts $!
+        @curr_road = find_curr_road
+        if @curr_road.nil?
           new_phi = @phi
-        end
+        else
+          @facing = facing_node[0]
+          @target = create_tar # msg[:dest] <- put in when want to use real tar
+          @obs = create_obs
 
+          @last_time = @curr_time
+          @curr_time = Time.now
+          begin
+            new_phi = @phi + phi_dot * (@curr_time - @last_time)
+          rescue
+            puts $!
+            new_phi = @phi
+          end
+        end
+          
         # prepare and send the response
 
         resp = { :phi => new_phi }
