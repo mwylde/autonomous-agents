@@ -70,11 +70,14 @@ module Driving
       #                            c1, c2, a, h1, sigma, a_tar, g_tar_obs)
       # agent.weights = [w_tar, w_obs]
       
-      f_obs = obs_list.collect{|obs_i| -f_obs_i(@phi, obs_i, d0, sigma, h1)}
+      f_obs = obs_list.collect{|obs_i| f_obs_i(@phi, obs_i, d0, sigma, h1)}
       if rand < 0.1
-        puts "a: r%.2f %f, r%.2f %f" % [@obs[0][1], (@obs[0][0] - @pos).dir,
-                                        @obs[1][1], (@obs[1][0] - @pos).dir]
-        puts "f: r%.2f %f, r%.2f %f" % [@obs[0][1], f_obs[0], @obs[1][1], f_obs[1]]
+        puts "a: r% .2f % .4f, r% .2f % .4f" %
+          [@obs[0][1], ((@obs[0][0] - @pos).dir - @phi)/Math::PI,
+           @obs[1][1], ((@obs[1][0] - @pos).dir - @phi)/Math::PI]
+        puts "f: r% .2f % .4f, r% .2f % .4f" % [@obs[0][1], f_obs[0],
+                                                @obs[1][1], f_obs[1]]
+        puts f_obs.reduce(:+)
         puts ""
       end
       f_obs = f_obs.reduce(:+)
