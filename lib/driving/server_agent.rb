@@ -237,10 +237,11 @@ module Driving
       # this is the angle, in radians, of the arc of the concentric circles
       # which the car fills out in time t
       theta = spd * t / r
+      puts theta
 
       # FIXME: this shouldn't be necessary, but the car zooms off now even if
       # given no speed. this might be useful to save computation, though.
-      if theta > 0.000001
+      if theta > 0.00000001
         if @delta > 0
           rotate_pt = @se + @n*r
           self.pos= @pos.rotate_about(rotate_pt, -theta)

@@ -10,17 +10,21 @@ module Driving
       @speed = msg[:speed]
       @accel = msg[:accel]
 
-      puts "Pos #{@pos}, Delta #{@delta}"
+      puts "Pos #{@pos}, Delta #{@delta}, Spd #{@speed}, Accel #{@accel}"
 
       resp = {}
       
       case msg[:type]
       when :initial
         # @map = Map.new(msg[:map])
-        resp[:speed] = 0.5
         resp[:accel] = 0.1
-        resp[:delta] = 0.1
+        resp[:delta] = Math::PI / 4
       end
+
+      resp[:accel] = 1.0 if @speed < 0.9999
+      resp[:accel] = -1.0 if @speed > 1.0001
+      resp[:accel] = 0.0 if @speed > 0.9999 and @speed < 1.0001
+      
 
       send resp
     end
