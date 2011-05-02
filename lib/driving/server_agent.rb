@@ -7,7 +7,7 @@ module Driving
 
     attr_reader :id, :pos, :phi, :delta, :delta_speed, :speed, :accel, :w, :l,
     :tw, :tl, :u, :n, :ne, :nw, :se, :sw, :crumbs, :north, :map, :dest, :renders,
-    :curr_road
+    :curr_road, :nw_tire_pts, :sw_tire_pts, :se_tire_pts, :ne_tire_pts
     attr_accessor :paused
     
     # Creates a default agent with positional parameters set to 0; requires
@@ -105,6 +105,13 @@ module Driving
         @n = create_n
       end
 
+      # variables which depend on pos
+      unless @pos.nil?
+        @curr_road = find_curr_road
+      end
+    end
+
+    def cache_display_attributes
       # variables which depend on pos and phi
       unless @phi.nil? || @pos.nil?
         @ne = create_ne
@@ -112,11 +119,8 @@ module Driving
         @se = create_se
         @sw = create_sw
         @north = create_north
-      end
 
-      # variables which depend on pos
-      unless @pos.nil?
-        @curr_road = find_curr_road
+        create_tire_pts
       end
     end
 
@@ -153,8 +157,8 @@ module Driving
     def create_north
       @pos + @u*(@l/2.0)
     end
-
-    def nw_tire_pts
+    
+    def create_tire_pts
       # get the center of the tire
       c = @nw - @u*(@tl/2.0) - @n*(@tw/2.0)
 
@@ -162,11 +166,9 @@ module Driving
       tire_u = @u.rotate(-@delta).scale(@tl/2.0)
       tire_n = @n.rotate(-@delta).scale(@tw/2.0)
       
-      [ c + tire_u - tire_n, c + tire_u + tire_n,
-        c - tire_u + tire_n, c - tire_u - tire_n ]
-    end
+      @nw_tire_pts = [ c + tire_u - tire_n, c + tire_u + tire_n,
+                       c - tire_u + tire_n, c - tire_u - tire_n ]
 
-    def ne_tire_pts
       # get the center of the tire
       c = @ne - @u*(@tl/2.0) + @n*(@tw/2.0)
 
@@ -174,26 +176,24 @@ module Driving
       tire_u = @u.rotate(-@delta).scale(@tl/2.0)
       tire_n = @n.rotate(-@delta).scale(@tw/2.0)
 
-      [ c + tire_u - tire_n, c + tire_u + tire_n,
-        c - tire_u + tire_n, c - tire_u - tire_n ]
-    end
-    
-    def se_tire_pts
+      @ne_tire_pts = [ c + tire_u - tire_n, c + tire_u + tire_n,
+                       c - tire_u + tire_n, c - tire_u - tire_n ]
+
       # get the scaled heading and normal vectors for the tire (since it's a
       # back tire, these are aligned with the car as a whole).
       u_scale = @u.scale @tl
       n_scale = @n.scale @tw
 
-      [ @se + u_scale + n_scale, @se + u_scale, @se, @se + n_scale ]
-    end
+      @se_tire_pts = [ @se + u_scale + n_scale, @se + u_scale,
+                       @se, @se + n_scale ]
 
-    def sw_tire_pts
       # get the scaled heading and normal vectors for the tire (since it's a
       # back tire, these are aligned with the car as a whole).
       u_scale = @u.scale @tl
       n_scale = @n.scale @tw
 
-      [ @sw + u_scale, @sw + u_scale - n_scale, @sw - n_scale, @sw ]
+      @sw_tire_pts = [ @sw + u_scale, @sw + u_scale - n_scale,
+        @sw - n_scale, @sw ]
     end
 
     # Moves the agent for the specified time and average speed over that

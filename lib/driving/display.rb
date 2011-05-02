@@ -116,7 +116,7 @@ module Driving
       @g = @strategy.getDrawGraphics
       @g.setRenderingHint RenderingHints::KEY_ANTIALIASING,
       RenderingHints::VALUE_ANTIALIAS_ON
-      @g.setColor(Color.white)
+      @g.setColor(Color.new(0x1f, 0x83, 0x2d))
       @g.fillRect(0,0,getWidth,getHeight)
 
       if @input.following && @agents.size > 0
@@ -161,18 +161,31 @@ module Driving
     end
 
     def render_map
+      # Draw roads
+      @g.set_color Color.gray
       @map.road_set.each do |r|
-        @g.set_color Color.black
-        @g.set_stroke BasicStroke.new 0.0, BasicStroke::CAP_BUTT,
-                                      BasicStroke::JOIN_BEVEL, 0.0,
-                                      [@dash_mark_len, @dash_space_len].to_java(:float), 
-                                      0.0
-        line r if on_screen? r
-        @g.set_stroke BasicStroke.new(1.0)
-        r.walls.each do |w|
-          line w if on_screen? w
+        points = []
+        odd = true
+        if r.walls.any?{|w| on_screen? w}
+          r.walls.each do |w|
+            odd ? (points << w.p0 << w.p1) : (points << w.p1 << w.p0)
+            odd = !odd
+          end
+          polygon points, true
         end
       end
+      # Draw center lines
+      width = world_to_screen(Point.new(0, 0)).dist world_to_screen(Point.new(0, 0.25))
+      @map.road_set.each do |r|
+        @g.set_color Color.new(0xff, 0xc2, 0x1d)
+        @g.set_stroke BasicStroke.new width, BasicStroke::CAP_BUTT,
+        BasicStroke::JOIN_BEVEL, 0.0,
+        [@dash_mark_len, @dash_space_len].to_java(:float), 
+        0.0
+        line r if on_screen? r
+      end
+
+      @g.set_stroke BasicStroke.new(1.0)
     end
 
     def render_crumbs spec
@@ -198,7 +211,8 @@ module Driving
       @agents.each do |a|
         @display_crumbs.unshift a.pos.clone
         @display_crumbs.pop if @display_crumbs.size >= DISPLAY_MAX_CRUMBS
-          
+        a.cache_display_attributes
+
         if a.dest
           @g.set_color Color.green
           dot a.dest
