@@ -236,14 +236,16 @@ module Driving
       theta = spd * t / r
 
       if theta > 0.00000001
+        # delta is oriented clock-wise, so theta is backwards in a sense, so
+        # we rotate about negative theta.
         if @delta > 0
           rotate_pt = @se + @n*r
           self.pos= @pos.rotate_about(rotate_pt, -theta)
-          self.phi= @phi + theta
+          self.phi= @phi - theta
         else
           rotate_pt = @sw - @n*r
           self.pos= @pos.rotate_about(rotate_pt, theta)
-          self.phi= @phi - theta
+          self.phi= @phi + theta
         end
       end
     end

@@ -55,7 +55,8 @@ module Driving
       @display_crumbs = []
       @hidden_crumbs = []
 
-      @input = InputHandler.new @c_pos.clone, INIT_ZOOM, MIN_ZOOM, MAX_ZOOM, self
+      @input = InputHandler.new(@c_pos.clone, INIT_ZOOM, MIN_ZOOM, MAX_ZOOM,
+                                self, INIT_FOLLOWING)
       @paused = false
       addMouseMotionListener @input
       addMouseListener @input
@@ -128,6 +129,7 @@ module Driving
       end
 
       self.z_y= @input.zoom
+      puts @z_y
 
       @hidden_crumbs = @agents.collect { |a| a.crumbs.collect { |c| c.clone}}.flatten
       
@@ -420,13 +422,13 @@ module Driving
 
     attr_accessor :c_pos, :following, :follow_agent,
       :zoom, :zoom_min, :zoom_max, :mouse_pos
-    def initialize c_pos, zoom, zoom_min, zoom_max, display
+    def initialize c_pos, zoom, zoom_min, zoom_max, display, follow
       @display = display
       @c_pos = c_pos
       @zoom = zoom
       @zoom_min = zoom_min
       @zoom_max = zoom_max
-      @following = false
+      @following = follow
       @follow_agent = 0
     end
 
