@@ -3,9 +3,9 @@ module Driving
 
     PARAMS = {
       :d0 => 1,
-      :c1 => 1,
-      :a => 1,
-      :sigma => 1,
+      :c1 => 4,
+      :a => 3,
+      :sigma => 2,
       :a_tar => 1,
       :g_tar_obs => 1,
       :h1 => 1
@@ -21,7 +21,7 @@ module Driving
     end
 
     def windower h1, phi, psi, d_psi, sigma
-      0.5 * (Math.tanh(h1*Math.cos(phi-psi)-Math.cos(d_psi+sigma))+1)
+      0.5 * (Math.tanh(h1*(Math.cos(phi-psi)-Math.cos(d_psi+sigma)))+1)
     end
 
     def dist_scale dm, d0
@@ -70,7 +70,7 @@ module Driving
       #                            c1, c2, a, h1, sigma, a_tar, g_tar_obs)
       # agent.weights = [w_tar, w_obs]
       
-      f_obs = obs_list.collect{|obs_i| -f_obs_i(@phi-@delta, obs_i, d0, sigma, h1)}
+      f_obs = obs_list.collect{|obs_i| f_obs_i(@phi, obs_i, d0, sigma, h1)}
       puts f_obs.inspect if rand < 0.01
       f_obs = f_obs.reduce(:+)
 
@@ -132,16 +132,17 @@ module Driving
         
         # FIXME: we need to replace this with keeping track of the last position's
         # curr_road and seeing if the new position has passed into a new road.
-        @curr_road = find_curr_road 
-        raise "Fell off road!" if !@curr_road
-        @facing = get_facing_node
-        @target = create_tar # msg[:dest] <- put in when want to use real tar
-        @obs = create_obs
-
-        @last_time = @curr_time
-        @curr_time = Time.now
         begin
+          @curr_road = find_curr_road 
+          raise "Fell off road!" if !@curr_road
+          @facing = get_facing_node
+          @target = create_tar # msg[:dest] <- put in when want to use real tar
+          @obs = create_obs
+
+          @last_time = @curr_time
+          @curr_time = Time.now
           new_delta = @delta + delta_dot * (@curr_time - @last_time)
+          new_phi = @phi + delta_dot * (@curr_time - @last_time)
         rescue
           puts $!
           new_delta = @delta
@@ -149,7 +150,8 @@ module Driving
 
         # prepare and send the response
 
-        resp = { :delta => new_delta }
+        # resp = { :delta => new_delta }
+        resp  = { :phi => new_phi }
 
         # Render the obstacles and target for this agent.
         renders = ["@g.set_color Color.red"]
