@@ -136,7 +136,7 @@ module Driving
         # curr_road and seeing if the new position has passed into a new road.
         @curr_road = find_curr_road 
         raise "Fell off road!" if !@curr_road
-        @facing = get_facing_node
+        @facing = facing_node[0]
         @target = create_tar # msg[:dest] <- put in when want to use real tar
         @obs = create_obs
 
@@ -186,7 +186,8 @@ module Driving
       @curr_road.walls.collect do |w|
         id = w.object_id
         r = 2*@radius / dists[id]
-        par_comp = @curr_road.unit_vector*@length/2.0
+        facing, other = facing_node
+        par_comp = (facing.pos-other.pos).normalize*@length/2.0
         perp_comp = units[id]*(dists[id]+r)
         [@pos + perp_comp + par_comp, r]
       end
@@ -207,9 +208,11 @@ module Driving
     end
 
     # Determines which node of the current road the agent is facing; this
-    # depends on the position and the heading direction (phi).
-    def get_facing_node
-      [@curr_road.n0, @curr_road.n1].min_by{|n|
+    # depends on the position and the heading direction (phi). Returned as an
+    # array where the first element is the facing node and the second is the
+    # other node.
+    def facing_node
+      [@curr_road.n0, @curr_road.n1].sort_by{|n|
         ((n.pos - @pos).dir - @phi).abs
       }
     end
