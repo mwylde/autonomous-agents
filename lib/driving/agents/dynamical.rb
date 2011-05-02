@@ -2,13 +2,15 @@ module Driving
   class DynamicalAgent < ClientAgent
 
     PARAMS = {
-      :d0 => 1,
+      :m => 2,          # general scaling of repeller
+      :d0 => 0.01,      # distance scaling factor
       :c1 => 1,
-      :a => 1,
-      :sigma => 1,
+      :c2 => 1,
+      :a => 10,         # target attractor scaling factor
       :a_tar => 1,
       :g_tar_obs => 1,
-      :h1 => 1
+      :sigma => 1,      # safety margin for windower
+      :h1 => 10         # slope of windower
     }
 
     def f_tar phi, a, psi_tar
@@ -50,13 +52,16 @@ module Driving
 
       # weights = agent.weights
 
+      m = PARAMS[:m]
       d0 = PARAMS[:d0]
-      c1 = PARAMS[:c1]
+      # c1 = PARAMS[:c1]
+      # c2 = PARAMS[:c2]
       a = PARAMS[:a]
       sigma = PARAMS[:sigma]
-      a_tar = PARAMS[:a_tar]
-      g_tar_obs = PARAMS[:g_tar_obs]
       h1 = PARAMS[:h1]
+      # a_tar = PARAMS[:a_tar]
+      # g_tar_obs = PARAMS[:g_tar_obs]
+
 
       # each obs is of the form [dm, psi, d_psi]
       obs_list = perceive_obs
@@ -70,8 +75,8 @@ module Driving
       #                            c1, c2, a, h1, sigma, a_tar, g_tar_obs)
       # agent.weights = [w_tar, w_obs]
       
-      f_obs = obs_list.collect{|obs_i| f_obs_i(@phi, obs_i, d0, sigma, h1)}
-      if rand < 0.1
+      f_obs = obs_list.collect{|obs_i| m*f_obs_i(@phi, obs_i, d0, sigma, h1)}
+      if false # rand < 0.1
         puts "a: r% .2f % .4f, r% .2f % .4f" %
           [@obs[0][1], ((@obs[0][0] - @pos).dir - @phi)/Math::PI,
            @obs[1][1], ((@obs[1][0] - @pos).dir - @phi)/Math::PI]
