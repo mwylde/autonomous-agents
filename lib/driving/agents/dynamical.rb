@@ -52,7 +52,7 @@ module Driving
 
       d0 = PARAMS[:d0]
       c1 = PARAMS[:c1]
-      c2 = PARAMS[:a]
+      a = PARAMS[:a]
       sigma = PARAMS[:sigma]
       a_tar = PARAMS[:a_tar]
       g_tar_obs = PARAMS[:g_tar_obs]
@@ -83,7 +83,7 @@ module Driving
       f_obs = f_obs.reduce(:+)
 
 
-      
+      f_tar(phi, a, psi_tar) + f_obs
       # w_tar.abs*f_tar + w_obs.abs*f_obs + 0.01*(rand-0.5)
     end
 
@@ -127,9 +127,8 @@ module Driving
         
         # send initial response
         send({
-          :speed => 1.0,
           :phi => msg[:phi] + Math::PI / 8.0,
-          :accel => 0.1,
+          :accel => 1.0,
           :delta => 0.0
         })
       else
@@ -148,6 +147,7 @@ module Driving
         @curr_road = find_curr_road
         if @curr_road.nil?
           new_phi = @phi
+          @obs = []
         else
           @facing = facing_node[0]
           @target = create_tar # msg[:dest] <- put in when want to use real tar
@@ -166,6 +166,8 @@ module Driving
         # prepare and send the response
 
         resp = { :phi => new_phi }
+
+        resp[:accel] = 0 if @speed > 5.0
 
         # Render the obstacles
         renders = ["@g.set_color Color.red"]
