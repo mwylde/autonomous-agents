@@ -70,9 +70,9 @@ module Driving
       #                            c1, c2, a, h1, sigma, a_tar, g_tar_obs)
       # agent.weights = [w_tar, w_obs]
       
-      f_obs_list = obs_list.collect{|obs_i| f_obs_i(phi, obs_i, d0, sigma, h1)}
-      puts "[" + f_obs_list.join(", ") + "]"
-      f_obs = f_obs_list.reduce{|sum, x| sum + x}
+      f_obs = obs_list.collect{|obs_i| -f_obs_i(@phi-@delta, obs_i, d0, sigma, h1)}
+      puts f_obs.inspect if rand < 0.01
+      f_obs = f_obs.reduce(:+)
 
       # w_tar.abs*f_tar + w_obs.abs*f_obs + 0.01*(rand-0.5)
     end
@@ -99,7 +99,7 @@ module Driving
     def subtended_angle(p0, r0, p1, r1)
       d = p0.dist p1
       raise "Agent colliding with obstacle" if ((r0+r1)/d).abs > 1
-      Math.asin((r0 + r1)/d)
+      [Math.asin((r0 + r1)/d), Math::PI/2-0.0001].min
     end
 
     def handle_msg msg
@@ -117,7 +117,7 @@ module Driving
         send({
           :speed => 1.0,
           :accel => 0.1,
-          :delta => 0.1
+          :delta => 0
         })
       else
         # get state information
@@ -140,7 +140,12 @@ module Driving
 
         @last_time = @curr_time
         @curr_time = Time.now
-        new_delta = @delta + delta_dot * (@curr_time - @last_time)
+        begin
+          new_delta = @delta + delta_dot * (@curr_time - @last_time)
+        rescue
+          puts $!
+          new_delta = @delta
+        end
 
         # prepare and send the response
 
@@ -200,9 +205,9 @@ module Driving
     # Determines which node of the current road the agent is facing; this
     # depends on the position and the heading direction (phi).
     def get_facing_node
-      ang0 = ((@curr_road.n0.pos - @pos).dir - @phi).abs
-      ang1 = ((@curr_road.n1.pos - @pos).dir - @phi).abs
-      ang0 < ang1 ? @curr_road.n0 : @curr_road.n1
+      [@curr_road.n0, @curr_road.n1].min_by{|n|
+        ((n.pos - @pos).dir - @phi).abs
+      }
     end
 
     def socket; @socket; end

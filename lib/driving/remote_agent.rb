@@ -78,12 +78,12 @@ module Driving
       end
       # get actions from agents, which is choice of delta_speed (how
       # fast it's turning the wheel) and acceleration
-      self.delta= msg[:delta] if msg[:delta]
+      self.delta = msg[:delta] if msg[:delta]
       @accel = msg[:accel] if msg[:accel]
       # cheating
-      self.phi= msg[:phi] if msg[:phi]
+      self.phi = msg[:phi] if msg[:phi]
       @renders = msg[:renders] if msg[:renders]
-      puts "phi = #{@phi}; accel = #{@accel}" if rand < 0.01
+      puts "delta = #{@delta}; accel = #{@accel}" if rand < 0.01
       send(self.to_hash.merge({:type => :update}))
     end
   end

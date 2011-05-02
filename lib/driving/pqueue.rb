@@ -41,7 +41,7 @@ class PriorityQueue
   def initialize(elements=nil, &block) # :yields: a, b
     @qarray = [nil]
     @size = 0
-    @gt = block || lambda {|a,b| a > b}
+    @gt = block || lambda {|a,b| (a <=> b) < 0}
     replace(elements) if elements
   end
 

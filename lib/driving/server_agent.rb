@@ -47,9 +47,9 @@ module Driving
       }
     end
 
-    def delta= new_delta
-      @delta = [-Math::PI/2, new_delta].max
-      @delta = [Math::PI/2, new_delta].min
+    def delta= d
+      @delta = [-Math::PI/2, d].max
+      @delta = [Math::PI/2, d].min
     end
 
     # Starts the update loop which periodically updates the state
@@ -190,7 +190,7 @@ module Driving
     # instance variable) so that average speed over the time interval can be
     # used, instead of instantaneous speed at the end.
     def move t, spd
-      puts "Delta must be in [-Pi/2, Pi/2]" unless (@delta.abs <= Math::PI/2)
+      puts "Delta must be in [-Pi/2, Pi/2]" unless (@delta.abs <= Math::PI/2+0.001)
 
       if @delta.abs < 0.01
         move_straight t, spd
@@ -199,7 +199,7 @@ module Driving
       end
 
       if CRUMBS_ON
-        @crumbs.unshift @pos.clone
+        @crumbs.unshift @pos
         @crumbs.pop if @crumbs.size >= AGENT_MAX_CRUMBS
       end
     end

@@ -53,10 +53,6 @@ module Driving
           (@g + @h)  <=> (y.g + y.h)
       end
 
-      def > y
-        (self <=> y) > 0
-      end
-
       def inspect
         "A*Node<state=#{state.pos}, g=#{g}, h=#{h}"
       end
@@ -219,11 +215,7 @@ module Driving
 
     def get_facing nodes
       nodes.sort_by{|n|
-        if false && n.pos.dist(@pos) < 0.1
-          10000000
-        else
-          ((n.pos - @pos).dir - @phi).abs
-        end
+        ((n.pos - @pos).dir - @phi).abs
       }
     end
 
