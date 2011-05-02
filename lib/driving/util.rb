@@ -267,8 +267,28 @@ module Driving
 
       Point.new x,y
     end
-      
 
+    # This decides whether this line segment intersects with another
+    # one. Algorithm taken from
+    # http://paulbourke.net/geometry/lineline2d/
+    def intersects? l
+      e = 0.001
+      x1, x2, x3, x4 = @p0.x, @p1.x, l.p0.x, l.p1.x
+      y1, y2, y3, y4 = @p0.y, @p1.y, l.p0.y, l.p1.y
+      denom  = (y4-y3) * (x2-x1) - (x4-x3) * (y2-y1)
+      numera = (x4-x3) * (y1-y3) - (y4-y3) * (x1-x3)
+      numerb = (x2-x1) * (y1-y3) - (y2-y1) * (x1-x3)
+
+      # are the lines coincident?
+      return true if numera.abs < e && numerb.abs < e && denom.abs < e
+      # are the lines parallel?
+      return false if denom.abs < e
+      mua = numera/denom.to_f
+      mub = numerb/denom.to_f
+      return false if mua < 0 || mua > 1 || mub < 0 || mub > 1
+      return true
+    end
+    
     def dist_to_pt pt
       pt.dist(intersect_with_pt(pt))
       # x1 = @p0.x

@@ -114,6 +114,11 @@ module Driving
     end
 
     def draw
+      agents = @agents.clone
+      agents.each{|a|
+        a.cache_display_attributes
+      }
+
       @g = @strategy.getDrawGraphics
       @g.setRenderingHint RenderingHints::KEY_ANTIALIASING,
       RenderingHints::VALUE_ANTIALIAS_ON
@@ -133,10 +138,10 @@ module Driving
       @hidden_crumbs = @agents.collect { |a|
         a.crumbs.collect { |c| c.clone}
       }.flatten if CRUMBS_ON
-      
+
       render_map
       render_crumbs :both if CRUMBS_ON
-      render_agents
+      render_agents agents
 
       if @paused
         @g.setColor(Color.red)
@@ -207,16 +212,15 @@ module Driving
       end
     end
 
-    def render_agents
+    def render_agents agents
       if @place_agent && @input.mouse_pos
         @place_agent.pos = screen_to_world @input.mouse_pos
       end
-      @agents.each do |a|
+      agents.each do |a|
         if CRUMBS_ON
           @display_crumbs.unshift a.pos.clone
           @display_crumbs.pop if @display_crumbs.size >= DISPLAY_MAX_CRUMBS
         end
-        a.cache_display_attributes
 
         if a.dest
           @g.set_color Color.green

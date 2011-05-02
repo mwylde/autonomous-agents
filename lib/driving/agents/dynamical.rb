@@ -1,17 +1,27 @@
 module Driving
   class DynamicalAgent < ClientAgent
 
+    # Dynamical navigation parameters
     PARAMS = {
       :m => 2,          # general scaling of repeller
       :d0 => 0.01,      # distance scaling factor
       :c1 => 1,
       :c2 => 1,
-      :a => 10,         # target attractor scaling factor
+      :a => 5,         # target attractor scaling factor
       :a_tar => 1,
       :g_tar_obs => 1,
       :sigma => 1,      # safety margin for windower
       :h1 => 10         # slope of windower
     }
+
+    # Mode that the agent starts in
+    START_MODE = :start
+    # Mode reached when the agent reaches an intersection, which means
+    # that it needs to choose which direction it's going to travel in
+    INTERSECTION_MODE = :intersection
+    # Normal operating mode of the agent; it just dynamically
+    # navigates towards the current target.
+    NORMAL_MODE = :normal
 
     def f_tar phi, a, psi_tar
       -a * Math.sin(phi - psi_tar)
@@ -75,6 +85,7 @@ module Driving
       #                            c1, c2, a, h1, sigma, a_tar, g_tar_obs)
       # agent.weights = [w_tar, w_obs]
       
+
       f_obs = obs_list.collect{|obs_i| m*f_obs_i(@phi, obs_i, d0, sigma, h1)}
       if false # rand < 0.1
         puts "a: r% .2f % .4f, r% .2f % .4f" %
@@ -119,13 +130,14 @@ module Driving
 
     def handle_msg msg
       case msg[:type]
-      when :initial
+      when :initial, :dest_change
+        @mode = START_MODE
         # get constant information
-        @map = Map.new(msg[:map])
-        @dest = msg[:dest]
+        @map = Map.new(msg[:map]) if msg[:map]
+        @dest = Point.new(*msg[:dest])
         @radius = DYNAMICAL_AGENT_RADIUS
-        @length = msg[:l]
-        @width = msg[:w]
+        @length = msg[:l] if msg[:l]
+        @width = msg[:w] if msg[:w]
 
         # need to set this so it's ready to use next time
         @curr_time = Time.now
@@ -137,6 +149,9 @@ module Driving
           :delta => 0.0
         })
       else
+        if msg[:type] == :unpause
+          @curr_time = Time.now
+        end
         # get state information
         @pos = Point.new(*msg[:pos])
         @phi = msg[:phi]
@@ -150,47 +165,88 @@ module Driving
         # FIXME: we need to replace this with keeping track of the last position's
         # curr_road and seeing if the new position has passed into a new road.
         @curr_road = find_curr_road
-        if @curr_road.nil?
-          new_phi = @phi
-          @obs = []
-        else
-          @facing = facing_node[0]
-          @target = create_tar # msg[:dest] <- put in when want to use real tar
-          @obs = create_obs
-
-          @last_time = @curr_time
-          @curr_time = Time.now
-          begin
-            new_phi = @phi + phi_dot * (@curr_time - @last_time)
-          rescue
-            puts $!
-            new_phi = @phi
-          end
-        end
           
         # prepare and send the response
 
-        resp = { :phi => new_phi }
+        if @curr_road
+          # do a mode transition if appropriate
+          mode_transitions
+          # compute the new phi value
+          new_phi = navigate
+          resp = { :phi => new_phi }
 
-        resp[:accel] = 0 if @speed > 5.0
+          resp[:accel] = 0 if @speed > 5.0
 
-        # Render the obstacles
-        renders = ["@g.set_color Color.red"]
-        @obs.each do |o|
-          c, r = o
+          # Render the obstacles
+          renders = ["@g.set_color Color.red"]
+          @obs.each do |o|
+            c, r = o
+            renders << "circle Point.new(#{c.x}, #{c.y}), #{r}"
+          end
+          # Render the target
+          c = @target[0]
+          r = @target[1]
+          renders << "@g.set_color Color.blue"
           renders << "circle Point.new(#{c.x}, #{c.y}), #{r}"
+          resp[:renders] = renders
+          # Render the agent's bounding circle
+          renders << "@g.set_color Color.lightGray"
+          renders << "circle Point.new(#{@pos.x}, #{@pos.y}), #{@radius}"
+        else
+          resp = {:phi => @phi, :renders => []}
         end
-        # Render the target
-        c = @target[0]
-        r = @target[1]
-        renders << "@g.set_color Color.blue"
-        renders << "circle Point.new(#{c.x}, #{c.y}), #{r}"
-        resp[:renders] = renders
-        # Render the agent's bounding circle
-        renders << "@g.set_color Color.lightGray"
-        renders << "circle Point.new(#{@pos.x}, #{@pos.y}), #{@radius}"
         
         send resp
+      end
+    end
+
+    def mode= mode
+      puts "Mode transitioned from #{@mode} to #{mode}"
+      @mode = mode
+    end
+
+    # this function defines the transition conditions between the
+    # states of the FSA that controls the behavior of the agent
+    def mode_transitions
+      case @mode
+      when START_MODE
+        facing, _ = facing_node
+        if facing
+          @target = create_tar facing.pos
+          self.mode = NORMAL_MODE 
+        end
+      when NORMAL_MODE
+        facing, other = facing_node
+        if facing.pos.dist(@pos) < ROAD_WIDTH
+          self.mode = INTERSECTION_MODE
+          @target = choose_tar
+        end
+      when INTERSECTION_MODE
+        closest = @map.closest_node @pos
+        if closest.pos.dist(@pos) > ROAD_WIDTH
+          self.mode = NORMAL_MODE
+        end
+      end
+    end
+
+    # chooses a new phi according the the dynamical state of the world
+    # and the current mode
+    def navigate
+      case @mode
+      when START_MODE
+        @obs = create_obs
+      when NORMAL_MODE
+        @obs = create_obs
+      when INTERSECTION_MODE
+        @obs = []
+      end
+      @last_time = @curr_time
+      @curr_time = Time.now
+      begin
+        @phi + phi_dot * (@curr_time - @last_time)
+      rescue
+        puts $!
+        @phi
       end
     end
 
@@ -201,21 +257,65 @@ module Driving
     # their intrinsic attributes; in perceive_obs we compute the parameters of
     # the obstacles needed for the dynamical navigation calculations.
     def create_obs
-      units = @curr_road.units_to_walls @pos
-      dists = @curr_road.dists_to_walls @pos
-
-      @curr_road.walls.collect do |w|
-        id = w.object_id
-        r = 2*@radius / dists[id]
-        facing, other = facing_node
-        par_comp = (facing.pos-other.pos).normalize*@length/2.0
-        perp_comp = units[id]*(dists[id]+r)
-        [@pos + perp_comp + (DYNAMICAL_OBSTACLES_AHEAD ? par_comp : Vector.new(0,0)), r]
+      facing, other = facing_node
+      road_norm = (facing.pos-@pos).normal_vector
+      # the line that goes from the agent's pos in the direction of
+      # the vector normal to the road a sufficiently long distance
+      # such that it will definitely intersect with one of the road
+      # edges; this lets us figure out which one is the edge on the
+      # right side of the road, which is the one we want as an obstacle.
+      norm_line = LineSegment.new(@pos, @pos + road_norm * 100)
+      # line segment that goes down the center of the road
+      center_line = LineSegment.new(@curr_road.n0.pos, @curr_road.n1.pos)
+      # check if we're on the wrong side of the road for some reaons;
+      # if so, we want to disable the center line obstacle so we can
+      # get back onto the right side
+      road_edge = @curr_road.walls.find{|w|
+        w.intersects? norm_line
+      }
+      obs = []
+      if norm_line.intersects? center_line
+        center_line = nil
+        w = (@curr_road.walls - Set[road_edge]).first
+        # make it larger than a normal obs so that it pushed the agent
+        # back into the proper lane
+        obs << create_obs_from_wall(w, @radius*3)
+      end
+      obs += [road_edge, center_line].reject{|x| x.nil?}.collect do |w|
+        create_obs_from_wall w
       end
     end
 
-    def create_tar
-      [@facing.pos, @radius]
+    def create_obs_from_wall w, r = @radius
+      facing, other = facing_node
+      unit = w.unit_from_pt(@pos)
+      dist = w.dist_to_pt(@pos)
+      r = 2*r / dist
+      par_comp = (facing.pos-other.pos).normalize*@length/2.0
+      perp_comp = unit*(dist+r)
+      [@pos + perp_comp + (DYNAMICAL_OBSTACLES_AHEAD ? par_comp : Vector.new(0,0)), r]
+    end
+
+    # If the agent is on a road with (facing, other) = (n0, n1), this
+    # function chooses the target t from the set {t | t != n1, t is a neighbor
+    # of n0} such that if u is the vector from the agent to the
+    # destination and v is the angle from n0 to t, (u-v).abs is
+    # minimized. Basically, we want to take the road that seems like
+    # it might get us to the destination taking into account only
+    # purely local conditions.
+    def choose_tar
+      facing, other = facing_node
+      dest_dir = (@dest - @pos).dir
+      t = (facing.neighbors - Set[other]).min_by{|t|
+        (dest_dir - (t.pos - facing.pos).dir).abs
+      }
+      create_tar t.pos
+    end
+
+    # Creates a target at the specified point
+    def create_tar p
+      road_norm = (p-@pos).normal_vector.normalize
+      [p + road_norm * (ROAD_WIDTH/2), @radius]
     end
 
     # FIXME this is a very inefficient implementation that just searches through
