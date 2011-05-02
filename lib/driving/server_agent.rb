@@ -238,11 +238,11 @@ module Driving
       if theta > 0.00000001
         if @delta > 0
           rotate_pt = @se + @n*r
-          self.pos= @pos.rotate_about(rotate_pt, theta)
+          self.pos= @pos.rotate_about(rotate_pt, -theta)
           self.phi= @phi + theta
         else
           rotate_pt = @sw - @n*r
-          self.pos= @pos.rotate_about(rotate_pt, -theta)
+          self.pos= @pos.rotate_about(rotate_pt, theta)
           self.phi= @phi - theta
         end
       end

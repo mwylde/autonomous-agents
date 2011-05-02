@@ -162,7 +162,7 @@ module Driving
 
     def render_map
       # Draw roads
-      @g.set_color Color.gray
+      @g.set_color Color.darkGray
       @map.road_set.each do |r|
         points = []
         odd = true
