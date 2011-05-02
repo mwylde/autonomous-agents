@@ -355,7 +355,7 @@ module Driving
     # mouse state)
     
     def aspect_ratio
-      getWidth / getHeight
+      getWidth / getHeight.to_f
     end
 
     def zoom_x
@@ -373,7 +373,7 @@ module Driving
       wy = p.y
       
       sx = (wx - (@c_pos.x - zoom_x)) * ( getWidth / (2 * zoom_x))
-      sy = ((@c_pos.y + zoom_y) - wy) * ( getWidth / (2 * zoom_x))
+      sy = ((@c_pos.y + zoom_y) - wy) * ( getHeight / (2 * zoom_y))
       
       Point.new(sx, sy)
     end
@@ -383,7 +383,7 @@ module Driving
       sy = p.y
       
       wx = (2 * zoom_x * sx / getWidth) + (@c_pos.x - zoom_x)
-      wy = (@c_pos.y + zoom_y) - (2 * zoom_y * sy / getWidth)
+      wy = (@c_pos.y + zoom_y) - (2 * zoom_y * sy / getHeight)
       
       Point.new(wx, wy)
     end
