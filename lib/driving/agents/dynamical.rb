@@ -109,6 +109,8 @@ module Driving
         @map = Map.new(msg[:map])
         @dest = msg[:dest]
         @radius = DYNAMICAL_AGENT_RADIUS
+        @length = msg[:l]
+        @width = msg[:w]
 
         # need to set this so it's ready to use next time
         @curr_time = Time.now
@@ -117,7 +119,7 @@ module Driving
         send({
           :speed => 1.0,
           :accel => 0.1,
-          :delta => 0
+          :delta => 0.5
         })
       else
         # get state information
@@ -183,8 +185,10 @@ module Driving
 
       @curr_road.walls.collect do |w|
         id = w.object_id
-        r = @radius / dists[id]
-        [@pos + units[id] * (dists[id] + r), r]
+        r = 2*@radius / dists[id]
+        par_comp = @curr_road.unit_vector*@length/2.0
+        perp_comp = units[id]*(dists[id]+r)
+        [@pos + perp_comp + par_comp, r]
       end
     end
 

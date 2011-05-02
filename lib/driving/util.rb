@@ -192,11 +192,12 @@ module Driving
 
     # See `scale`
     def *(c)
-      cname = c.class.name
-      unless cname == "Fixnum" or cname == "Float"
-        raise "Can only scale by a scalar, not a #{cname}"
+      case c
+      when Fixnum, Float
+        scale c
+      else
+        raise "Can only scale by a scalar, not a #{c.class.name}"
       end
-      scale c
     end
 
     # Scales by the inverse of the constant
