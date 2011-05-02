@@ -70,8 +70,9 @@ module Driving
       #                            c1, c2, a, h1, sigma, a_tar, g_tar_obs)
       # agent.weights = [w_tar, w_obs]
       
-      f_obs = obs_list.collect{|obs_i| f_obs_i(phi, obs_i, d0, sigma, h1)}
-      f_obs = f_obs.reduce{|sum, x| sum + x}
+      f_obs_list = obs_list.collect{|obs_i| f_obs_i(phi, obs_i, d0, sigma, h1)}
+      puts "[" + f_obs_list.join(", ") + "]"
+      f_obs = f_obs_list.reduce{|sum, x| sum + x}
 
       # w_tar.abs*f_tar + w_obs.abs*f_obs + 0.01*(rand-0.5)
     end
@@ -107,14 +108,14 @@ module Driving
         # get constant information
         @map = Map.new(msg[:map])
         @dest = msg[:dest]
-        @radius = AGENT_LENGTH / 2.0
+        @radius = DYNAMICAL_AGENT_RADIUS
 
         # need to set this so it's ready to use next time
         @curr_time = Time.now
         
         # send initial response
         send({
-          :speed => 0.5,
+          :speed => 1.0,
           :accel => 0.1,
           :delta => 0.1
         })
@@ -145,17 +146,21 @@ module Driving
 
         resp = { :delta => new_delta }
 
-        # Render the obstacles and target for this agent.
+        # Render the obstacles
         renders = ["@g.set_color Color.red"]
         @obs.each do |o|
           c, r = o
           renders << "circle Point.new(#{c.x}, #{c.y}), #{r}"
         end
+        # Render the target
         c = @target[0]
         r = @target[1]
         renders << "@g.set_color Color.blue"
         renders << "circle Point.new(#{c.x}, #{c.y}), #{r}"
         resp[:renders] = renders
+        # Render the agent's bounding circle
+        renders << "@g.set_color Color.lightGray"
+        renders << "circle Point.new(#{@pos.x}, #{@pos.y}), #{@radius}"
         
         send resp
       end

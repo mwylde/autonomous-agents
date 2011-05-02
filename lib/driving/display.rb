@@ -223,15 +223,6 @@ module Driving
           dot a.dest
         end
 
-        if a.renders
-          a.renders.each{|x|
-            begin
-              eval x
-            rescue
-            end
-          }
-        end
-
         next unless on_screen? a.ne or on_screen? a.ne or on_screen? a.sw or
           on_screen? a.se
         
@@ -246,6 +237,16 @@ module Driving
         polygon a.sw_tire_pts, fill=true
 
         dot a.north
+
+        if a.renders
+          a.renders.each{|x|
+            begin
+              eval x
+            rescue
+            end
+          }
+        end
+
       end
     end
 
