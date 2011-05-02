@@ -129,7 +129,6 @@ module Driving
       end
 
       self.z_y= @input.zoom
-      puts @z_y
 
       @hidden_crumbs = @agents.collect { |a| a.crumbs.collect { |c| c.clone}}.flatten
       
