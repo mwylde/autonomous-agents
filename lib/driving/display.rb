@@ -52,8 +52,8 @@ module Driving
       default_pos = @map.world_max.midpt @map.world_min
       @c_pos = camera_pos || default_pos
        
-      @display_crumbs = []
-      @hidden_crumbs = []
+      @display_crumbs = [] if CRUMBS_ON
+      @hidden_crumbs = [] if CRUMBS_ON
 
       @input = InputHandler.new(@c_pos.clone, INIT_ZOOM, MIN_ZOOM, MAX_ZOOM,
                                 self, INIT_FOLLOWING)
@@ -130,10 +130,12 @@ module Driving
 
       self.z_y= @input.zoom
 
-      @hidden_crumbs = @agents.collect { |a| a.crumbs.collect { |c| c.clone}}.flatten
+      @hidden_crumbs = @agents.collect { |a|
+        a.crumbs.collect { |c| c.clone}
+      }.flatten if CRUMBS_ON
       
       render_map
-      render_crumbs :both
+      render_crumbs :both if CRUMBS_ON
       render_agents
 
       if @paused
@@ -210,8 +212,10 @@ module Driving
         @place_agent.pos = screen_to_world @input.mouse_pos
       end
       @agents.each do |a|
-        @display_crumbs.unshift a.pos.clone
-        @display_crumbs.pop if @display_crumbs.size >= DISPLAY_MAX_CRUMBS
+        if CRUMBS_ON
+          @display_crumbs.unshift a.pos.clone
+          @display_crumbs.pop if @display_crumbs.size >= DISPLAY_MAX_CRUMBS
+        end
         a.cache_display_attributes
 
         if a.dest

@@ -31,7 +31,7 @@ module Driving
       @delta_speed = delta_speed
       @speed = speed
       @accel = accel
-      @crumbs = []
+      @crumbs = [] if CRUMBS_ON
     end
 
     # Converts an agent to a hash representation which can be sent
@@ -44,18 +44,12 @@ module Driving
         :delta_speed => @delta_speed,
         :speed => @speed,
         :accel => @accel,
-        :curr_road => @curr_road ? @curr_road.to_hash : nil
       }
     end
 
-    # FIXME this is a very inefficient implementation that just searches through
-    # all the roads when it's called. should ideally be tracking the current
-    # road and updating whenever the agent moves into a new road.
-    def find_curr_road
-      @map.road_set.each do |road|
-        return road if road.contains @pos
-      end
-      nil
+    def delta= new_delta
+      @delta = [-Math::PI/2, new_delta].max
+      @delta = [Math::PI/2, new_delta].min
     end
 
     # Starts the update loop which periodically updates the state
@@ -103,11 +97,6 @@ module Driving
       unless @phi.nil?
         @u = create_u
         @n = create_n
-      end
-
-      # variables which depend on pos
-      unless @pos.nil?
-        @curr_road = find_curr_road
       end
     end
 
@@ -203,17 +192,16 @@ module Driving
     def move t, spd
       puts "Delta must be in [-Pi/2, Pi/2]" unless (@delta.abs <= Math::PI/2)
 
-      @delta = [-Math::PI/2, @delta].max
-      @delta = [Math::PI/2, @delta].min
-      
       if @delta.abs < 0.01
         move_straight t, spd
       else
         move_curved t, spd
       end
 
-      @crumbs.unshift @pos.clone
-      @crumbs.pop if @crumbs.size >= AGENT_MAX_CRUMBS
+      if CRUMBS_ON
+        @crumbs.unshift @pos.clone
+        @crumbs.pop if @crumbs.size >= AGENT_MAX_CRUMBS
+      end
     end
     
     # Move the agent in a straight path as if time t (in seconds) has elapsed,

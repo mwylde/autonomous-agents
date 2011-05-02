@@ -78,7 +78,7 @@ module Driving
       end
       # get actions from agents, which is choice of delta_speed (how
       # fast it's turning the wheel) and acceleration
-      @delta = msg[:delta] if msg[:delta]
+      self.delta= msg[:delta] if msg[:delta]
       @accel = msg[:accel] if msg[:accel]
       # cheating
       self.phi= msg[:phi] if msg[:phi]

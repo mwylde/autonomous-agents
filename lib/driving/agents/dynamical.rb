@@ -1,6 +1,16 @@
 module Driving
   class DynamicalAgent < ClientAgent
 
+    PARAMS = {
+      :d0 => 1,
+      :c1 => 1,
+      :a => 1,
+      :sigma => 1,
+      :a_tar => 1,
+      :g_tar_obs => 1,
+      :h1 => 1
+    }
+
     def f_tar phi, a, psi_tar
       -a * Math.sin(phi - psi_tar)
     end
@@ -40,13 +50,13 @@ module Driving
 
       # weights = agent.weights
 
-      d0 = @params[:d0]
-      c1 = @params[:c1]
-      c2 = @params[:a]
-      sigma = @params[:sigma]
-      a_tar = @params[:a_tar]
-      g_tar_obs = @params[:g_tar_obs]
-      h1 = @params[:h1]
+      d0 = PARAMS[:d0]
+      c1 = PARAMS[:c1]
+      c2 = PARAMS[:a]
+      sigma = PARAMS[:sigma]
+      a_tar = PARAMS[:a_tar]
+      g_tar_obs = PARAMS[:g_tar_obs]
+      h1 = PARAMS[:h1]
 
       # each obs is of the form [dm, psi, d_psi]
       obs_list = perceive_obs
@@ -92,76 +102,63 @@ module Driving
     end
 
     def handle_msg msg
-      
-      # Get the data from the message
-      
-      @pos = Point.new(*msg[:pos])
-      puts @pos
-      @phi = msg[:phi]
-      @delta = msg[:delta]
-      @delta_speed = msg[:delta_speed]
-      @speed = msg[:speed]
-      @accel = msg[:accel]
-      @curr_road = Road.from_hash msg[:curr_road]
-      @facing = get_facing_node
-      @target = create_tar # msg[:dest] <- put in when want to use real tar
-
-      resp = {}
-      
       case msg[:type]
       when :initial
+        # get constant information
         @map = Map.new(msg[:map])
         @dest = msg[:dest]
         @radius = AGENT_LENGTH / 2.0
-        resp[:speed] = 0.5
-        resp[:accel] = 0.1
-        resp[:delta] = 0.1
-      end
 
-      # Create appropriate obstacles, and choose the new delta.
+        # need to set this so it's ready to use next time
+        @curr_time = Time.now
+        
+        # send initial response
+        send({
+          :speed => 0.5,
+          :accel => 0.1,
+          :delta => 0.1
+        })
+      else
+        # get state information
+        @pos = Point.new(*msg[:pos])
+        @phi = msg[:phi]
+        @delta = msg[:delta]
+        @delta_speed = msg[:delta_speed]
+        @speed = msg[:speed]
+        @accel = msg[:accel]
 
-      @params = {
-        :d0 => 1,
-        :c1 => 1,
-        :a => 1,
-        :sigma => 1,
-        :a_tar => 1,
-        :g_tar_obs => 1,
-        :h1 => 1
-      }
-      
-      # Create the obstacles (they are created dynamically to follow the car
-      # along the side of the road.
-      @obs = create_obs
+        # compute more advanced, dynamcial-specific things
+        
+        # FIXME: we need to replace this with keeping track of the last position's
+        # curr_road and seeing if the new position has passed into a new road.
+        @curr_road = find_curr_road 
+        raise "Fell off road!" if !@curr_road
+        @facing = get_facing_node
+        @target = create_tar # msg[:dest] <- put in when want to use real tar
+        @obs = create_obs
 
-      @last_time = @curr_time ? @curr_time : Time.now
-      @curr_time = Time.now
-      time_step = @curr_time - @last_time
-      resp[:delta] = @delta + delta_dot * time_step
+        @last_time = @curr_time
+        @curr_time = Time.now
+        new_delta = @delta + delta_dot * (@curr_time - @last_time)
 
-      # FIXME: we should have a better to handle avoiding extreme delta values;
-      # maybe some form of repeller?
-      resp[:delta] = -Math::PI/2.0 if resp[:delta] < -Math::PI/2.0
-      resp[:delta] =  Math::PI/2.0 if resp[:delta] >  Math::PI/2.0
+        # prepare and send the response
 
-      # Render the obstacles and target for this agent.
-      
-      renders = ["@g.set_color Color.red"]
-      @obs.each do |o|
-        c, r = o
+        resp = { :delta => new_delta }
+
+        # Render the obstacles and target for this agent.
+        renders = ["@g.set_color Color.red"]
+        @obs.each do |o|
+          c, r = o
+          renders << "circle Point.new(#{c.x}, #{c.y}), #{r}"
+        end
+        c = @target[0]
+        r = @target[1]
+        renders << "@g.set_color Color.blue"
         renders << "circle Point.new(#{c.x}, #{c.y}), #{r}"
+        resp[:renders] = renders
+        
+        send resp
       end
-
-      c = @target[0]
-      r = @target[1]
-      renders << "@g.set_color Color.blue"
-      renders << "circle Point.new(#{c.x}, #{c.y}), #{r}"
-      
-      resp[:renders] = renders
-
-      # Send the final response
-      
-      send resp
     end
 
     # Creates an object on each side of the current road. This should be
@@ -185,13 +182,23 @@ module Driving
       [@facing.pos, @radius]
     end
 
+    # FIXME this is a very inefficient implementation that just searches through
+    # all the roads when it's called. should ideally be tracking the current
+    # road and updating whenever the agent moves into a new road.
+    def find_curr_road
+      @map.road_set.each do |road|
+        return road if road.contains @pos
+      end
+      nil
+    end
+
     # Determines which node of the current road the agent is facing; this
     # depends on the position and the heading direction (phi).
     def get_facing_node
       ang0 = ((@curr_road.n0.pos - @pos).dir - @phi).abs
       ang1 = ((@curr_road.n1.pos - @pos).dir - @phi).abs
       ang0 < ang1 ? @curr_road.n0 : @curr_road.n1
-    end      
+    end
 
     def socket; @socket; end
     

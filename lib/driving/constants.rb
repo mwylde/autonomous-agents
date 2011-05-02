@@ -28,4 +28,6 @@ module Driving
   MAX_ZOOM = 1000000
   DISPLAY_SLEEP_DURATION = 0.05
   INIT_FOLLOWING = true
+
+  CRUMBS_ON = false
 end
