@@ -124,7 +124,7 @@ module Driving
       @g = @strategy.getDrawGraphics
       @g.setRenderingHint RenderingHints::KEY_ANTIALIASING,
       RenderingHints::VALUE_ANTIALIAS_ON
-      @g.setColor(Color.white)
+      @g.setColor(Color.new(0x1f, 0x83, 0x2d))
       @g.fillRect(0,0,getWidth,getHeight)
 
       if @input.following && @agents.size > 0
@@ -220,7 +220,7 @@ module Driving
         #if @display_crumbs.size >= MAX_DISPLAY_CRUMBS * @current_agents.size
         #  @display_crumbs.pop
         #end
-
+        a.cache_display_attributes
         # @display_crumbs.unshift a.pos
         if a.dest
           @g.set_color Color.green
