@@ -3,8 +3,8 @@ module Driving
 
     PARAMS = {
       :d0 => 1,
-      :c1 => 3,
-      :a => 4,
+      :c1 => 1,
+      :a => 1,
       :sigma => 1,
       :a_tar => 1,
       :g_tar_obs => 1,
@@ -21,7 +21,7 @@ module Driving
     end
 
     def windower h1, phi, psi, d_psi, sigma
-      0.5 * (Math.tanh(h1*(Math.cos(phi-psi)-Math.cos(d_psi+sigma)))+1)
+      0.5 * (Math.tanh(h1*Math.cos(phi-psi)-Math.cos(d_psi+sigma))+1)
     end
 
     def dist_scale dm, d0
@@ -38,7 +38,7 @@ module Driving
       d_i * w_i * r_i
     end
 
-    def delta_dot
+    def phi_dot
       # We're treating phi as the heading direction. Since we're dealing with
       # cars, it's not exactly clear what we should be using as a heading
       # direction. It might turn out that delta is a better measure of the car's
@@ -52,7 +52,7 @@ module Driving
 
       d0 = PARAMS[:d0]
       c1 = PARAMS[:c1]
-      c2 = PARAMS[:a]
+      a = PARAMS[:a]
       sigma = PARAMS[:sigma]
       a_tar = PARAMS[:a_tar]
       g_tar_obs = PARAMS[:g_tar_obs]
@@ -70,10 +70,20 @@ module Driving
       #                            c1, c2, a, h1, sigma, a_tar, g_tar_obs)
       # agent.weights = [w_tar, w_obs]
       
-      f_obs = obs_list.collect{|obs_i| f_obs_i(@phi-@delta, obs_i, d0, sigma, h1)}
-      puts f_obs.inspect if rand < 0.01
+      f_obs = obs_list.collect{|obs_i| f_obs_i(@phi, obs_i, d0, sigma, h1)}
+      if rand < 0.01
+        puts "a: r% .2f % .4f, r% .2f % .4f" %
+          [@obs[0][1], ((@obs[0][0] - @pos).dir - @phi)/Math::PI,
+           @obs[1][1], ((@obs[1][0] - @pos).dir - @phi)/Math::PI]
+        puts "f: r% .2f % .4f, r% .2f % .4f" % [@obs[0][1], f_obs[0],
+                                                @obs[1][1], f_obs[1]]
+        puts f_obs.reduce(:+)
+        puts ""
+      end
       f_obs = f_obs.reduce(:+)
 
+
+      f_tar(phi, a, psi_tar) + f_obs
       # w_tar.abs*f_tar + w_obs.abs*f_obs + 0.01*(rand-0.5)
     end
 
@@ -117,9 +127,9 @@ module Driving
         
         # send initial response
         send({
-          :speed => 1.0,
-          :accel => 0.1,
-          :delta => 0
+          :phi => msg[:phi] + Math::PI / 8.0,
+          :accel => 1.0,
+          :delta => 0.0
         })
       else
         # get state information
@@ -131,51 +141,50 @@ module Driving
         @accel = msg[:accel]
 
         # compute more advanced, dynamcial-specific things
-
-        # response hash that we'll build
-        resp = {}
-        renders = []
         
         # FIXME: we need to replace this with keeping track of the last position's
         # curr_road and seeing if the new position has passed into a new road.
-        begin
-          @curr_road = find_curr_road 
-          raise "Fell off road!" if !@curr_road
+        @curr_road = find_curr_road
+        if @curr_road.nil?
+          new_phi = @phi
+          @obs = []
+        else
           @facing = facing_node[0]
           @target = create_tar # msg[:dest] <- put in when want to use real tar
           @obs = create_obs
 
           @last_time = @curr_time
           @curr_time = Time.now
-          new_delta = @delta + delta_dot * (@curr_time - @last_time)
-          new_phi = @phi + delta_dot * (@curr_time - @last_time)
-
-          # Render the obstacles
-          renders << "@g.set_color Color.red"
-          @obs.each do |o|
-            c, r = o
-            renders << "circle Point.new(#{c.x}, #{c.y}), #{r}"
+          begin
+            new_phi = @phi + phi_dot * (@curr_time - @last_time)
+          rescue
+            puts $!
+            new_phi = @phi
           end
-          # Render the target
-          c = @target[0]
-          r = @target[1]
-          renders << "@g.set_color Color.blue"
-          renders << "circle Point.new(#{c.x}, #{c.y}), #{r}"
-          resp[:renders] = renders
-        rescue
-          puts $!
-          new_delta = @delta
         end
-
+          
         # prepare and send the response
 
-        resp = { :delta => new_delta }
-        #resp[:phi]  = new_phi
+        resp = { :phi => new_phi }
 
+        resp[:accel] = 0 if @speed > 5.0
+
+        # Render the obstacles
+        renders = ["@g.set_color Color.red"]
+        @obs.each do |o|
+          c, r = o
+          renders << "circle Point.new(#{c.x}, #{c.y}), #{r}"
+        end
+        # Render the target
+        c = @target[0]
+        r = @target[1]
+        renders << "@g.set_color Color.blue"
+        renders << "circle Point.new(#{c.x}, #{c.y}), #{r}"
+        resp[:renders] = renders
         # Render the agent's bounding circle
         renders << "@g.set_color Color.lightGray"
         renders << "circle Point.new(#{@pos.x}, #{@pos.y}), #{@radius}"
-        resp[:renders] = renders
+        
         send resp
       end
     end
