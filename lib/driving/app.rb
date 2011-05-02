@@ -15,7 +15,9 @@ module Driving
     end
 
     def run
-      if @options[:agent]
+      if @options[:test]
+        run_test
+      elsif @options[:agent]
         run_agent
       else
         run_server
@@ -43,6 +45,18 @@ module Driving
         }
         opts.on("-c CLASS", "--agent CLASS", "Starts an agent with the supplied class"){|c|
           @options[:agent] = c
+        }
+        opts.on("-t", "--test", "Runs a non-interactive test with the",
+                "specified agent and positions") {
+          @options[:test] = true
+        }
+        opts.on("-s XxY", "--start XxY", "Provide the starting position of the",
+                "agent in world coordinates for your map"){|s|
+          @options[:pos] = Point.new(s.split("x").collect{|x| x.to_f})
+        }
+        opts.on("-d XxY", "--dest XxY", "Provide the destination position of the",
+                "agent in world coordinates for your map"){|s|
+          @options[:dest] = Point.new(s.split("x").collect{|x| x.to_f})
         }
       end
     end
@@ -80,6 +94,18 @@ module Driving
       #rescue NameError
       #  puts "Agent class #{@options[:agent]} doesn't exist."
       #end
+    end
+
+    def run_test
+      puts "Starting test with #{@options[:agent]}"
+      @agents = []
+      @server = Server.new @options[:address], @options[:port], @map, @agents
+      Thread.abort_on_exception = true
+      Thread.new do
+        @server.run
+      end
+      sleep 1
+      AStarAgent.new(@options[:address], @options[:port]).run
     end
   end
 end
