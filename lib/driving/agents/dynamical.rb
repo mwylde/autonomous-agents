@@ -38,7 +38,7 @@ module Driving
       d_i * w_i * r_i
     end
 
-    def delta_dot
+    def phi_dot
       # We're treating phi as the heading direction. Since we're dealing with
       # cars, it's not exactly clear what we should be using as a heading
       # direction. It might turn out that delta is a better measure of the car's
@@ -70,10 +70,17 @@ module Driving
       #                            c1, c2, a, h1, sigma, a_tar, g_tar_obs)
       # agent.weights = [w_tar, w_obs]
       
-      f_obs = obs_list.collect{|obs_i| -f_obs_i(@phi-@delta, obs_i, d0, sigma, h1)}
-      puts f_obs.inspect if rand < 0.01
+      f_obs = obs_list.collect{|obs_i| -f_obs_i(@phi, obs_i, d0, sigma, h1)}
+      if rand < 0.1
+        puts "a: r%.2f %f, r%.2f %f" % [@obs[0][1], (@obs[0][0] - @pos).dir,
+                                        @obs[1][1], (@obs[1][0] - @pos).dir]
+        puts "f: r%.2f %f, r%.2f %f" % [@obs[0][1], f_obs[0], @obs[1][1], f_obs[1]]
+        puts ""
+      end
       f_obs = f_obs.reduce(:+)
 
+
+      
       # w_tar.abs*f_tar + w_obs.abs*f_obs + 0.01*(rand-0.5)
     end
 
@@ -118,8 +125,9 @@ module Driving
         # send initial response
         send({
           :speed => 1.0,
+          :phi => msg[:phi] + Math::PI / 8.0,
           :accel => 0.1,
-          :delta => 0.5
+          :delta => 0.0
         })
       else
         # get state information
@@ -143,15 +151,15 @@ module Driving
         @last_time = @curr_time
         @curr_time = Time.now
         begin
-          new_delta = @delta + delta_dot * (@curr_time - @last_time)
+          new_phi = @phi + phi_dot * (@curr_time - @last_time)
         rescue
           puts $!
-          new_delta = @delta
+          new_phi = @phi
         end
 
         # prepare and send the response
 
-        resp = { :delta => new_delta }
+        resp = { :phi => new_phi }
 
         # Render the obstacles
         renders = ["@g.set_color Color.red"]
