@@ -45,6 +45,7 @@ module Driving
   end
 
   class Road
+
     def self.naive_walls p0, p1
       n = (p1 - p0).normalize.normal_vector * ROAD_WIDTH
 
@@ -172,6 +173,10 @@ module Driving
       @road_set = road_set_from_hash @road_hash
     end
 
+    # Creates a two-layered hash to store road objects, indexed first by start
+    # point and then by end point. Which point is the start and which is the end
+    # is arbitrary, so each road object is stored both ways, but such that there
+    # are two references to the same road object.
     def create_roads
       roads = {}
       
@@ -179,21 +184,25 @@ module Driving
         n.neighbors.each do |m|
           road = Road.new(n, m)
 
-          # the hash is indexed by both start pos and end pos, but we don't care
-          # about directionality, so we store the road wall object both ways in
-          # the two-layered hash.
-          # we also only store a wall object if a wall object for those points
-          # doesn't already exist. this is because we want there to only be one
-          # real road object, so that updating it propoagets. 
-          
+          # We only store a road object in the hash if the road object doesn't
+          # already exist, and we store it both ways (ie, [start pt][end pt] and
+          # [end pt][start pt]); this way only one road object is created for
+          # each unique set of nodes, and there are just two references stored.
+
+          # if the start pt doesn't already have a hash, then make one
           if roads[n.pos].nil?
             roads[n.pos] = { m.pos => road }
+          # if the start pt does have a hash and the road doesn't already exist
+          # in it, then put this road in the start pt's hash
           elsif roads[n.pos][m.pos].nil?
             roads[n.pos][m.pos] = road
           end
 
+          # if the end point doesn't have a hash, then make one
           if roads[m.pos].nil?
             roads[m.pos] = { n.pos => road }
+          # if the end pt does have a hash and the road doesn't already exist in
+          # it, then put this road in the end pt's hash
           elsif roads[m.pos][n.pos].nil?
             roads[m.pos][n.pos] = road
           end
@@ -203,7 +212,7 @@ module Driving
       return roads
     end
 
-    # returns a set of all the roads. this 
+    # returns a set of all the roads.
     def road_set_from_hash hash
       s = Set.new
 
