@@ -53,10 +53,6 @@ module Driving
           (@g + @h)  <=> (y.g + y.h)
       end
 
-      def > y
-        (@g + @h) < (y.g + y.h)
-      end
-
       def inspect
         "A*Node<state=#{state.pos}, g=#{g}, h=#{h}"
       end

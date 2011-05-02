@@ -70,7 +70,7 @@ module Driving
       #                            c1, c2, a, h1, sigma, a_tar, g_tar_obs)
       # agent.weights = [w_tar, w_obs]
       
-      f_obs = obs_list.collect{|obs_i| f_obs_i(@delta, obs_i, d0, sigma, h1)}
+      f_obs = obs_list.collect{|obs_i| -f_obs_i(@phi-@delta, obs_i, d0, sigma, h1)}
       puts f_obs.inspect if rand < 0.01
       f_obs = f_obs.reduce(:+)
 
