@@ -284,7 +284,7 @@ module Driving
       if norm_line.intersection center_line
         center_line = nil
         w = (@curr_road.walls - Set[road_edge]).first
-        # make it larger than a normal obs so that it pushed the agent
+        # make it larger than a normal obs so that it pushes the agent
         # back into the proper lane
         obs << create_obs_from_wall(w, @radius*10)
       end
