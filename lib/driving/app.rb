@@ -12,7 +12,7 @@ module Driving
         :server => true,
         :max_seconds => 60*5,
         :times => 10,
-        :options => "results.txt"
+        :output => "results.txt"
       }
       parser.parse! argv
     end
