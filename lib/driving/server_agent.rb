@@ -5,9 +5,14 @@ module Driving
   # response to their current velocity and turning speed.
   class ServerAgent
 
+    # gives the minimum distance (in meters) between the agent and the
+    # destination before we say that the agent has reached the destination
+    MIN_DEST_DIST = 5
+
     attr_reader :id, :pos, :phi, :delta, :delta_speed, :speed, :accel, :w, :l,
     :tw, :tl, :u, :n, :ne, :nw, :se, :sw, :crumbs, :north, :map, :dest, :renders,
-    :curr_road, :nw_tire_pts, :sw_tire_pts, :se_tire_pts, :ne_tire_pts
+    :curr_road, :nw_tire_pts, :sw_tire_pts, :se_tire_pts, :ne_tire_pts,
+    :dest_reached
     attr_accessor :paused
     
     # Creates a default agent with positional parameters set to 0; requires
@@ -32,6 +37,7 @@ module Driving
       @speed = speed
       @accel = accel
       @crumbs = [] if CRUMBS_ON
+      @dest_reached = false
     end
 
     # Converts an agent to a hash representation which can be sent
@@ -73,6 +79,12 @@ module Driving
             move curr_time-last_time, avg_spd
           end
 
+          if @pos.dist(@dest) < MIN_DEST_DIST
+            @dest_reached = true
+            puts "Reached destination!!!"
+            break
+          end
+
           t = 1.0/AGENT_UPDATE_FREQ - (Time.now - curr_time)
           sleep t > 0.0 ? t : 0
         end
@@ -90,6 +102,7 @@ module Driving
     def pos= new_pos
       @pos = new_pos
 
+      # check whether we've reached our destination
       cache_attributes
     end
 
