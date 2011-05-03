@@ -1,5 +1,6 @@
-#require './astar'
-#require './dynamical'
+ROOT = File.expand_path(File.dirname(__FILE__))
+require "#{ROOT}/dynamical"
+require "#{ROOT}/astar"
 
 module Driving
   class HybridAgent < DynamicalAgent
