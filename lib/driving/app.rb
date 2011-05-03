@@ -124,7 +124,7 @@ module Driving
         loop do
           if @agents[0] && @agents[0].dest_reached
             File.open(@options[:output], "a+") do |f|
-              f.write("#{@agents[0].initial_pos} #{agents[0].dest} #{time_diff} succeeded\n")
+              f.write("#{@agents[0].initial_pos} #{@agents[0].dest} #{time_diff} succeeded\n")
             end
             exit
           end
@@ -132,7 +132,7 @@ module Driving
           time_diff = Time.now - start
           if time_diff > @options[:max_seconds]
             File.open(@options[:output], "a+") do |f|
-              f.write("#{@agents[0].initial_pos} #{agents[0].dest} #{time_diff} failed\n")
+              f.write("#{@agents[0].initial_pos} #{@agents[0].dest} #{time_diff} failed\n")
             end
             exit
           end
