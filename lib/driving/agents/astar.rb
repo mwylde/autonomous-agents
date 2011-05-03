@@ -6,59 +6,40 @@ else
 end
 
 module Driving
-  class AStarAgent < ClientAgent
+  # Node class used for A* navigation. Includes the state, which is
+  # the Driving::Node this AStarNode represents, parent, which is
+  # the AStarNode that expanded this one, and g and h which are the
+  # current cost and expected remaining cost respectively.
+  class AStarNode
+    attr_accessor :state, :parent, :g, :h
+    def initialize state, parent
+      @state = state
+      @parent = parent
+      @g = 0
+      @h = 0
+    end
+
+    # Creates an array of AStarNodes from this node's neighbors
+    def expand
+      @state.neighbors.map{|n|
+        AStarNode.new(n, self)
+      }
+    end
+
+    def <=> y
+      (@g + @h)  <=> (y.g + y.h)
+    end
+
+    def inspect
+      "A*Node<state=#{state.pos}, g=#{g}, h=#{h}"
+    end
+  end
+  module AStarMixin
     # The maximum number of nodes to expand during A* search. Larger
     # values will ensure that we can find paths to destinations that
     # are further away, while smaller values will make planning faster.
     MAX_NODES_EXPANDED = 10000
-    # Mode in which the agent simply goes straight, following the
-    # current road
-    STRAIGHT_MODE = :straight
-    # Mode in which the agent executes a turn towards the next
-    # waypoint
-    TURN_MODE = :turn
-    # Mode in which the agent stops and replans
-    REPLAN_MODE = :replan
-    # Just goes forward until outside of the range of the start node
-    START_MODE = :start
-    
-    def initialize *args
-      super *args
 
-      # current operation mode of the agent
-      @mode = START_MODE
-    end
-
-    # Node class used for A* navigation. Includes the state, which is
-    # the Driving::Node this AStarNode represents, parent, which is
-    # the AStarNode that expanded this one, and g and h which are the
-    # current cost and expected remaining cost respectively.
-    class AStarNode
-      attr_accessor :state, :parent, :g, :h
-      def initialize state, parent
-        @state = state
-        @parent = parent
-        @g = 0
-        @h = 0
-      end
-
-      # Creates an array of AStarNodes from this node's neighbors
-      def expand
-        @state.neighbors.map{|n|
-          AStarNode.new(n, self)
-        }
-      end
-
-      def <=> y
-          (@g + @h)  <=> (y.g + y.h)
-      end
-
-      def inspect
-        "A*Node<state=#{state.pos}, g=#{g}, h=#{h}"
-      end
-        
-    end
-    
     # calculates the best route from the current node to the
     # destination node using A*
     def astar
@@ -109,7 +90,28 @@ module Driving
         []
       end
     end
+  end
+  
+  class AStarAgent < ClientAgent
+    include AStarMixin
+    # Mode in which the agent simply goes straight, following the
+    # current road
+    STRAIGHT_MODE = :straight
+    # Mode in which the agent executes a turn towards the next
+    # waypoint
+    TURN_MODE = :turn
+    # Mode in which the agent stops and replans
+    REPLAN_MODE = :replan
+    # Just goes forward until outside of the range of the start node
+    START_MODE = :start
     
+    def initialize *args
+      super *args
+
+      # current operation mode of the agent
+      @mode = START_MODE
+    end
+
     def handle_msg msg
       if msg[:map]
         x = msg.clone
@@ -194,25 +196,6 @@ module Driving
 
     def socket; @socket; end
 
-    # Neville's algorithm for finding the spline through n points
-    # (en.wikipedia.org/wiki/Neville's_algorithm)
-    def neville(ps, x)
-      n = ps.size
-      xs = ps.map{|p| p.x}
-      ys = ps.map{|p| p.y}
-      ps = []
-      n.times{|i|
-        (n-i).times{|j|
-          if i == 0
-            ps[j] = ys[j]
-          else
-            ps[j] = ((x-xs[j+i])*ps[j]+(xs[j]-x)*ps[j+1])/(xs[j]-xs[j+i])
-          end
-        }
-      }
-      ps[0]
-    end
-
     def get_facing nodes
       nodes.sort_by{|n|
         ((n.pos - @pos).dir - @phi).abs
@@ -284,39 +267,5 @@ module Driving
         return [@phi, 2]
       end
     end
-
-    # The basic idea behind this algorithm is as follows. We want to
-    # figure out how often we get to run, so we compute a rolling
-    # average of the time between the last five invocation of
-    # handle_message. We use this and our current speed to predict how
-    # far ahead we'll be by the next time we get to react. We find the
-    # point that we predict we'll reach, and then use spline
-    # interpolation to figure out the angle we'll want to be at when
-    # we get there.
-    #
-    # Actually, that's how I'd like to do it. For now, I'm just going
-    # to calculute the tangent of the spline at the current point and
-    # try to turn so that I'm parallel
-    def get_new_delta_spline
-      return @delta unless @last && @route.size > 1
-      # points that define the center-road spline
-      x, y, z = @last.pos, @route[-1].pos, @route[-2].pos
-
-      # points that define the edge-road spline
-      xp, _, yp, _ = Driving::calculate_road(x, y)
-      _, _, zp, _  = Driving::calculate_road(y, z)
-
-      # average of the above points, to get the path that we want the
-      # car to follow (the center of the lane)
-      xb = Point.new((x.x + xp.x)/2, (x.y + xp.y))
-      yb = Point.new((y.x + yp.x)/2, (y.y + yp.y))
-      zb = Point.new((z.x + zp.x)/2, (z.y + zp.y))
-
-      # find the approx tangent
-      xs = [@pos.x-0.05, @pos.x+0.05]
-      a, b = xs.map{|x| Point.new(x, neville([xb, yb, zb], x)) }
-      phi_wanted = (a-b).dir
-    end
-
   end
 end
