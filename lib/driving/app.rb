@@ -61,7 +61,7 @@ module Driving
                 "agent in world coordinates for your map"){|s|
           @options[:dest] = Point.new(s.split("x").collect{|x| x.to_f})
         }
-        opts.on("-m SECS", "--max-secs", "Runs the simulation for a maximum of",
+        opts.on("-x SECS", "--max-secs", "Runs the simulation for a maximum of",
                 "SECS seconds"){|s|
           @options[:max_seconds] = s
         }
