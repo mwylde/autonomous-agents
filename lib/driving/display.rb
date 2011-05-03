@@ -179,8 +179,8 @@ module Driving
 
     def render_map
       # Draw roads
+      @g.set_color Color.darkGray
       @map.road_set.each do |r|
-        @g.set_color Color.darkGray
         points = []
         odd = true
         if r.walls.any?{|w| on_screen? w}
@@ -190,10 +190,12 @@ module Driving
           end
           polygon points, true
         end
-
-        @g.set_color Color.black
-        r.walls.each{|w| line w if on_screen? w}
       end
+      
+      # Draw walls
+      @g.set_color Color.black
+      @map.road_set.each{|r| r.walls.each{|w| line w if on_screen? w}}
+      
       # Draw center lines
       width = world_to_screen(Point.new(0, 0)).dist world_to_screen(Point.new(0, 0.25))
       @map.road_set.each do |r|
