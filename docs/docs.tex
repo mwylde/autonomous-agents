@@ -23,10 +23,84 @@
 \subsection{Related work}
 
 \section{Autonomous Driving}
+
 \subsection{Simulation}
 
-
 \section{Methods}
+
+To create an autonomous agent that navigates while simulating a car's behavior
+and traffic laws, we took three general approaches: deliberative planning
+through A* search, reactive navigation through a dynamical system, and a hybrid
+of deliberative planning and reactive motion. As for the agents' environment, we
+create graphical worlds out of real map data. The code architecture consists of
+a server and a separate client for each agent.
+
+\subsection{Code Architecture}
+
+The project is written in Ruby, under JRuby to utilize Java2D for the graphical
+display. Specifically, all server code runs specifically under JRuby, but client
+code can run under any flavor of Ruby. Agents are represented both on the client
+and server end; server agents perform motion- and display-related
+calculations, and client agents contain all the navigation inference and
+decision-making and ultimately send decisions (restricted to behavior variables)
+back to the server againt.
+
+A brief description of the various source files will follow.
+
+\begin{description}
+\item[app.rb] This file is the point of entry for the program. This same entry
+  point is used to, based on various command-line options, start a server, start
+  a new agent, or run tests.
+
+\item[client_agent.rb] This file contains the \code{ClientAgent} class, the
+  super class which every client agent inherits. Client agents receive messages
+  from remote server agents, process the message (based on their form of
+  navigation), and then send back a response in their behavior variable space.
+
+\item[constants.rb] This file contains various general constants that may be
+  used in several locations or files, or that may be particularly useful to
+  tweak with.
+
+\item[display.rb] This file contains all of the display code used to generate
+  our rendering of the world.
+
+\item[map.rb] This file contains the classes, specifically \code{Map}, which
+  encode information provided from real map data.
+
+\item[pqueue.rb] A priority queue implementation useful for A* search.
+
+\item[remote_agent.rb] This file contains the \code{RemoteServerAgent} class,
+  which is a subclass of \code{ServerAgent}. Essentially, a remote server agent
+  is a server agent which is tied to a specific client agent and communicates
+  with that client agent.
+
+\item[server_agnet.rb] This file contains the \code{ServerAgent} class, which
+  contains all the base representation and calculations needed for an agent (for
+  example, the server agent computes various points needed to display the agent
+  graphically).
+
+\item[server.rb] This file contains the socket server to which new agents
+  connect.
+
+\item[socket.rb] MICAH
+
+\item[util.rb]
+
+\item[agents/astar.rb]
+
+\item[agents/dynamical.rb]
+
+\item[agents/hybrid.rb]
+
+\item[agents/simple.rb]
+
+\subsection{Simulation Environment}
+
+\subsection{Deliberative Planning}
+
+\subsection{Reactive Navigation}
+
+\subsection{Hybrid Approach}
 
 \section{Results}
 
