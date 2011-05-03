@@ -281,7 +281,24 @@ to the destination and $v$ is the angle from $n_0$ to $t$. We're
 trying to discover the best route using purely local information, so
 we find the path that appears to take us in the correct direction.
 
+We set our dynamical parameters somewhat arbitrarily as follows: $m =
+2, d_0 = 0.1, a = 20, \sigma = 1, h_1 = 10$. We do not use weights as
+we found them unnecessary. The most crucial parameter for our
+simulation seems to be $a$, the target attractor scaling factor. Lower
+$a$ values do not produce working navigation.
+
 \subsection{Hybrid Agent}
+The hybrid agent was designed with the understanding that vehicular
+navigation is really a hybrid problem. Unlike more free-form
+environments, road systems are very limiting to dynamical
+navigation. Even though the agent may think its going in roughly the
+right direction, it has no way of knowing from purely local
+information whether it can even reach its destination by its
+path. Methods like $A^*$ which look at global map data can solve this
+issue by finding the best path to take from every intersection so that
+the agent reaches the target in the minimum amount of time. However,
+deliberative methods do not handle the moment-to-moment navigation
+issues well, particularly in a dynamic environment.
 
 \section{Results}
 
