@@ -466,6 +466,7 @@ module Driving
       @c_pos = @c_pos.add_vector displacement
 
       @pmouse = Point.new(e.getX, e.getY)
+      puts @c_pos if rand < 0.01
     end
 
     def mouseReleased e

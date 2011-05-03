@@ -45,7 +45,6 @@ module Driving
   end
 
   class Road
-
     def self.naive_walls p0, p1
       n = (p1 - p0).normalize.normal_vector * ROAD_WIDTH
 
@@ -244,16 +243,24 @@ module Driving
 
     # Clips the walls of one intersection of roads.
     def clip_intersection n
-      ms = n.neighbors.sort_by{|m| (m.pos-n.pos).dir}
-      ms[0..-2].each_index do |i|
-        m0, m1 = ms[i], ms[i+1]
+      # Sort the neighbors counter-clockwise
+      ms = n.neighbors.sort_by{|m| (m.pos-n.pos).dir_norm}
+
+      d = true if ms.length == 3 && n.pos.x > 1220 && n.pos.x < 1230
+      puts "n: #{n.pos}" if d
+      ms.each{|m| puts m.pos} if d
+      ms.each_index do |i|
+        m0 = ms[i]
+        m1 = i+1 == ms.length ? ms[0] : ms[i+1]
         r0 = get_road(n.pos, m0.pos)
         r1 = get_road(n.pos, m1.pos)
-        bisect_ang = ((m1.pos-n.pos).dir + (m0.pos-n.pos).dir)/2.0 
+        ang_delta = ((m1.pos-n.pos).dir_norm - (m0.pos-n.pos).dir_norm) % (2*Math::PI)
+        puts ang_delta if d
+        bisect_ang = (m0.pos-n.pos).dir + ang_delta/2.0
         (r0.walls + r1.walls).each do |w|
-          bisect_line = LineSegment.line n.pos, Vector.unit(bisect_ang)
-          pt = LineSegment.line(w).intersection bisect_line
-          n.pos.dist(w.p0) < n.pos.dist(w.p1) ? w.p0 = pt : w.p1 = pt
+          bisect_line = LineSegment.ray n.pos, Vector.unit(bisect_ang)
+          pt = bisect_line.intersection LineSegment.line(w)
+          n.pos.dist(w.p0) < n.pos.dist(w.p1) ? w.p0 = pt : w.p1 = pt unless pt.nil?
         end
       end
     end
