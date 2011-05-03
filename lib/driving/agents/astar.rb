@@ -81,8 +81,8 @@ module Driving
       node = astar pos, phi, current_road, goal
       if node
         route = []
-        while node.parent
-          route << node.parent.state
+        while node
+          route << node.state
           node = node.parent
         end
         route
