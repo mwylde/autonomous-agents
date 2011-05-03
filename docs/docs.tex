@@ -10,6 +10,7 @@
 \usepackage{listings}
 \usepackage{color}
 \usepackage{fullpage}
+\newcommand{\code}{\texttt}
 
 \author{Micah Wylde\\Jeffrey Ruberg}
 \date{\today}
@@ -77,7 +78,7 @@ a server and a separate client for each agent.
 \subsection{Code Architecture}
 
 The project is written in Ruby, under JRuby to utilize Java2D for the graphical
-display. Specifically, all server code runs specifically under JRuby, but client
+display. Specifically, all server code runs solely under JRuby, but client
 code can run under any flavor of Ruby. Agents are represented both on the client
 and server end; server agents perform motion- and display-related
 calculations, and client agents contain all the navigation inference and
@@ -91,7 +92,7 @@ A brief description of the various source files will follow.
   point is used to, based on various command-line options, start a server, start
   a new agent, or run tests.
 
-\item[client_agent.rb] This file contains the \code{ClientAgent} class, the
+\item[client\_agent.rb] This file contains the \code{ClientAgent} class, the
   super class which every client agent inherits. Client agents receive messages
   from remote server agents, process the message (based on their form of
   navigation), and then send back a response in their behavior variable space.
@@ -108,12 +109,12 @@ A brief description of the various source files will follow.
 
 \item[pqueue.rb] A priority queue implementation useful for A* search.
 
-\item[remote_agent.rb] This file contains the \code{RemoteServerAgent} class,
+\item[remote\_agent.rb] This file contains the \code{RemoteServerAgent} class,
   which is a subclass of \code{ServerAgent}. Essentially, a remote server agent
   is a server agent which is tied to a specific client agent and communicates
   with that client agent.
 
-\item[server_agnet.rb] This file contains the \code{ServerAgent} class, which
+\item[server\_agnet.rb] This file contains the \code{ServerAgent} class, which
   contains all the base representation and calculations needed for an agent (for
   example, the server agent computes various points needed to display the agent
   graphically).
@@ -123,17 +124,42 @@ A brief description of the various source files will follow.
 
 \item[socket.rb] MICAH
 
-\item[util.rb]
+\item[util.rb] This file contains a collection of geometry classes
+  (\code{Point}, \code{Vector}, etc.) which are useful in the display and other
+  various places (most notably in dynamical navigatoin calculations).
 
-\item[agents/astar.rb]
+\item[agents/astar.rb] This file contains a client agent that deliberatively
+  plans paths using A* search.
 
-\item[agents/dynamical.rb]
+\item[agents/dynamical.rb] This file contains a client agent that navigates
+  through a purely dynamical system-based approach.
 
-\item[agents/hybrid.rb]
+\item[agents/hybrid.rb] This file contains a client agent that navigates through
+  a combination of deliberative planning and dynamical systems.
 
-\item[agents/simple.rb]
+\item[agents/simple.rb] This file contains a very primitive client agent (that
+  can hardly be called an agent) which allowed us to easily test the motion
+  calculations performed by server agents.
+
+\end{description}
 
 \subsection{Simulation Environment}
+
+Our environment takes place in a graphical world we have constructed from
+scratch. We start with real map data specifying nodes (intersections) and
+connections (roads) between nodes, and create a graph representation; we also
+convert positions specified in terms of latitude and longitude into a scale of
+meters (where the minimum latitude position is given an x-coordinate of zero,
+and likewise for longitude and y-coordinates). We mostly store the road data as
+this graph of nodes and neighborhood relationships, but we also create road
+objects which own wall line segments; while the map is being processed, we also
+clip/extend these walls to create realistic-looking chunks of road between two
+nodes.
+
+To run the display, we start a server by running the script
+\code{bin/driving}. In the display, we have implemented mouse dragging, zooming,
+pausing, agent following (on by default), and agent placement/manipulation..
+
 
 \subsection{Deliberative Planning}
 
@@ -144,5 +170,7 @@ A brief description of the various source files will follow.
 \section{Results}
 
 \section{Conclusion}
+\subsection{Unreached goals}
+- cached map rendering
 
 \end{document}
