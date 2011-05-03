@@ -245,6 +245,41 @@ sending a new destination.
   \label{dynamical}
 \end{figure}
 
+The reactive agent uses a dynamical systems approach for
+navigation. It forces the agent to stay in its lane by placing
+obstacles along the walls of the lane. We use a series of targets
+place at the next intersection to guide the agent along the desired
+path. The most interesting detail of our dynamical system is our
+obstacle representation. The math of dynamical systems requires that
+all objects in the world be represented as circles, which is a poor
+fit for long straight obstacles such as walls. There are two
+conventional solutions to representing non-circular obstacles: use one
+large circle that bounds the obstacle or use many small circles along
+the obstacle. The first is untenable for the narrow corridors a car
+must pass through, while the second would require a very large number
+of circles and the corresponding computation. Our approach is to use a
+single circular obstacle per wall which follows the agent and which
+grows in size as the agent gets closer. Implementing this requires
+only basic geometry. We find the vector between the wall and the agent
+perpendicular to the road and displace the center of the circle from
+the road by a factor of the distance between the agent and the edge of
+the road. 
+
+Like the deliberative agent, the reactive agent is modeled
+as a FSM with states start, normal, intersection and turn. Start
+waits until the agent is properly set up and chooses the initial
+target as the node the agent is currently facing, then transitions to
+normal mode. When in normal mode, the agent navigates until it
+reaches a node at which point it transitions to either intersection
+mode if the node it's reached has more than one neighbor or turn mode
+otherwise. If it's an intersection (which means more than one choice
+of which way to go) the agent computes the set $T = \{t\;|\;t\neq
+n_1,t \mbox{ is a neighbor of } n_0\}$ where $n_0$ is the node we've
+arrived at and $n_1$ is the node we've left. It then finds the $t\in
+T$ which minimizes $abs(u-v)$ where $u$ is the vector from the agent
+to the destination and $v$ is the angle from $n_0$ to $t$. We're
+trying to discover the best route using purely local information, so
+we find the path that appears to take us in the correct direction.
 
 \subsection{Hybrid Agent}
 
