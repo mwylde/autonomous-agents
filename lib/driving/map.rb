@@ -249,24 +249,13 @@ module Driving
         m0, m1 = ms[i], ms[i+1]
         r0 = get_road(n.pos, m0.pos)
         r1 = get_road(n.pos, m1.pos)
-        ang = (m1.pos-n.pos).dir - (m0.pos-n.pos).dir
-        ang < Math::PI ? clip_acute_ang(n,r0,r1) : extend_obtuse_ang(n,r0,r1)
+        bisect_ang = ((m1.pos-n.pos).dir + (m0.pos-n.pos).dir)/2.0 
+        (r0.walls + r1.walls).each do |w|
+          bisect_line = LineSegment.line n.pos, Vector.unit(bisect_ang)
+          pt = LineSegment.line(w).intersection bisect_line
+          n.pos.dist(w.p0) < n.pos.dist(w.p1) ? w.p0 = pt : w.p1 = pt
+        end
       end
-    end
-
-    # Clips the walls (on the acute side) of two roads, r0 and r1, which meet to
-    # form an acute angle at node n.
-    def clip_acute_ang n, r0, r1
-      # FIXME: find where the wall line segments meet, and then modify the wall
-      # end pts to be at the intersection.
-      
-    end
-
-    # Extends the walls (on the obtuse side) of two roads, r0 and r1, which meet
-    # to form an obtuse angle at node n.
-    def extend_obtuse_ang n, m0, m1
-      # FIXME: find where the extensions of the wall line segments meet, and
-      # then modify the wall end pts to be at the intersection.
     end
 
     # def clip_walls

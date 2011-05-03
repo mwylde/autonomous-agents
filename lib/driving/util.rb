@@ -119,6 +119,11 @@ module Driving
       Vector.new(mag * Math.cos(dir), mag * Math.sin(dir))
     end
 
+    # Creates a unit vector with the specified angular direction
+    def self.unit dir
+      Vector.from_mag_dir 1, dir
+    end
+
     # Creates the vector terminating at the specified (x, y) point
     def initialize x, y
       @x = x.to_f
@@ -140,7 +145,7 @@ module Driving
 
     # Direction of the vector in radians
     def dir
-      Math.atan2(@y, @x)
+      Math.atan2(@y, @x) % 2.0*Math::PI
     end
 
     # Returns true if this vector is unit (has magnitude 1), false
@@ -226,14 +231,43 @@ module Driving
 
   # A linesegment connects two points
   class LineSegment
+    LARGE_NUMBER = 1000000
+    
     attr_accessor :p0, :p1
     def initialize p0, p1
       @p0 = p0
       @p1 = p1
     end
 
+    # Creates a "ray" based on a point and vector. This is essentially a line
+    # segment starting at p heading in the direction of v for a very long
+    # distance.
+    def self.ray p, v
+      LineSegment.new(p, p+v.normalize*LARGE_NUMBER)
+    end
+
+    # Creates a "line" based on a point and vector, or a previously created line
+    # segment. This is essentially a line segment starting very far from p in
+    # the negative v direction and heading very far along v.
+    def self.line *args
+      if args.length == 1
+        if args[0].is_a? Driving::LineSegment
+          l = args[0]
+          LineSegment.new(l.p0-l.unit*LARGE_NUMBER,
+                          l.p1+l.unit*LARGE_NUMBER)
+        end
+      else
+        if args[0].is_a? Driving::Point and args[1].is_a? Driving::Vector
+          p = args[0]
+          v = args[1]
+          LineSegment.new(p-v.normalize*LARGE_NUMBER,
+                          p+v.normalize*LARGE_NUMBER)
+        end
+      end
+    end
+
     def to_s
-      "Segment #{@p0}->#{@p1}"
+      "Segment #{@p0} -> #{@p1}"
     end
 
     def to_a
@@ -268,7 +302,7 @@ module Driving
       Point.new x,y
     end
 
-    # This returns the intersection point of two lines, or nil if they
+    # This returns the intersection point of two line segments, or nil if they
     # do not in fact intersect. Algorithm taken from
     # http://paulbourke.net/geometry/lineline2d/
     def intersection l
