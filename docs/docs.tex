@@ -95,58 +95,60 @@ behavior variables) back to the server again.
 A brief description of the roles of the various source files will follow.
 
 \begin{description}
-\item[app.rb] This file is the point of entry for the program. This same entry
-  point is used to, based on various command-line options, start a server, start
-  a new agent, or run tests.
+\item[app.rb] The point of entry for the program. Processes
+  command-line options and can optionally start a server, start a new
+  agent, or run tests.
 
-\item[client\_agent.rb] This file contains the \code{ClientAgent} class, the
-  super class which every client agent inherits. Client agents receive messages
-  from remote server agents, process the message (based on their form of
-  navigation), and then send back a response in their behavior variable space.
+\item[client\_agent.rb] Contains the \code{ClientAgent} class, the
+  super class which every client agent inherits. Client agents receive
+  messages from remote server agents, process the message (based on
+  their form of navigation), and then send back a response in their
+  behavior variable space.
 
-\item[constants.rb] This file contains various general constants that may be
+\item[constants.rb] Contains various general constants that may be
   used in several locations or files, or that may be particularly useful to
   tweak with.
 
-\item[display.rb] This file contains all of the display code used to generate
+\item[display.rb] Contains all of the display code used to generate
   our rendering of the world.
 
-\item[map.rb] This file contains the classes, specifically \code{Map}, which
+\item[map.rb] Contains the classes, specifically \code{Map}, which
   encode information provided from real map data.
 
-\item[pqueue.rb] A priority queue implementation useful for $A^*$ search.
+\item[pqueue.rb] A priority queue implementation used for $A^*$ search.
 
-\item[remote\_agent.rb] This file contains the \code{RemoteServerAgent} class,
-  which is a subclass of \code{ServerAgent}. Essentially, a remote server agent
-  is a server agent which is tied to a specific client agent and communicates
-  with that client agent.
+\item[remote\_agent.rb] Contains the \code{RemoteServerAgent} class,
+  which is a subclass of \code{ServerAgent}. Essentially, a remote
+  server agent is a server agent which is tied to a specific client
+  agent and communicates with that client agent.
 
-\item[server\_agnet.rb] This file contains the \code{ServerAgent} class, which
+\item[server\_agent.rb] Contains the \code{ServerAgent} class, which
   contains all the base representation and calculations needed for an agent (for
   example, the server agent computes various points needed to display the agent
   graphically).
 
-\item[server.rb] This file contains the socket server to which new agents
-  connect.
+\item[server.rb] Contains the socket server which handles agent connections.
 
-\item[socket.rb] MICAH
+\item[socket.rb] Contains code for handling communication between
+  clients and the server
 
-\item[util.rb] This file contains a collection of geometry classes
-  (\code{Point}, \code{Vector}, etc.) which are useful in the display and other
-  various places (most notably in dynamical navigation calculations).
+\item[util.rb] Contains a collection of geometry classes
+  (\code{Point}, \code{Vector}, etc.) which are useful in the display
+  and other various places (most notably in dynamical navigation
+  calculations).
 
-\item[agents/astar.rb] This file contains a client agent that deliberatively
+\item[agents/astar.rb] Contains a client agent that deliberatively
   plans paths using $A^*$ search.
 
-\item[agents/dynamical.rb] This file contains a client agent that navigates
+\item[agents/dynamical.rb] Contains a client agent that navigates
   through a purely dynamical system-based approach.
 
-\item[agents/hybrid.rb] This file contains a client agent that navigates through
+\item[agents/hybrid.rb] Contains a client agent that navigates through
   a combination of deliberative planning and dynamical systems.
 
-\item[agents/simple.rb] This file contains a very primitive client agent (that
-  can hardly be called an agent) which allows us to easily test the motion
-  calculations performed by server agents.
+\item[agents/simple.rb] Contains a very primitive client agent (that
+  can hardly be called an agent) which allows us to easily test the
+  motion calculations performed by server agents.
 
 \end{description}
 
