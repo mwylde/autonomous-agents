@@ -13,14 +13,53 @@
 
 \author{Micah Wylde\\Jeffrey Ruberg}
 \date{\today}
-\title{Autonomous Navigation: The Quest for a Real Title\\Comp 352}
+\title{Autonomous Agents:\\
+A Hybrid Dynamical System for Vehicle Navigation\\
+Comp 352}
 
 \begin{document}
 \maketitle
 
 \section{Introduction}
+Self-driving cars hold much promise for saving fuel, time and
+lives. Human-driven vehicles are responsible for millions of traffic
+accidents and over 30,000 deaths annually in the US alone. Humans can
+also make poor decisions in regards to routes, leading to traffic jams
+and wasted fuel. Safe, effective autonomous cars could largely solve
+these issues. AI researchers have been interested in the potential for
+vehicular navigation since the 1960s. In order to spur development in
+this area, the Defense Advanced Research Projects Agency (DARPA)
+organized the Grand Challenge in 2004, which tasked contestants to
+build cars which could autonomously navigate a 142 mile-long course in
+the Mojave desert. Though none of the vehicles could finish the
+course, a second competition the next year was more successful. Four
+teams finished in the allotted time, traversing a treacherous 132 mile
+desert course with no human guidance. Building on this achievement, in
+2007 DARPA organized the Urban Challenge which took place in a
+simulated suburban environment. To win, cars had to navigate a maze of
+streets while accounting for other traffic and following California
+traffic laws at all times. Six teams finished the 61 mile course with
+the winner, ``Boss'' from CMU, taking a little more than four hours
+\cite{robotic_cars}.
 
-\subsection{Related work}
+There are many challenges involved in autonomous driving and robot
+navigation in general. In the real world one must deal with unreliable
+and imperfect sensor data, imprecise localization technologies and
+other perception issues. Even in simulation the challenges of
+successful navigation are immense. Cars must follow traffic laws, get
+to their destination quickly and efficiently and act safely at all
+times, even in unexpected situations. As far as the actual navigation,
+there are two general approaches: deliberative and reactive. As an
+example of the former, $A^*$ is an efficient and optimal graph search
+algorithm which is very effective at finding the best route between
+two points but cannot handle the dynamism of the real world. Dynamical
+navigation is a reactive strategy that uses force fields to guide
+agents away from obstacles and towards their target. However, it is
+purely local and has trouble finding optimal paths to distant
+goals. In this paper we present simulated agents which use each
+technique as well as a hybrid agent which makes use of $A*$ for global
+navigation and dynamical systems for local navigation.
+
 
 \section{Autonomous Driving}
 
