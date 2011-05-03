@@ -191,6 +191,11 @@ module Driving
           polygon points, true
         end
       end
+      
+      # Draw walls
+      @g.set_color Color.black
+      @map.road_set.each{|r| r.walls.each{|w| line w if on_screen? w}}
+      
       # Draw center lines
       width = world_to_screen(Point.new(0, 0)).dist world_to_screen(Point.new(0, 0.25))
       @map.road_set.each do |r|
@@ -461,6 +466,7 @@ module Driving
       @c_pos = @c_pos.add_vector displacement
 
       @pmouse = Point.new(e.getX, e.getY)
+      puts @c_pos if rand < 0.01
     end
 
     def mouseReleased e

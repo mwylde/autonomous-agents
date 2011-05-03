@@ -65,7 +65,7 @@ module Driving
     end
 
     def to_s
-      "Road: #{@p0} -> #{@p1} with #{@walls}"
+      "Road: #{@n0.pos} -> #{@n1.pos} with #{@walls}"
     end
 
     def unit_vector
@@ -170,8 +170,15 @@ module Driving
       # create a two-layered hash storing roads
       @road_hash = create_roads
       @road_set = road_set_from_hash @road_hash
+
+      # clip all the walls
+      clip_map
     end
 
+    # Creates a two-layered hash to store road objects, indexed first by start
+    # point and then by end point. Which point is the start and which is the end
+    # is arbitrary, so each road object is stored both ways, but such that there
+    # are two references to the same road object.
     def create_roads
       roads = {}
       
@@ -179,21 +186,25 @@ module Driving
         n.neighbors.each do |m|
           road = Road.new(n, m)
 
-          # the hash is indexed by both start pos and end pos, but we don't care
-          # about directionality, so we store the road wall object both ways in
-          # the two-layered hash.
-          # we also only store a wall object if a wall object for those points
-          # doesn't already exist. this is because we want there to only be one
-          # real road object, so that updating it propoagets. 
-          
+          # We only store a road object in the hash if the road object doesn't
+          # already exist, and we store it both ways (ie, [start pt][end pt] and
+          # [end pt][start pt]); this way only one road object is created for
+          # each unique set of nodes, and there are just two references stored.
+
+          # if the start pt doesn't already have a hash, then make one
           if roads[n.pos].nil?
             roads[n.pos] = { m.pos => road }
+          # if the start pt does have a hash and the road doesn't already exist
+          # in it, then put this road in the start pt's hash
           elsif roads[n.pos][m.pos].nil?
             roads[n.pos][m.pos] = road
           end
 
+          # if the end point doesn't have a hash, then make one
           if roads[m.pos].nil?
             roads[m.pos] = { n.pos => road }
+          # if the end pt does have a hash and the road doesn't already exist in
+          # it, then put this road in the end pt's hash
           elsif roads[m.pos][n.pos].nil?
             roads[m.pos][n.pos] = road
           end
@@ -203,24 +214,18 @@ module Driving
       return roads
     end
 
-    # returns a set of all the roads. this 
+    # returns a set of all the roads.
     def road_set_from_hash hash
       s = Set.new
-
-      # the road hash is indexed by start point and then by end point
       hash.each do |p0, p0_hash|
         p0_hash.each do |p1, r|
-          # FIXME: I think the fact that it's a set should handle the fact that
-          # the double-hash has duplicate references to roads. If not, then I
-          # can keep a list of sets of points that have been added and only add
-          # a road if it's not in the list of set of points.
           s.add r
         end
       end
-
       return s
     end
 
+    # access a road given its two end points.
     def get_road p0, p1
       if @road_hash[p0].nil? || @road_hash[p1].nil?
         raise "Neither point specified has any roads"
@@ -231,25 +236,54 @@ module Driving
       end
     end
 
-    def clip_walls
-      @nodes.each do |n|
-        if n.neighbors.size == 2
-          ms = n.neighbors
-          u0 = (ms[0].pos - n.pos).normalize!
-          u1 = (ms[1].pos - n.pos).normalize!
+    # Clips the walls of all roads on the map.
+    def clip_map
+      @nodes.each{|n| clip_intersection(n)}
+    end
 
-          # unit vector pointing towards the inner wall intersection.
-          u = (u0 + u1).normalize!
-          inner_pt = n.pos + u*ROAD_WIDTH
+    # Clips the walls of one intersection of roads.
+    def clip_intersection n
+      # Sort the neighbors counter-clockwise
+      ms = n.neighbors.sort_by{|m| (m.pos-n.pos).dir}
 
-          @roads[n][ms[0]].walls.each do |w|
-            if w.hits inner_pt
-              # FIXME: LOTS MORE IMPLEMENTATINO
-            end
-          end
+      d = true if ms.length == 3 && n.pos.x > 1220 && n.pos.x < 1230
+      puts "n: #{n.pos}" if d
+      ms.each{|m| puts m.pos} if d
+      ms.each_index do |i|
+        m0 = ms[i]
+        m1 = i+1 == ms.length ? ms[0] : ms[i+1]
+        r0 = get_road(n.pos, m0.pos)
+        r1 = get_road(n.pos, m1.pos)
+        ang_delta = ((m1.pos-n.pos).dir - (m0.pos-n.pos).dir) % (2*Math::PI)
+        puts ang_delta if d
+        bisect_ang = (m0.pos-n.pos).dir + ang_delta/2.0
+        (r0.walls + r1.walls).each do |w|
+          bisect_line = LineSegment.ray n.pos, Vector.unit(bisect_ang)
+          pt = bisect_line.intersection LineSegment.line(w)
+          n.pos.dist(w.p0) < n.pos.dist(w.p1) ? w.p0 = pt : w.p1 = pt unless pt.nil?
         end
       end
     end
+
+    # def clip_walls
+    #   @nodes.each do |n|
+    #     if n.neighbors.size == 2
+    #       ms = n.neighbors
+    #       u0 = (ms[0].pos - n.pos).normalize!
+    #       u1 = (ms[1].pos - n.pos).normalize!
+
+    #       # unit vector pointing towards the inner wall intersection.
+    #       u = (u0 + u1).normalize!
+    #       inner_pt = n.pos + u*ROAD_WIDTH
+
+    #       @roads[n][ms[0]].walls.each do |w|
+    #         if w.hits inner_pt
+    #           # FIXME: LOTS MORE IMPLEMENTATINO
+    #         end
+    #       end
+    #     end
+    #   end
+    # end
 
     def latlong_to_world p
 
