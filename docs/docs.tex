@@ -82,19 +82,30 @@ program, osm\_convert, which converts an OSM XML file to a YAML\footnote{YAML (a
   data serialization standard which allows easy conversion of data structures to
   and from a string representation.}
 
-In order to make a map
-suitable for driving, we generated \textit{roads} from each edge by creating
-parallel lines from the edge a constant ROAD\_WIDTH apart.
+In order to make a map suitable for driving, we generated \textit{roads} from
+each edge by creating parallel lines from the edge a constant ROAD\_WIDTH apart.
 
-\subsection{Code Architecture}
+\subsection{System Architecture}
 
-The project is written in Ruby, under JRuby to utilize Java2D for the graphical
-display. Specifically, all server code runs solely under JRuby, but client
-code can run under any flavor of Ruby. Agents are represented both on the client
-and server end; server agents perform motion- and display-related
-calculations, and client agents contain all the navigation inference and
-decision-making and ultimately send decisions (restricted to behavior variables)
-back to the server againt.
+The project is written in Ruby, specifically JRuby\footnote{JRuby is an
+  implementation of the Ruby Programming Language on top of the Java Virtual
+  Machine, which allows integration between Java and Ruby code} to utilize
+Java2D for the graphical display. As a result, the server code runs solely under
+JRuby, but client code can additionally be run using Ruby 1.9. Agents are
+represented both on the client and server end; server agents perform motion and
+display-related calculations, and client agents contain all the navigation
+inference and decision-making and ultimately send decisions (restricted to
+behavior variables) back to the server again.
+
+\begin{figure}[h]
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{architecture}
+  \end{center}
+  \caption{The system architecture of the simulation. Solid lines connect
+    components included in the same process, while dotted lines indicated socket
+    connections between discrete processes.}
+  \label{architecture}
+\end{figure}
 
 A brief description of the various source files will follow.
 
