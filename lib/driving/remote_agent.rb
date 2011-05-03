@@ -47,6 +47,7 @@ module Driving
         :type => :dest_change,
         :dest => @dest.to_a
       }
+      @paused = false
       send msg.merge(self.to_hash)
     end
     
@@ -65,7 +66,10 @@ module Driving
     def paused= p
       @paused = p
       if !p
-        handle_msg @paused_msg if @paused_msg
+        msg = {
+          :type => :unpause
+        }
+        send msg.merge(self.hash)
       end
     end
 
