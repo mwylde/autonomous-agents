@@ -58,29 +58,46 @@ technique as well as a hybrid agent which makes use of $A^*$ for global
 navigation and dynamical systems for local navigation.
 
 
-\section{Autonomous Driving}
-
-\subsection{Simulation}
-
 \section{Methods}
 
 To create an autonomous agent that navigates while simulating a car's behavior
 and traffic laws, we took three general approaches: deliberative planning
 through $A^*$ search, reactive navigation through a dynamical system, and a
 hybrid of deliberative planning and reactive motion. The system architecture
-consists of a server and a separate client for each agent.
+consists of a server and a separate client for each agent. Our goal
+was to produce agents which could navigate in a realistic environment
+while following traffic laws and acting safely at all times even when
+faced with dynamic, unexpected obstacles like pedestrians and other
+cars. Due to the great difficulty of producing the simulation, we were
+forced to scale back our ambitions to merely simulating driving in a
+relatively static world.
 
 \subsection{System Architecture}
 
-The project is written in Ruby, specifically JRuby\footnote{JRuby is an
-  implementation of the Ruby Programming Language on top of the Java Virtual
-  Machine, which allows integration between Java and Ruby code} to utilize
-Java2D for the graphical display. As a result, the server code runs solely under
-JRuby, but client code can additionally be run using Ruby 1.9. Agents are
-represented both on the client and server end; server agents perform motion and
-display-related calculations, and client agents contain all the navigation
-inference and decision-making and ultimately send decisions (restricted to
-behavior variables) back to the server again.
+The project is written in Ruby, specifically JRuby\footnote{JRuby is
+  an implementation of the Ruby Programming Language on top of the
+  Java Virtual Machine, which allows integration between Java and Ruby
+  code} to utilize Java2D for the graphical display. As a result, the
+server code runs solely under JRuby, but client code can additionally
+be run using Ruby 1.9. Agents are represented both on the client and
+server end; server agents perform motion and display-related
+calculations, and client agents contain all the navigation inference
+and decision-making and ultimately send decisions (restricted to
+behavior variables) back to the server again. Agents communicate with
+the server over sockets by serializing hashes with YAML\footnote{YAML
+  (a recursive acronym for YAML Ain't Markup Language) is a
+  language-independent data serialization standard which allows easy
+  conversion of data structures to and from a string
+  representation.}. Every part of the simulation is asynchronous: the
+display is constantly rendering the current state of the world as
+quickly as it can. The server agents are constantly recalculating
+their state variables according to their velocity and amount of
+turning ($\delta$). The message loop is as follows: the client agents,
+which actually do the navigation computations, receive messages from
+the server with their current states. They then process that according
+to their operation and decide on an action, which is then sent to the
+server. The server carries out the action in the environment and sends
+the new state variables back to the agent.
 
 \begin{figure}[h]
   \begin{center}
@@ -92,7 +109,10 @@ behavior variables) back to the server again.
   \label{architecture}
 \end{figure}
 
-A brief description of the roles of the various source files will follow.
+The simulation is composed of many source files which control various
+pieces. The general architecture is given in figure
+\ref{architecture}, while the roles of the individual files are listed
+below. More information can be found in the documentation in each class.
 
 \begin{description}
 \item[app.rb] The point of entry for the program. Processes
@@ -153,56 +173,42 @@ A brief description of the roles of the various source files will follow.
 \end{description}
 
 \subsection{Simulation}
-To provide a realistic environment for navigation tests, we used real-world map
-data from OpenStreetMap.org, which provides XML-formatted maps for the entire
-world. The data format, called OSM, provides a graph representation of a road
-system; streets are represented by placing nodes wherever the road turns or
-intersects other roads, with edges connecting each node. To provide testing
-data, we used the website to export maps of Hayward, CA and Santa Cruz, CA. We
-wrote a program, \code{osm\_convert}, which converts an OSM XML file to a
-YAML\footnote{YAML (a recursive acronym for YAML Ain't Markup Language) is a
-  language-independent data serialization standard which allows easy conversion
-  of data structures to and from a string representation.} format. In
-\code{map.rb} we then read this YAML data and construct an internal
-representation of the graph, converting points specified by latitude and
-longitude to a scale of meters.
+To provide a realistic environment for navigation tests, we used
+real-world map data from OpenStreetMap.org, which provides
+XML-formatted maps for the entire world. The data format, called OSM,
+provides a graph representation of a road system; streets are
+represented by placing nodes wherever the road turns or intersects
+other roads, with edges connecting each node. To provide testing data,
+we used the website to export maps of Hayward, CA and Santa Cruz,
+CA. We wrote a program, \code{osm\_convert}, which converts an OSM XML
+file to a YAML format. In \code{map.rb} we then read this YAML data
+and construct an internal representation of the graph, converting
+points specified by latitude and longitude to a scale of meters.
 
-In order to make an internal representation of the map suitable for a driving
-simulation, we generate a \emph{road} for each graph edge by creating
-\emph{walls} (belonging to the \emph{road}) defined as parallel lines a constant
-\code{ROAD\_WIDTH} away from the center line, which is the line connecting the
-node and the node the edge connects it to. This parallel line approach creates
-overlapping walls at every acute angle and gaps at every obtuse angle, so we
-process the \emph{walls} to clip them where they overlap and extend them where
-they leave gaps.
+In order to construct a simulation from this data, we needed to make
+roads from the edges of the graph. We did so by finding the normal
+vector to the edge and computing line segments that were a constant
+ROAD\_DIST from the center-line. With the four corners, we could then
+draw the roads as polygons as well as use them for purposes of
+obstacle avoidance as described below. However, the naive
+implementation of this algorithm produced some overlapping walls and
+some walls which were too short. We therefore employ a clipping
+algorithm which ensures that the road edges meet smoothly. This does,
+however, leave empty spaces at intersections which appear green in the
+display.
 
-To run the display, we start a server by running the script \code{bin/driving}
-without any command line arguments (or with arguments to specify window geometry
-or map file). The display renders the world by drawing every \emph{road} as a
-polygon with points defined by its \emph{walls}. In the display, we have
-implemented mouse dragging, zooming, pausing, agent centering (on by default,
-toggled with space bar), and agent dragging.
-
-To create an agent, we create an agent process (while a server process is
-running) by running the script \code{bin/driving} with command line argument
-\code{-c} or \code{--agent} specifying the name of the class of client agent to
-create (\code{AStarAgent}, \code{DynamicalAgent}, \code{HybridAgent}, or
-\code{SimpleAgent}). This creates a server process, the \emph{remote server
-  agent} which contains and tracks the state of the agent and sends this state
-as a message to the client process, the \emph{client agent}, awaiting a response
-indicating what action to take. As part of the response, the client agent
-can send \emph{renders}, a list of strings which are executed in the display;
-this is provided so the client agent can specify that things relevant to
-its navigation decisions be drawn.
-
-We intended to model the agent's motion using basic, low-speed car physics,
-which conclude that a car with a set wheel position (set to anything other than
-straight) will trace out a circular path. The path is determined by $\delta$
-(the angular displacement of the wheel, with $\delta>0$ indicating a right
-turn), the length of the car, and the speed the car is traveling. We have, for
-practical concerns which will be discussed shortly, resorted to a much more
-primitive behavior variable space, where agents choose their heading angle
+The simulation has been designed for realism, with the agents
+responding in a physically plausible way according to two state
+variables which the agents can set: acceleration and $\delta$, the
+amount that the wheel is turned. Raising $\delta$ above 0 causes the
+wheels to turn right and the car to follow in a circle, while lowering
+it below 0 causes the wheels to turn left. In this way we hope to
+demonstrate a direct analogy to control of robotic cars, which
+primarily concerns the acceleration/brake and steering. However
+we had difficulty producing working navigation with this scheme, so
+the agents described below work by setting $\phi$, the heading angle,
 directly.
+
 
 \subsection{Deliberative Agent}
 \begin{figure}[h]
@@ -298,7 +304,13 @@ path. Methods like $A^*$ which look at global map data can solve this
 issue by finding the best path to take from every intersection so that
 the agent reaches the target in the minimum amount of time. However,
 deliberative methods do not handle the moment-to-moment navigation
-issues well, particularly in a dynamic environment.
+issues well, particularly in a dynamic environment. The best option
+seems to be a combination of the two: a hybrid dynamical agent. This
+agent behaves mostly like the dynamical agent described above except
+for how target selection works. Instead of choosing the next target
+using purely local information, we initially compute the $A^*$ route
+as described in the deliberative section and use each node of that as
+the intermediate targets.
 
 \section{Results}
 
