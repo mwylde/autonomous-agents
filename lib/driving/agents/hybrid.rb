@@ -146,12 +146,7 @@ module Driving
     # chooses a new phi according the the dynamical state of the world
     # and the current mode
     def navigate
-      case @mode
-      when START_MODE, NORMAL_MODE, TURN_MODE
-        @obs = create_obs
-      when INTERSECTION_MODE
-        @obs = create_obs
-      end
+      @obs = create_obs
       @last_time = @curr_time
       @curr_time = Time.now
       begin

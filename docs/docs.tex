@@ -204,12 +204,49 @@ practical concerns which will be discussed shortly, resorted to a much more
 primitive behavior variable space, where agents choose their heading angle
 directly.
 
-\subsection{Deliberative Planning}
+\subsection{Deliberative Agent}
+\begin{figure}[h]
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{astar}
+  \end{center}
+  \caption{$A^*$ navigation at work. The blue dots indicate the route.}
+  \label{astar}
+\end{figure}
+We do deliberative navigation using the $A^*$ graph search algorithm,
+which takes a heuristic function $h$ and finds a path between two
+nodes on a graph. If $h$ satisfies certain properties, the path
+returned will be optimal. We use the Euclidean distance formula
+$h(n_1, n_2)=\sqrt{(n_1.x - n_2.x)^2 + (n_1.y - n_2.y)^2}$ which
+satisfies these properties. The agent is modeled as a finite state
+machine with four states: start, straight, turn, and replan. The agent
+begins operation in the start state wherein it calculates the optimal
+route to its destination. Once that is done, it begins traveling
+forward until it is twice the road width from its starting node. It
+then transitions to straight mode, where it ensures that its $\phi$ is
+set parallel to the road. When it reaches a node, it pops the top node
+off the route stack and enters turn mode. In turn mode it sets its
+$\phi$ parallel to the vector between its target node (the node on the
+top of the route stack) and itself. This ensures the agent stays on
+the road at all times. Finally, when the agent has traveled past the
+node, it reverts back to straight mode. If the agent reaches a node
+which is not the next on its route, it enters replan mode, where it
+immediately stops and calculates a new route to its destination from
+its current position. Replanning can also be triggered by the server
+sending a new destination.
 
-\subsection{Reactive Navigation}
-- explain why choosing phi instead of delta is actually okay here
+\subsection{Reactive Agent}
+\begin{figure}[h]
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{dynamical}
+  \end{center}
+  \caption{Dynamical navigation at work. The red circles are obstacles
+    that move along the road with the agent, while the blue circle is
+    an intermediate target.}
+  \label{dynamical}
+\end{figure}
 
-\subsection{Hybrid Approach}
+
+\subsection{Hybrid Agent}
 
 \section{Results}
 
