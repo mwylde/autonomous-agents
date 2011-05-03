@@ -8,9 +8,11 @@ def plot p
   }
 end
 
-Dir.glob("*sc.txt").each{|s|
+Dir.glob("*map.txt").each{|s|
   File.open("#{s}.out.txt", "w+"){|f|
     f.write("distance, time, success\n")
-    f.write plot(s).reject{|x| !x[-1]}.collect{|x| x.join(",")}.join("\n")
+    p = plot(s)
+    puts s + " " + (p.reject{|x| !x[-1]}.size / p.size.to_f).round(3).to_s
+    f.write p.reject{|x| !x[-1]}.collect{|x| x.join(",")}.join("\n")
   }
 }

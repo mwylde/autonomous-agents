@@ -10,9 +10,10 @@
 \usepackage{listings}
 \usepackage{color}
 \usepackage{fullpage}
+\usepackage{cite}
 \newcommand{\code}{\texttt}
 
-\author{Micah Wylde\\Jeffrey Ruberg}
+\author{Micah Wylde}
 \date{\today}
 \title{Autonomous Agents:\\
 A Hybrid Dynamical System for Vehicle Navigation\\
@@ -56,6 +57,47 @@ their target. However, it is purely local and has trouble finding optimal paths
 to distant goals. In this paper we present simulated agents which use each
 technique as well as a hybrid agent which makes use of $A^*$ for global
 navigation and dynamical systems for local navigation.
+
+\subsection{Related works}
+Many group have created autonomous driving systems that can adapt to
+dynamic environments. Fraichard and Garnier \cite{fuzzy} used fuzzy
+logic to adapt a pre-computed trajectory to current road
+conditions. The identify two components: a trajectory planner and an
+execution monitor. The trajectory planner is purely deliberative,
+although it works by a rule-based system rather than $A^*$. The EM is
+reactive and uses a base of fuzzy rules generated from human
+drivers. Like us, an action consists of an acceleration and a
+$\delta$, which is the amount to turn the wheel. A more unusual
+approach to this problem is taken by Bell \cite{hyperstar}. He
+describes an extension to $A^*$ which instead of calculating the
+optimal path, finds the optimal \emph{hyperpath}, which is a set of
+paths any of which may be optimal, depending on future conditions. In
+particular, instead of considering only weights of edges (representing
+distances) we also consider an expected delay for each edge, which
+might represent traffic or other adverse road conditions. By
+pre-computing the hyperpath, we can adjust the route in real time as
+precise delay information becomes available.
+
+More recently, ``Boss'' won the Urban Challenge using a sophisticated
+system which involves four systems: perception, motion planning,
+mission planning and behavioral execution. While the first and the
+last are mostly only relevant when dealing with real vehicles, the
+motion planner and mission planner are directly analogous to the two
+components of our hybrid agent. For the latter, which provides a
+series of way points along which the car should travel to get to its
+final destination, they use a process similar to ours $A^*$ approach,
+albeit with a cost function that takes into account environmental
+complexity, expected time to traverse and other factors in addition to
+euclidean length of the edge. The motion planning system is
+responsible for choosing trajectories to the next way point. Their
+approach is not at all dynamical; it uses a model of vehicular motion
+to predict where the car (and other moving obstacles in the world)
+will be at some point in the future. The system chooses actions by
+optimizing parameters such that the differential equations that govern
+the car's motion will evolve in the desired manner. In this sense
+their approach is almost deliberative but on very small
+time-scales. Additionally, after good parameters are chosen they are
+constantly modified as new information is fed into the system \cite{bossx}.
 
 
 \section{Methods}
@@ -173,6 +215,14 @@ below. More information can be found in the documentation in each class.
 \end{description}
 
 \subsection{Simulation}
+\begin{figure}[h]
+  \begin{center}
+    \includegraphics[width=0.6\textwidth]{santa_cruz}
+  \end{center}
+  \caption{The Santa Cruz map displayed in the simulator, with an
+    agent navigating on the left agent.}
+  \label{astar}
+\end{figure}
 To provide a realistic environment for navigation tests, we used
 real-world map data from OpenStreetMap.org, which provides
 XML-formatted maps for the entire world. The data format, called OSM,
@@ -313,10 +363,58 @@ as described in the deliberative section and use each node of that as
 the intermediate targets.
 
 \section{Results}
+We ran each agent 40 times on two different maps with random starting
+and destination points. Below are the percentage of runs that
+successfully found the target:
+
+\begin{tabular}[c]{rcc}
+  & \textbf{Santa Cruz} & \textbf{Hayward} \\
+\textbf{A*} & 24.1\% & 31.0\% \\
+\textbf{Dynamical} & 37.2\% & 21.3\% \\
+\textbf{Hybrid} & 36.2\% & 19.0\%
+\end{tabular}
+
+These results are somewhat surprising, but likely speak more to bugs
+in the implementations of these strategies than the methods
+themselves. In particular, the very poor showing of hybrid navigation
+in the Hayward map is unexpected as is the general lack of success
+over all. From observation, the most common error conditions occur
+when a car accidentally goes off the road. At that point there is
+little the agents can do to rectify the situation, so once that
+happens there is little chance that the destination will be reached.
 
 \section{Conclusion}
-\subsection{Unreached goals}
-- cached map rendering
-- realistic choice variables
+In the paper we have implemented three driving agents in a virtual
+city environment based on very different operating principles. $A^*$
+deliberates: at the beginning, when it receives its position and
+destination it does a length computation to calculate the optimal path
+to its goal, which it follows without interruption until something
+comes up and it must repeat the process. The dynamical agent,
+meanwhile, does no pre-computation and keeps little state between
+invocations of its sense/act function. It uses purely local
+information--what a driver could conceivably see out his or her
+windshield--to decide how to act at any given time. While the results
+above suggest that Dynamical is the best approach for getting to a
+target, that is likely the result of poor implementation. In fact, $A^*$
+knows where it must go at any intersection in order to obtain the
+shortest path while Dynamical must constantly make poor guesses from
+very limited information.
+
+If we look past the problem of getting from our current position to
+our destination efficiently and consider the challenges of
+moment-to-moment navigation--how much to turn the wheel or press down
+the pedal at any given time--it's clear that Dynamical has the
+advantage. Not only can it react to changing map conditions (although
+this is not shown in the simulation) but from a design perspective it
+makes it much easier to get realistic motion. $A^*$ relies on
+instantaneous change in the agent's $\phi$ for its
+effectiveness. Forced to operate a wheel (i.e., setting $\delta$
+instead of $\phi$) the agent would have much greater difficulty
+figuring out how to turn at any given time in order to end up in the
+right place. 
+
+
+\bibliography{docs}{}
+\bibliographystyle{ieeetr}
 
 \end{document}
