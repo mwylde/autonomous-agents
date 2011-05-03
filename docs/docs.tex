@@ -15,8 +15,7 @@
 
 \author{Micah Wylde}
 \date{\today}
-\title{Autonomous Agents:\\
-A Hybrid Dynamical System for Vehicle Navigation\\
+\title{A Hybrid Dynamical System for Vehicle Navigation\\
 Comp 352}
 
 \begin{document}
@@ -403,7 +402,7 @@ very limited information.
 If we look past the problem of getting from our current position to
 our destination efficiently and consider the challenges of
 moment-to-moment navigation--how much to turn the wheel or press down
-the pedal at any given time--it's clear that Dynamical has the
+the pedal at any given time--it's clear that dynamical has the
 advantage. Not only can it react to changing map conditions (although
 this is not shown in the simulation) but from a design perspective it
 makes it much easier to get realistic motion. $A^*$ relies on
@@ -411,7 +410,25 @@ instantaneous change in the agent's $\phi$ for its
 effectiveness. Forced to operate a wheel (i.e., setting $\delta$
 instead of $\phi$) the agent would have much greater difficulty
 figuring out how to turn at any given time in order to end up in the
-right place. 
+right place. Such control is much easier with Dynamical navigation, as
+it operates on $\dot{\phi}$, not $\phi$ (and $\dot{\phi} \sim
+\delta$). Additionally we were unable to force the $A^*$ agent to stay
+within its lane, while this was relatively simple with dynamical. In
+short, dynamical seems like a much better fit for the problem than a
+deliberative approach.
+
+Dynamical's weakness, as discussed above, is its global path planning
+with gives no guarantees of even reaching the destination. To rectify
+this, adding $A^*$'s path planning to dynamical's moment-to-moment
+navigation should produce an effective driving agent in our
+environment. And while this is the case in many situations, real-map
+data presents many edge conditions that can break it. Making all three
+agents more robust the issues in the map data is an important future
+direction, as is adding better recovery procedures. Currently the
+simulation is very static, and while many agents can be added (even
+running on different computers) they do not interact. Making a more
+vibrant city full of agents and other dynamic obstacles would present
+a much better comparison of the merits of each approach.
 
 
 \bibliography{docs}{}
