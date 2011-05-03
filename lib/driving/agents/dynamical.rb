@@ -7,7 +7,7 @@ module Driving
       :d0 => 0.01,      # distance scaling factor
       # :c1 => 1,
       # :c2 => 1,
-      :a => 20,         # target attractor scaling factor
+      :a => 10,         # target attractor scaling factor
       # :a_tar => 1,
       # :g_tar_obs => 1,
       :sigma => 1,      # safety margin for windower
