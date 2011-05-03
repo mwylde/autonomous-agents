@@ -67,9 +67,24 @@ navigation and dynamical systems for local navigation.
 To create an autonomous agent that navigates while simulating a car's behavior
 and traffic laws, we took three general approaches: deliberative planning
 through $A^*$ search, reactive navigation through a dynamical system, and a
-hybrid of deliberative planning and reactive motion. As for the agents'
-environment, we create graphical worlds out of real map data. The code
-architecture consists of a server and a separate client for each agent.
+hybrid of deliberative planning and reactive motion. The system architecture
+consists of a server and a separate client for each agent.
+
+\subsection{Simulation}
+To provide a realistic environment for navigation tests, we used real-world map
+data from OpenStreetMap.org, which provides XML-formatted maps for the entire
+world. The data format, called OSM, provides a graph representation of a road
+system where streets are represented by placing nodes wherever the road turns or
+intersects other roads and edges connecting each node. To provide testing data,
+we used the website to export maps of Hayward, CA and Santa Cruz, CA. We wrote a
+program, osm\_convert, which converts an OSM XML file to a YAML\footnote{YAML (a
+  recursive acronym for YAML Ain't Markup Language) is a language-independent
+  data serialization standard which allows easy conversion of data structures to
+  and from a string representation.}
+
+In order to make a map
+suitable for driving, we generated \textit{roads} from each edge by creating
+parallel lines from the edge a constant ROAD\_WIDTH apart.
 
 \subsection{Code Architecture}
 

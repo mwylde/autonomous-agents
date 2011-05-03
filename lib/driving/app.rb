@@ -99,12 +99,12 @@ module Driving
       puts "Starting agent: #{@options[:agent].inspect}"
       # get the agent corresponding to the one supplied at the command
       # line 
-      begin
+      # begin
         klass = Driving.const_get(@options[:agent])
         klass.new(@options[:address], @options[:port]).run
-      rescue NameError
-        puts "Agent class #{@options[:agent]} doesn't exist."
-      end
+      #rescue NameError
+      #   puts "Agent class #{@options[:agent]} doesn't exist."
+      #end
     end
 
     def run_test

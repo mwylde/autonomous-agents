@@ -245,7 +245,7 @@ module Driving
       when START_MODE, NORMAL_MODE, TURN_MODE
         @obs = create_obs
       when INTERSECTION_MODE
-        @obs = []
+        @obs = [] # create_intersection_obs
       end
       @last_time = @curr_time
       @curr_time = Time.now
@@ -293,6 +293,12 @@ module Driving
       end
     end
 
+    # def create_intersection_obs
+    #   (@intersection_facing.neighbors - Set[@target_node]).collect{|n|
+    #     [n.pos, @radius]
+    #   }
+    # end
+
     def create_obs_from_wall w, r = @radius
       facing, other = facing_node
       unit = w.unit_from_pt(@pos)
@@ -316,6 +322,8 @@ module Driving
       t = (facing.neighbors - Set[other]).min_by{|t|
         (dest_dir - (t.pos - facing.pos).dir).abs
       }
+      @target_node = t
+      @intersection_facing = facing
       create_tar t.pos
     end
 
