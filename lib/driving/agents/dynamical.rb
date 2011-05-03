@@ -221,7 +221,7 @@ module Driving
         end
       when NORMAL_MODE
         facing, other = facing_node
-        if facing.pos.dist(@pos) < ROAD_WIDTH * 2
+        if facing.pos.dist(@pos) < ROAD_WIDTH
           if facing.neighbors.size > 2
             self.mode = INTERSECTION_MODE
             @target = choose_tar
@@ -232,7 +232,7 @@ module Driving
         end
       when INTERSECTION_MODE, TURN_MODE
         closest = @map.closest_node @pos
-        if closest.pos.dist(@pos) > ROAD_WIDTH * 2
+        if closest.pos.dist(@pos) > ROAD_WIDTH 
           self.mode = NORMAL_MODE
         end
       end
