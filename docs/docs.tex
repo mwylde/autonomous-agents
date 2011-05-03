@@ -58,8 +58,9 @@ navigation is a reactive strategy that uses force fields to guide
 agents away from obstacles and towards their target. However, it is
 purely local and has trouble finding optimal paths to distant
 goals. In this paper we present simulated agents which use each
-technique as well as a hybrid agent which makes use of $A*$ for global
-navigation and dynamical systems for local navigation.
+technique as well as a hybrid agent which makes use of $A^*$ for global
+navigation and dynamical systems for local navigation. Additionally,
+we present an asynchronous, networked simulation environment.
 
 
 \section{Autonomous Driving}
@@ -70,7 +71,7 @@ navigation and dynamical systems for local navigation.
 
 To create an autonomous agent that navigates while simulating a car's behavior
 and traffic laws, we took three general approaches: deliberative planning
-through A* search, reactive navigation through a dynamical system, and a hybrid
+through $A^*$ search, reactive navigation through a dynamical system, and a hybrid
 of deliberative planning and reactive motion. As for the agents' environment, we
 create graphical worlds out of real map data. The code architecture consists of
 a server and a separate client for each agent.
