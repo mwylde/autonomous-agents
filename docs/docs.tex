@@ -70,22 +70,6 @@ through $A^*$ search, reactive navigation through a dynamical system, and a
 hybrid of deliberative planning and reactive motion. The system architecture
 consists of a server and a separate client for each agent.
 
-\subsection{Simulation}
-To provide a realistic environment for navigation tests, we used real-world map
-data from OpenStreetMap.org, which provides XML-formatted maps for the entire
-world. The data format, called OSM, provides a graph representation of a road
-system where streets are represented by placing nodes wherever the road turns or
-intersects other roads and edges connecting each node. To provide testing data,
-we used the website to export maps of Hayward, CA and Santa Cruz, CA. We wrote a
-program, osm\_convert, which converts an OSM XML file to a YAML\footnote{YAML (a
-  recursive acronym for YAML Ain't Markup Language) is a language-independent
-  data serialization standard which allows easy conversion of data structures to
-  and from a string representation.}
-
-In order to make a map
-suitable for driving, we generated \textit{roads} from each edge by creating
-parallel lines from the edge a constant ROAD\_WIDTH apart.
-
 \subsection{Code Architecture}
 
 The project is written in Ruby, under JRuby to utilize Java2D for the graphical
@@ -154,18 +138,32 @@ A brief description of the roles of the various source files will follow.
 
 \end{description}
 
-\subsection{Simulation Environment}
+\subsection{Simulation}
+To provide a realistic environment for navigation tests, we used real-world map
+data from OpenStreetMap.org, which provides XML-formatted maps for the entire
+world. The data format, called OSM, provides a graph representation of a road
+system; streets are represented by placing nodes wherever the road turns or
+intersects other roads, with edges connecting each node. To provide testing
+data, we used the website to export maps of Hayward, CA and Santa Cruz, CA. We
+wrote a program, \code{osm\_convert}, which converts an OSM XML file to a
+YAML\footnote{YAML (a recursive acronym for YAML Ain't Markup Language) is a
+  language-independent data serialization standard which allows easy conversion
+  of data structures to and from a string representation.} format. In
+\code{map.rb} we then read this YAML data and construct an internal
+representation of the graph, converting points specified by latitude and
+longitude to a scale of meters.
 
-Our environment takes place in a graphical world we have constructed from
-scratch. We start with real map data specifying nodes (intersections) and
-connections (roads) between nodes, and create a graph representation; we also
-convert positions specified in terms of latitude and longitude into a scale of
-meters (where the minimum latitude position is given an x-coordinate of zero,
-and likewise for longitude and y-coordinates). We mostly store the road data as
-this graph of nodes and neighborhood relationships, but we also create road
-objects which own wall line segments; while the map is being processed, we also
-clip/extend these walls to create realistic-looking chunks of road between two
-nodes.
+In order to make an internal representation of the map suitable for a driving
+simulation, we generate a \emph{road} for each graph edge by creating
+\emph{walls} defined as parallel lines a constant \code{ROAD\_WIDTH} away from
+the center line, which is the line connecting the node and the node the edge
+connects it to. This parallel line approach creates overlapping walls at every
+acute angle and gaps at every obtuse angle, so we process the walls to clip them
+where they overlap and extend them where they leave gaps.
+
+
+
+
 
 To run the display, we start a server by running the script \code{bin/driving}
 without any command line arguments (or with arguments to specify window geometry
