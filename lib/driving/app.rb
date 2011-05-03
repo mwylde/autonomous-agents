@@ -9,7 +9,10 @@ module Driving
         :port => 8423,
         :w => 800,
         :h => 600,
-        :server => true
+        :server => true,
+        :max_seconds => 60*5,
+        :times => 10,
+        :options => "results.txt"
       }
       parser.parse! argv
     end
@@ -46,9 +49,9 @@ module Driving
         opts.on("-c CLASS", "--agent CLASS", "Starts an agent with the supplied class"){|c|
           @options[:agent] = c
         }
-        opts.on("-t", "--test", "Runs a non-interactive test with the",
-                "specified agent and positions") {
-          @options[:test] = true
+        opts.on("-t RUNS", "--test RUNS", "Runs a non-interactive test with the",
+                "specified agent and positions RUNS times") { |r|
+          @options[:test] = r.to_i
         }
         opts.on("-s XxY", "--start XxY", "Provide the starting position of the",
                 "agent in world coordinates for your map"){|s|
@@ -57,6 +60,10 @@ module Driving
         opts.on("-d XxY", "--dest XxY", "Provide the destination position of the",
                 "agent in world coordinates for your map"){|s|
           @options[:dest] = Point.new(s.split("x").collect{|x| x.to_f})
+        }
+        opts.on("-m SECS", "--max-secs", "Runs the simulation for a maximum of",
+                "SECS seconds"){|s|
+          @options[:max_seconds] = s
         }
       end
     end
@@ -102,13 +109,35 @@ module Driving
 
     def run_test
       root = File.expand_path(File.dirname(__FILE__))
-      require "#{root}/driving/server"
+      require "#{root}/server"
       puts "Starting test with #{@options[:agent]}"
       @agents = []
+      @map = Map.from_file(@options[:map_file])
       @server = Server.new @options[:address], @options[:port], @map, @agents
       Thread.abort_on_exception = true
       Thread.new do
         @server.run
+      end
+      # check periodically whether the agents have finished
+      Thread.new do
+        start = Time.now
+        loop do
+          if @agents[0] && @agents[0].dest_reached
+            File.open(@options[:output], "a+") do |f|
+              f.write("#{@agents[0].initial_pos} #{agents[0].dest} #{time_diff} succeeded\n")
+            end
+            exit
+          end
+
+          time_diff = Time.now - start
+          if time_diff > @options[:max_seconds]
+            File.open(@options[:output], "a+") do |f|
+              f.write("#{@agents[0].initial_pos} #{agents[0].dest} #{time_diff} failed\n")
+            end
+            exit
+          end
+          sleep 1
+        end
       end
       sleep 1
       AStarAgent.new(@options[:address], @options[:port]).run

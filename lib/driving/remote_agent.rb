@@ -2,6 +2,7 @@ module Driving
   # RemoteServerAgent is a subclass of ServerAgent with extra methods
   # for dealing with ClientAgents. 
   class RemoteServerAgent < ServerAgent
+    attr_reader :initial_pos
     include Communicator
 
     def initialize socket, server, *agent_params
@@ -32,6 +33,7 @@ module Driving
         break if choices.size == 0
         dest_node = choices.max_by{|n| n.neighbors.size}
       end
+      @initial_pos = @pos
       @dest = dest_node.pos
       initial = {
         :type => :initial,
