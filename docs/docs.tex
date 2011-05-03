@@ -23,42 +23,38 @@ Comp 352}
 
 \section{Introduction}
 Self-driving cars hold much promise for saving fuel, time and
-lives. Human-driven vehicles are responsible for millions of traffic
-accidents and over 30,000 deaths annually in the US alone. Humans can
-also make poor decisions in regards to routes, leading to traffic jams
-and wasted fuel. Safe, effective autonomous cars could largely solve
-these issues. AI researchers have been interested in the potential for
-vehicular navigation since the 1960s. In order to spur development in
-this area, the Defense Advanced Research Projects Agency (DARPA)
-organized the Grand Challenge in 2004, which tasked contestants to
-build cars which could autonomously navigate a 142 mile-long course in
-the Mojave desert. Though none of the vehicles could finish the
-course, a second competition the next year was more successful. Four
-teams finished in the allotted time, traversing a treacherous 132 mile
-desert course with no human guidance. Building on this achievement, in
-2007 DARPA organized the Urban Challenge which took place in a
-simulated suburban environment. To win, cars had to navigate a maze of
-streets while accounting for other traffic and following California
-traffic laws at all times. Six teams finished the 61 mile course with
+lives. Human-driven vehicles are responsible for millions of traffic accidents
+and over 30,000 deaths annually in the US alone. Humans can also make poor
+decisions in regards to routes, leading to traffic jams and wasted fuel. Safe,
+effective autonomous cars could largely solve these issues. AI researchers have
+been interested in the potential for vehicular navigation since the 1960s. In
+order to spur development in this area, the Defense Advanced Research Projects
+Agency (DARPA) organized the Grand Challenge in 2004, which tasked contestants
+to build cars which could autonomously navigate a 142 mile-long course in the
+Mojave desert. Though none of the vehicles could finish the course, a second
+competition the next year was more successful. Four teams finished in the
+allotted time, traversing a treacherous 132 mile desert course with no human
+guidance. Building on this achievement, in 2007 DARPA organized the Urban
+Challenge which took place in a simulated suburban environment. To win, cars had
+to navigate a maze of streets while accounting for other traffic and following
+California traffic laws at all times. Six teams finished the 61 mile course with
 the winner, ``Boss'' from CMU, taking a little more than four hours
 \cite{robotic_cars}.
 
-There are many challenges involved in autonomous driving and robot
-navigation in general. In the real world one must deal with unreliable
-and imperfect sensor data, imprecise localization technologies and
-other perception issues. Even in simulation the challenges of
-successful navigation are immense. Cars must follow traffic laws, get
-to their destination quickly and efficiently and act safely at all
-times, even in unexpected situations. As far as the actual navigation,
-there are two general approaches: deliberative and reactive. As an
-example of the former, $A^*$ is an efficient and optimal graph search
-algorithm which is very effective at finding the best route between
-two points but cannot handle the dynamism of the real world. Dynamical
-navigation is a reactive strategy that uses force fields to guide
-agents away from obstacles and towards their target. However, it is
-purely local and has trouble finding optimal paths to distant
-goals. In this paper we present simulated agents which use each
-technique as well as a hybrid agent which makes use of $A*$ for global
+There are many challenges involved in autonomous driving and robot navigation in
+general. In the real world one must deal with unreliable and imperfect sensor
+data, imprecise localization technologies and other perception issues. Even in
+simulation the challenges of successful navigation are immense. Cars must follow
+traffic laws, get to their destination quickly and efficiently and act safely at
+all times, even in unexpected situations. As far as the actual navigation, there
+are two general approaches: deliberative and reactive. As an example of the
+former, $A^*$ is an efficient and optimal graph search algorithm which is very
+effective at finding the best route between two points but cannot handle the
+dynamism of the real world. Dynamical systems-based navigation is a reactive
+strategy that uses force fields to guide agents away from obstacles and towards
+their target. However, it is purely local and has trouble finding optimal paths
+to distant goals. In this paper we present simulated agents which use each
+technique as well as a hybrid agent which makes use of $A^*$ for global
 navigation and dynamical systems for local navigation.
 
 
@@ -70,10 +66,10 @@ navigation and dynamical systems for local navigation.
 
 To create an autonomous agent that navigates while simulating a car's behavior
 and traffic laws, we took three general approaches: deliberative planning
-through A* search, reactive navigation through a dynamical system, and a hybrid
-of deliberative planning and reactive motion. As for the agents' environment, we
-create graphical worlds out of real map data. The code architecture consists of
-a server and a separate client for each agent.
+through $A^*$ search, reactive navigation through a dynamical system, and a
+hybrid of deliberative planning and reactive motion. As for the agents'
+environment, we create graphical worlds out of real map data. The code
+architecture consists of a server and a separate client for each agent.
 
 \subsection{Code Architecture}
 
@@ -107,7 +103,7 @@ A brief description of the various source files will follow.
 \item[map.rb] This file contains the classes, specifically \code{Map}, which
   encode information provided from real map data.
 
-\item[pqueue.rb] A priority queue implementation useful for A* search.
+\item[pqueue.rb] A priority queue implementation useful for $A^*$ search.
 
 \item[remote\_agent.rb] This file contains the \code{RemoteServerAgent} class,
   which is a subclass of \code{ServerAgent}. Essentially, a remote server agent
@@ -126,10 +122,10 @@ A brief description of the various source files will follow.
 
 \item[util.rb] This file contains a collection of geometry classes
   (\code{Point}, \code{Vector}, etc.) which are useful in the display and other
-  various places (most notably in dynamical navigatoin calculations).
+  various places (most notably in dynamical navigation calculations).
 
 \item[agents/astar.rb] This file contains a client agent that deliberatively
-  plans paths using A* search.
+  plans paths using $A^*$ search.
 
 \item[agents/dynamical.rb] This file contains a client agent that navigates
   through a purely dynamical system-based approach.
@@ -156,9 +152,10 @@ objects which own wall line segments; while the map is being processed, we also
 clip/extend these walls to create realistic-looking chunks of road between two
 nodes.
 
-To run the display, we start a server by running the script
-\code{bin/driving}. In the display, we have implemented mouse dragging, zooming,
-pausing, agent following (on by default), and agent placement/manipulation..
+To run the display, we start a server by running the script \code{bin/driving}
+without any command line arguments (or with arguments to specify window geometry
+or map file). In the display, we have implemented mouse dragging, zooming,
+pausing, agent centering (on by default), and agent placement/manipulation.
 
 
 \subsection{Deliberative Planning}
