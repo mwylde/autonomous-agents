@@ -150,7 +150,7 @@ module Driving
       when START_MODE, NORMAL_MODE, TURN_MODE
         @obs = create_obs
       when INTERSECTION_MODE
-        @obs = []
+        @obs = create_obs
       end
       @last_time = @curr_time
       @curr_time = Time.now
