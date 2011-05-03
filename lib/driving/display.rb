@@ -93,16 +93,25 @@ module Driving
         if @place_agent
           @place_agent.pos = screen_point
           if cr = @place_agent.curr_road
-            # arbitrarily decide to orient the car towards one node
-            facing = cr.n1
-            @place_agent.phi = (facing.pos - @place_agent.pos).dir
+            pos = @place_agent.pos
+            # orient the car correctly according to which side of the
+            # road it's on
+            facing, other = [cr.n0, cr.n1].sort_by{|n|
+              ((n.pos - pos).dir - @place_agent.phi).abs
+            }
+            road_norm = (facing.pos-pos).normal_vector
+            norm_line = LineSegment(pos, pos + road_norm * 100)
+            center_line = LineSegment.new(cr.n0.pos, cr.n1.pos)
+
+            ns = [cr.n0, cr.n1]
+            ns.reverse! if norm_line.intersection center_line
+            @place_agent.phi = (ns[0] - ns[1]).dir
           end
           @choose_dest = @place_agent
           @place_agent = nil
         elsif @choose_dest
           if @map.road_for_point screen_point
             @choose_dest.new_dest screen_point
-            @choose_dest.paused = false
             @choose_dest = nil
           end
         end

@@ -268,10 +268,10 @@ module Driving
       Point.new x,y
     end
 
-    # This decides whether this line segment intersects with another
-    # one. Algorithm taken from
+    # This returns the intersection point of two lines, or nil if they
+    # do not in fact intersect. Algorithm taken from
     # http://paulbourke.net/geometry/lineline2d/
-    def intersects? l
+    def intersection l
       e = 0.001
       x1, x2, x3, x4 = @p0.x, @p1.x, l.p0.x, l.p1.x
       y1, y2, y3, y4 = @p0.y, @p1.y, l.p0.y, l.p1.y
@@ -280,13 +280,16 @@ module Driving
       numerb = (x2-x1) * (y1-y3) - (y2-y1) * (x1-x3)
 
       # are the lines coincident?
-      return true if numera.abs < e && numerb.abs < e && denom.abs < e
+      if numera.abs < e && numerb.abs < e && denom.abs < e
+        return Point.new((x1 + x2)/2.0, (y1+y2)/2.0)
+      end
       # are the lines parallel?
-      return false if denom.abs < e
+      return nil if denom.abs < e
+      
       mua = numera/denom.to_f
       mub = numerb/denom.to_f
-      return false if mua < 0 || mua > 1 || mub < 0 || mub > 1
-      return true
+      return nil if mua < 0 || mua > 1 || mub < 0 || mub > 1
+      return Point.new(x1 + mua * (x2 - x1), y1 + mua * (y2 - y1))
     end
     
     def dist_to_pt pt
