@@ -145,12 +145,7 @@ module Driving
 
     # Direction of the vector in radians
     def dir
-      Math.atan2(@y, @x)
-    end
-
-    # Direction of the vector in radians, normalized to be in the range [0,2pi]
-    def dir_norm
-      dir % (2*Math::PI)
+      Math.atan2(@y, @x) % (2*Math::PI)
     end
 
     # Returns true if this vector is unit (has magnitude 1), false

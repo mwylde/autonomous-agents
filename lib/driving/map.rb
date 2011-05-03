@@ -244,7 +244,7 @@ module Driving
     # Clips the walls of one intersection of roads.
     def clip_intersection n
       # Sort the neighbors counter-clockwise
-      ms = n.neighbors.sort_by{|m| (m.pos-n.pos).dir_norm}
+      ms = n.neighbors.sort_by{|m| (m.pos-n.pos).dir}
 
       d = true if ms.length == 3 && n.pos.x > 1220 && n.pos.x < 1230
       puts "n: #{n.pos}" if d
@@ -254,7 +254,7 @@ module Driving
         m1 = i+1 == ms.length ? ms[0] : ms[i+1]
         r0 = get_road(n.pos, m0.pos)
         r1 = get_road(n.pos, m1.pos)
-        ang_delta = ((m1.pos-n.pos).dir_norm - (m0.pos-n.pos).dir_norm) % (2*Math::PI)
+        ang_delta = ((m1.pos-n.pos).dir - (m0.pos-n.pos).dir) % (2*Math::PI)
         puts ang_delta if d
         bisect_ang = (m0.pos-n.pos).dir + ang_delta/2.0
         (r0.walls + r1.walls).each do |w|
