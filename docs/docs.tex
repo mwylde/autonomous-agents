@@ -81,7 +81,7 @@ calculations, and client agents contain all the navigation inference and
 decision-making and ultimately send decisions (restricted to behavior variables)
 back to the server againt.
 
-A brief description of the various source files will follow.
+A brief description of the roles of the various source files will follow.
 
 \begin{description}
 \item[app.rb] This file is the point of entry for the program. This same entry
@@ -134,7 +134,7 @@ A brief description of the various source files will follow.
   a combination of deliberative planning and dynamical systems.
 
 \item[agents/simple.rb] This file contains a very primitive client agent (that
-  can hardly be called an agent) which allowed us to easily test the motion
+  can hardly be called an agent) which allows us to easily test the motion
   calculations performed by server agents.
 
 \end{description}
@@ -155,12 +155,32 @@ nodes.
 To run the display, we start a server by running the script \code{bin/driving}
 without any command line arguments (or with arguments to specify window geometry
 or map file). In the display, we have implemented mouse dragging, zooming,
-pausing, agent centering (on by default), and agent placement/manipulation.
+pausing, agent centering (on by default, toggled with space bar), and agent
+placement/manipulation.
 
+To create an agent, we create an agent process (while a server process is
+running) by running the script \code{bin/driving} with command line argument
+\code{-c} or \code{--agent} specifying the name of the class of client agent to
+create (\code{AStarAgent}, \code{DynamicalAgent}, \code{HybridAgent}, or
+\code{SimpleAgent}). The agent will then be shown on the display, and we can
+rotate among all current agents with the arrow keys if agent following is
+enabled in the display. When a client agent is created, a paired remote server
+agent will be created; the remote server agent will constantly send its current
+state information to the client agent, which will respond with its decision.
+
+We intended to model the agent's motion using basic, low-speed car physics,
+which conclude that a car with a set wheel position (set to anything other than
+straight) will trace out a circular path. The path is determined by $\delta$
+(the angular displacement of the wheel, with $\delta>0$ indicating a right
+turn), the length of the car, and the speed the car is traveling. We have, for
+practical concerns which will be discussed shortly, resorted to a much more
+primitive behavior variable space, where agents choose their heading angle
+directly.
 
 \subsection{Deliberative Planning}
 
 \subsection{Reactive Navigation}
+- explain why choosing phi instead of delta is actually okay here
 
 \subsection{Hybrid Approach}
 
@@ -169,5 +189,6 @@ pausing, agent centering (on by default), and agent placement/manipulation.
 \section{Conclusion}
 \subsection{Unreached goals}
 - cached map rendering
+- realistic choice variables
 
 \end{document}
