@@ -38,7 +38,7 @@ module Driving
           @options[:address] = a
         }
         opts.on("-p PORT", "--port PORT", "Port to run server on") {|p|
-          @options[:port] = p
+          @options[:port] = p.to_i
         }
         opts.on("-g WxH", "--geometry WxH", "Window geometry (width by height)"){|s|
           @options[:w], @options[:h] = s.split("x").collect{|x| x.to_i}
