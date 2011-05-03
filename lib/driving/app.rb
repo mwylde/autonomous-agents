@@ -63,8 +63,8 @@ module Driving
     
     def run_server
       root = File.expand_path(File.dirname(__FILE__))
-      require "#{root}/driving/display"
-      require "#{root}/driving/server"
+      require "#{root}/display"
+      require "#{root}/server"
 
       @map = Map.from_file(@options[:map_file])
 

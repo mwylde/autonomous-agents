@@ -2,3 +2,8 @@
 .emacs.desktop*
 *.wiki
 
+/docs/docs.aux
+/.bundle/config
+/docs/docs.log
+/docs/docs.out
+/docs/docs.synctex.gz
