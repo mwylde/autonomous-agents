@@ -155,31 +155,31 @@ longitude to a scale of meters.
 
 In order to make an internal representation of the map suitable for a driving
 simulation, we generate a \emph{road} for each graph edge by creating
-\emph{walls} defined as parallel lines a constant \code{ROAD\_WIDTH} away from
-the center line, which is the line connecting the node and the node the edge
-connects it to. This parallel line approach creates overlapping walls at every
-acute angle and gaps at every obtuse angle, so we process the walls to clip them
-where they overlap and extend them where they leave gaps.
-
-
-
-
+\emph{walls} (belonging to the \emph{road}) defined as parallel lines a constant
+\code{ROAD\_WIDTH} away from the center line, which is the line connecting the
+node and the node the edge connects it to. This parallel line approach creates
+overlapping walls at every acute angle and gaps at every obtuse angle, so we
+process the \emph{walls} to clip them where they overlap and extend them where
+they leave gaps.
 
 To run the display, we start a server by running the script \code{bin/driving}
 without any command line arguments (or with arguments to specify window geometry
-or map file). In the display, we have implemented mouse dragging, zooming,
-pausing, agent centering (on by default, toggled with space bar), and agent
-placement/manipulation.
+or map file). The display renders the world by drawing every \emph{road} as a
+polygon with points defined by its \emph{walls}. In the display, we have
+implemented mouse dragging, zooming, pausing, agent centering (on by default,
+toggled with space bar), and agent dragging.
 
 To create an agent, we create an agent process (while a server process is
 running) by running the script \code{bin/driving} with command line argument
 \code{-c} or \code{--agent} specifying the name of the class of client agent to
 create (\code{AStarAgent}, \code{DynamicalAgent}, \code{HybridAgent}, or
-\code{SimpleAgent}). The agent will then be shown on the display, and we can
-rotate among all current agents with the arrow keys if agent following is
-enabled in the display. When a client agent is created, a paired remote server
-agent will be created; the remote server agent will constantly send its current
-state information to the client agent, which will respond with its decision.
+\code{SimpleAgent}). This creates a server process, the \emph{remote server
+  agent} which contains and tracks the state of the agent and sends this state
+as a message to the client process, the \emph{client agent}, awaiting a response
+indicating what action to take. As part of the response, the client agent
+can send \emph{renders}, a list of strings which are executed in the display;
+this is provided so the client agent can specify that things relevant to
+its navigation decisions be drawn.
 
 We intended to model the agent's motion using basic, low-speed car physics,
 which conclude that a car with a set wheel position (set to anything other than
