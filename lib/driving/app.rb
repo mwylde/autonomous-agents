@@ -62,6 +62,10 @@ module Driving
     end
     
     def run_server
+      root = File.expand_path(File.dirname(__FILE__))
+      require "#{root}/driving/display"
+      require "#{root}/driving/server"
+
       @map = Map.from_file(@options[:map_file])
 
       @agents = [] #ServerAgent.new(0, @map)]
@@ -88,15 +92,17 @@ module Driving
       puts "Starting agent: #{@options[:agent].inspect}"
       # get the agent corresponding to the one supplied at the command
       # line 
-      #begin
+      begin
         klass = Driving.const_get(@options[:agent])
         klass.new(@options[:address], @options[:port]).run
-      #rescue NameError
-      #  puts "Agent class #{@options[:agent]} doesn't exist."
-      #end
+      rescue NameError
+        puts "Agent class #{@options[:agent]} doesn't exist."
+      end
     end
 
     def run_test
+      root = File.expand_path(File.dirname(__FILE__))
+      require "#{root}/driving/server"
       puts "Starting test with #{@options[:agent]}"
       @agents = []
       @server = Server.new @options[:address], @options[:port], @map, @agents

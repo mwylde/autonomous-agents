@@ -13,10 +13,6 @@ require "#{root}/driving/socket"
 require "#{root}/driving/server_agent"
 require "#{root}/driving/remote_agent"
 require "#{root}/driving/client_agent"
-if RUBY_ENGINE == 'jruby'
-  require "#{root}/driving/display"
-  require "#{root}/driving/server"
-end
 require "#{root}/driving/app"
 
 Dir.glob("#{root}/driving/agents/*.rb") do |agent|
