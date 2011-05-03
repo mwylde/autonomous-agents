@@ -66,7 +66,7 @@ module Driving
     end
 
     def to_s
-      "Road: #{@p0} -> #{@p1} with #{@walls}"
+      "Road: #{@n0.pos} -> #{@n1.pos} with #{@walls}"
     end
 
     def unit_vector
@@ -171,6 +171,9 @@ module Driving
       # create a two-layered hash storing roads
       @road_hash = create_roads
       @road_set = road_set_from_hash @road_hash
+
+      # clip all the walls
+      clip_map
     end
 
     # Creates a two-layered hash to store road objects, indexed first by start
@@ -215,21 +218,15 @@ module Driving
     # returns a set of all the roads.
     def road_set_from_hash hash
       s = Set.new
-
-      # the road hash is indexed by start point and then by end point
       hash.each do |p0, p0_hash|
         p0_hash.each do |p1, r|
-          # FIXME: I think the fact that it's a set should handle the fact that
-          # the double-hash has duplicate references to roads. If not, then I
-          # can keep a list of sets of points that have been added and only add
-          # a road if it's not in the list of set of points.
           s.add r
         end
       end
-
       return s
     end
 
+    # access a road given its two end points.
     def get_road p0, p1
       if @road_hash[p0].nil? || @road_hash[p1].nil?
         raise "Neither point specified has any roads"
@@ -240,25 +237,57 @@ module Driving
       end
     end
 
-    def clip_walls
-      @nodes.each do |n|
-        if n.neighbors.size == 2
-          ms = n.neighbors
-          u0 = (ms[0].pos - n.pos).normalize!
-          u1 = (ms[1].pos - n.pos).normalize!
+    # Clips the walls of all roads on the map.
+    def clip_map
+      @nodes.each{|n| clip_intersection(n)}
+    end
 
-          # unit vector pointing towards the inner wall intersection.
-          u = (u0 + u1).normalize!
-          inner_pt = n.pos + u*ROAD_WIDTH
-
-          @roads[n][ms[0]].walls.each do |w|
-            if w.hits inner_pt
-              # FIXME: LOTS MORE IMPLEMENTATINO
-            end
-          end
-        end
+    # Clips the walls of one intersection of roads.
+    def clip_intersection n
+      ms = n.neighbors.sort_by{|m| (m.pos-n.pos).dir}
+      ms[0..-2].each_index do |i|
+        m0, m1 = ms[i], ms[i+1]
+        r0 = get_road(n.pos, m0.pos)
+        r1 = get_road(n.pos, m1.pos)
+        ang = (m1.pos-n.pos).dir - (m0.pos-n.pos).dir
+        ang < Math::PI ? clip_acute_ang(n,r0,r1) : extend_obtuse_ang(n,r0,r1)
       end
     end
+
+    # Clips the walls (on the acute side) of two roads, r0 and r1, which meet to
+    # form an acute angle at node n.
+    def clip_acute_ang n, r0, r1
+      # FIXME: find where the wall line segments meet, and then modify the wall
+      # end pts to be at the intersection.
+      
+    end
+
+    # Extends the walls (on the obtuse side) of two roads, r0 and r1, which meet
+    # to form an obtuse angle at node n.
+    def extend_obtuse_ang n, m0, m1
+      # FIXME: find where the extensions of the wall line segments meet, and
+      # then modify the wall end pts to be at the intersection.
+    end
+
+    # def clip_walls
+    #   @nodes.each do |n|
+    #     if n.neighbors.size == 2
+    #       ms = n.neighbors
+    #       u0 = (ms[0].pos - n.pos).normalize!
+    #       u1 = (ms[1].pos - n.pos).normalize!
+
+    #       # unit vector pointing towards the inner wall intersection.
+    #       u = (u0 + u1).normalize!
+    #       inner_pt = n.pos + u*ROAD_WIDTH
+
+    #       @roads[n][ms[0]].walls.each do |w|
+    #         if w.hits inner_pt
+    #           # FIXME: LOTS MORE IMPLEMENTATINO
+    #         end
+    #       end
+    #     end
+    #   end
+    # end
 
     def latlong_to_world p
 
