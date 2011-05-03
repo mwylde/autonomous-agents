@@ -141,7 +141,8 @@ module Driving
         end
       end
       sleep 1
-      AStarAgent.new(@options[:address], @options[:port]).run
+      klass = Driving.const_get(@options[:agent])
+      klass.new(@options[:address], @options[:port]).run
     end
   end
 end
