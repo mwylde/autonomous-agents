@@ -1,6 +1,6 @@
 M - Intro
-B - Literature Survey
-J - Problem
-B - Method
+B   + Related Work
+J - Autonomus Driving
+B - Methods
 ? - Results
 ? - Conclusion
