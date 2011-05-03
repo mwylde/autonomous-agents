@@ -42,11 +42,11 @@ module Driving
 
     # calculates the best route from the current node to the
     # destination node using A*
-    def astar
+    def astar pos, phi, current_road, goal
       fringe = PriorityQueue.new
       # figure out which node of our road we're facing
-      facing, other = [@curr.n0, @curr.n1].sort_by{|n|
-        ((n.pos - @pos).dir - @phi).abs
+      facing, other = [current_road.n0, current_road.n1].sort_by{|n|
+        ((n.pos - pos).dir - phi).abs
       }
       fringe.add(AStarNode.new(facing, AStarNode.new(other, nil)))
       closed_states = Set.new [other]
@@ -54,7 +54,7 @@ module Driving
       until fringe.isEmpty
         current = fringe.remove
         next if closed_states.include? current.state
-        return current if current.state == @goal
+        return current if current.state == goal
 
         expanded = current.expand
         
@@ -69,7 +69,7 @@ module Driving
         end
         expanded.each{|successor|
           successor.g = current.g + current.state.pos.dist(successor.state.pos)
-          successor.h = successor.state.pos.dist @goal.pos
+          successor.h = successor.state.pos.dist goal.pos
           fringe.add(successor)
         }
       end
@@ -77,8 +77,8 @@ module Driving
       return nil
     end
 
-    def calculate_route
-      node = astar()
+    def calculate_route pos, phi, current_road, goal
+      node = astar pos, phi, current_road, goal
       if node
         route = []
         while node.parent
@@ -189,7 +189,7 @@ module Driving
     def change_dest p
       @dest = p
       @goal = @map.closest_node @dest
-      @route = calculate_route
+      @route = calculate_route @pos, @phi, @curr, @goal
       self.mode = START_MODE
       puts "Route: #{@route.inspect}"
     end
@@ -237,10 +237,6 @@ module Driving
           self.mode = TURN_MODE
           @turn_from_node = facing
           @turn_to_node = @route[-1]
-          if false && !facing.neighbors.include?(@route[-1])
-            self.mode = REPLAN_MODE
-            return [@phi, -5]
-          end
           return turn_navigate
         else
           return straight_navigate

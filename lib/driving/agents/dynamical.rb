@@ -103,7 +103,7 @@ module Driving
       f_obs = f_obs.reduce(:+)
 
 
-      f_tar(phi, a, psi_tar) + f_obs
+      f_tar(phi, a, psi_tar) + f_obs.to_f
       # w_tar.abs*f_tar + w_obs.abs*f_obs + 0.01*(rand-0.5)
     end
 
@@ -168,11 +168,11 @@ module Driving
         
         # FIXME: we need to replace this with keeping track of the last position's
         # curr_road and seeing if the new position has passed into a new road.
-        @curr_road = find_curr_road
+        @curr = find_curr_road
           
         # prepare and send the response
 
-        if @curr_road
+        if @curr
           # do a mode transition if appropriate
           mode_transitions
           # compute the new phi value
@@ -273,17 +273,17 @@ module Driving
       # right side of the road, which is the one we want as an obstacle.
       norm_line = LineSegment.new(@pos, @pos + road_norm * 100)
       # line segment that goes down the center of the road
-      center_line = LineSegment.new(@curr_road.n0.pos, @curr_road.n1.pos)
+      center_line = LineSegment.new(@curr.n0.pos, @curr.n1.pos)
       # check if we're on the wrong side of the road for some reaons;
       # if so, we want to disable the center line obstacle so we can
       # get back onto the right side
-      road_edge = @curr_road.walls.find{|w|
+      road_edge = @curr.walls.find{|w|
         w.intersection norm_line
       }
       obs = []
       if norm_line.intersection center_line
         center_line = nil
-        w = (@curr_road.walls - Set[road_edge]).first
+        w = (@curr.walls - Set[road_edge]).first
         # make it larger than a normal obs so that it pushes the agent
         # back into the proper lane
         obs << create_obs_from_wall(w, @radius*10)
@@ -340,7 +340,7 @@ module Driving
     # array where the first element is the facing node and the second is the
     # other node.
     def facing_node
-      [@curr_road.n0, @curr_road.n1].sort_by{|n|
+      [@curr.n0, @curr.n1].sort_by{|n|
         ((n.pos - @pos).dir - @phi).abs
       }
     end
