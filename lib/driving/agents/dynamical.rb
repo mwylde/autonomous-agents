@@ -7,7 +7,7 @@ module Driving
       :d0 => 0.01,      # distance scaling factor
       :c1 => 1,
       :c2 => 1,
-      :a => 5,         # target attractor scaling factor
+      :a => 20,         # target attractor scaling factor
       :a_tar => 1,
       :g_tar_obs => 1,
       :sigma => 1,      # safety margin for windower
@@ -19,6 +19,10 @@ module Driving
     # Mode reached when the agent reaches an intersection, which means
     # that it needs to choose which direction it's going to travel in
     INTERSECTION_MODE = :intersection
+    # Mode reached when the agent reaches a road end that is not an
+    # intersection, which means that there is no choice of where to go
+    # next.
+    TURN_MODE = :turn
     # Normal operating mode of the agent; it just dynamically
     # navigates towards the current target.
     NORMAL_MODE = :normal
@@ -217,13 +221,18 @@ module Driving
         end
       when NORMAL_MODE
         facing, other = facing_node
-        if facing.pos.dist(@pos) < ROAD_WIDTH
-          self.mode = INTERSECTION_MODE
-          @target = choose_tar
+        if facing.pos.dist(@pos) < ROAD_WIDTH * 2
+          if facing.neighbors.size > 2
+            self.mode = INTERSECTION_MODE
+            @target = choose_tar
+          else
+            self.mode = TURN_MODE
+            @target = create_tar((facing.neighbors - Set[other]).first.pos)
+          end
         end
-      when INTERSECTION_MODE
+      when INTERSECTION_MODE, TURN_MODE
         closest = @map.closest_node @pos
-        if closest.pos.dist(@pos) > ROAD_WIDTH
+        if closest.pos.dist(@pos) > ROAD_WIDTH * 2
           self.mode = NORMAL_MODE
         end
       end
@@ -233,9 +242,7 @@ module Driving
     # and the current mode
     def navigate
       case @mode
-      when START_MODE
-        @obs = create_obs
-      when NORMAL_MODE
+      when START_MODE, NORMAL_MODE, TURN_MODE
         @obs = create_obs
       when INTERSECTION_MODE
         @obs = []
@@ -271,15 +278,15 @@ module Driving
       # if so, we want to disable the center line obstacle so we can
       # get back onto the right side
       road_edge = @curr_road.walls.find{|w|
-        w.intersects? norm_line
+        w.intersection norm_line
       }
       obs = []
-      if norm_line.intersects? center_line
+      if norm_line.intersection center_line
         center_line = nil
         w = (@curr_road.walls - Set[road_edge]).first
         # make it larger than a normal obs so that it pushed the agent
         # back into the proper lane
-        obs << create_obs_from_wall(w, @radius*3)
+        obs << create_obs_from_wall(w, @radius*10)
       end
       obs += [road_edge, center_line].reject{|x| x.nil?}.collect do |w|
         create_obs_from_wall w
